@@ -4,6 +4,7 @@
 #include "ofxTiming.h"
 
 class BufferedVideo : public ofBaseVideo {
+
 protected:
 	vector<ofPixels> images;
 	int loaded;
@@ -25,6 +26,7 @@ protected:
 		}
 		newFrame = true;
 	}
+
 public:
 	BufferedVideo()
 	:currentFrame(0)
