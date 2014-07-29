@@ -39,7 +39,9 @@ public:
 		timer.setFramerate(frameRate);
 	}
 	void load(string directoryName) {
-		directory.listDir(directoryName);
+		loaded = 0;
+        currentFrame = 0;
+        directory.listDir(directoryName);
 		images.resize(directory.size());
 		loadNextAvailable();
 		texture.allocate(images[0]);

@@ -59,7 +59,7 @@ class testApp : public ofBaseApp{
     // Leap
 	ofxLeapMotion leap;
     LeapVisualizer leapVisualizer;
-    LeapRecorder leapRecorder;
+    LeapRecorder   leapRecorder;
     LeapToCameraCalibrator leapCameraCalibrator;
     
 	ofEasyCam cam;
@@ -68,15 +68,15 @@ class testApp : public ofBaseApp{
     bool bPlaying;
     bool bRecording;
     bool bUseVirtualProjector;
-    bool bUseFbo; 
+    bool bUseFbo;
+    bool bInputMousePoints;
 	int  playingFrame;
     string folderName;
 	
     //------------------------------
     // Video buffer playback
     BufferedVideo video;
-    bool playing,active;
-    bool bCompletedOneVideoLoop;
+    bool playing;
 	bool bEndRecording;
     
 	//------------------------------
@@ -88,5 +88,9 @@ class testApp : public ofBaseApp{
     
     void finishRecording();
     void loadAndPlayRecording(string folderName);
+    void calibrateFromXML( string folderName);
+    
+    void drawLiveForRecording();
+    void drawPlayback();
     
 };

@@ -47,7 +47,7 @@ class FingerTipCalibRecorder{
 			return;
 		}
         
-        ofPoint mouseCoord = ofPoint(mouseX-xOffset,mouseY-yOffset);
+        ofPoint mouseCoord = ofPoint((mouseX-xOffset),mouseY-yOffset);
         
         if(lastFrameCount != frameCount) lastTagNumber	= XML.addTag("CALIB_READ");
 		

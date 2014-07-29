@@ -153,7 +153,7 @@ void LeapVisualizer::drawGrid(){
 		ofPushMatrix();
 		ofEnableSmoothing();
 		ofRotate(90, 0, 0, 1);
-		ofSetColor(160,160,160, 100);
+		ofSetColor(160,160,160, 200);
 		ofDrawGridPlane(200, 10, false);
 		ofPopMatrix();
 	}

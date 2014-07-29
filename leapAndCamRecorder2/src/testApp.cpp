@@ -37,7 +37,7 @@ void testApp::setup(){
     
 	cameraLibdc.setSize(cameraWidth, cameraHeight);
 	cameraLibdc.setImageType(OF_IMAGE_COLOR);
-	//cameraLibdc.setBayerMode(DC1394_COLOR_FILTER_GRBG);
+	//cameraLibdc.setBayerMode(DC1394_COLOR_FILTER_GRBG); // check this, why grayscale???
 	cameraLibdc.setBlocking(true);
 	
 	cameraLibdc.setExposure(1.0);
@@ -45,11 +45,11 @@ void testApp::setup(){
 	
 	// After setup it's still possible to change a lot of parameters. If you want
 	// to change a pre-setup parameter, the camera will auto-restart
-	cameraLibdc.setBrightness(0);
+	/*cameraLibdc.setBrightness(0);
 	cameraLibdc.setGain(0);
 	cameraLibdc.setExposure(1.0);
 	cameraLibdc.setGammaAbs(1);
-	cameraLibdc.setShutterAbs(1. / 31.0);
+	cameraLibdc.setShutterAbs(1. / 31.0);*/
 	
 #else
 	cameraVidGrabber.setVerbose(true);
@@ -60,7 +60,7 @@ void testApp::setup(){
 	// Setup video saver
 	bRecording = false;
 	currentFrameNumber = 0;
-	imageSequence.resize(300);
+	imageSequence.resize(500);
 	currentFrameImg.allocate(cameraWidth, cameraHeight, OF_IMAGE_COLOR);
 	for(int i = 0; i < imageSequence.size(); i++) {
 		imageSequence[i].allocate(cameraWidth,cameraHeight, OF_IMAGE_COLOR);
@@ -70,20 +70,17 @@ void testApp::setup(){
 	// Setup leap
 	leap.open();
 	cam.setOrientation(ofPoint(-55, 0, 0));
-
-	glEnable(GL_DEPTH_TEST);
-    glEnable(GL_NORMALIZE);
-	glEnable(GL_DEPTH);
-	
+    
     leapVisualizer.setup();
     leapRecorder.setup();
 
-	bPlaying    = false;
+	bPlaying = false;
 	playingFrame = 0;
 	bEndRecording = false;
     playing = false;
     bUseVirtualProjector = true;
     bUseFbo = true;
+    bInputMousePoints = false;
     
 	string versionDisplay = "Using openFrameworks version: " + ofToString( ofGetVersionInfo());
 	cout << versionDisplay;
@@ -95,19 +92,24 @@ void testApp::setup(){
     lastIndexVideoPos.set(0,0,0);
     lastIndexLeapPos.set(0,0,0);
     
-    loadAndPlayRecording("2014-07-28-16-49-24-400");
-    leapCameraCalibrator.setup(cameraHeight, cameraWidth);
-    leapCameraCalibrator.loadFingerTipPoints("recordings/2014-07-28-16-49-24-400/calib/fingerCalibPts.xml");
-    leapCameraCalibrator.correctCamera();
+    string loadFolderName = "2014-07-29-15-52-05-291";
+    loadAndPlayRecording(loadFolderName);
+    calibrateFromXML(loadFolderName);
+
+    fbo.allocate(cameraWidth,cameraHeight,GL_RGBA);
     
-    fbo.allocate(cameraHeight,cameraWidth,GL_RGB);
+    ofEnableAlphaBlending();
+    glEnable(GL_NORMALIZE); // needed??
+	glEnable(GL_DEPTH);
+    // glEnable(GL_DEPTH_TEST); // why is this messing the render up in the projector cam??????
+    
+    
 }
-
-
 
 
 //--------------------------------------------------------------
 void testApp::update(){
+    
     
     
     //------------- Playback
@@ -116,9 +118,10 @@ void testApp::update(){
         video.setPlaying(playing);
     }
     
-    bool bCameraHasNewFrame = false;
+    
     
     //------------- Recording
+    bool bCameraHasNewFrame = false;
     #ifdef _USE_LIBDC_GRABBER
         if (cameraLibdc.grabVideo(currentFrameImg)) {
             bCameraHasNewFrame = true;
@@ -159,12 +162,7 @@ void testApp::update(){
         }
     }
     
-    
-    
 
-    
-    
-    
     //-------------  Leap update
 	leap.markFrameAsOld();
     
@@ -174,68 +172,140 @@ void testApp::update(){
 //--------------------------------------------------------------
 void testApp::draw(){
 
-	ofBackground(0,0,0);
+    ofBackground(0,0,0);
+    
+    if(!bPlaying){
+        drawLiveForRecording();
+    }else{
+        drawPlayback();
+    }
 	
-	// draw current video image if no in playback mode
-    ofSetColor(ofColor::white);
-	if(bRecording || !bPlaying){
-        currentFrameImg.rotate90(1);
-        currentFrameImg.draw(cameraHeight,0);
-	}
-	
-    // draw some info text
     drawText();
-	
-    // draw leap into fbo
+
+}
+
+//--------------------------------------------------------------
+void testApp::drawLiveForRecording(){
+    
+    ofSetColor(ofColor::white);
+    currentFrameImg.draw(cameraWidth,0);
+    
     if (bUseFbo){
         fbo.begin();
-        ofClear(0,0,0,255);
+        ofClear(0,0,0,0);
     }
     
-    if (leapCameraCalibrator.calibrated && bUseVirtualProjector){
-        leapCameraCalibrator.projector.beginAsCamera();
-    }
-    else {
-        cam.begin();
-    }
-		
-        leapVisualizer.drawGrid();
-		if (!bPlaying)leapVisualizer.drawFrame(leap);
-	
-		if (bPlaying && !bRecording){
-			int nFrameTags = leapVisualizer.XML.getNumTags("FRAME");
-			if (nFrameTags > 0){
-                
-                playingFrame = video.getCurrentFrameID();
-                leapVisualizer.drawFrameFromXML(playingFrame);
-                
-                if( lastIndexVideoPos.x > 0 && lastIndexVideoPos.y > 0){
-                    ofSetColor(ofColor::red);
-                    ofDrawSphere(lastIndexLeapPos, 5.0f);
-                }
-                
-			}
-		}
+    // start camera
+    glEnable(GL_DEPTH_TEST);
+    cam.begin();
+    
+    // draw grid
+    leapVisualizer.drawGrid();
+    
+    // if live draw live leap
+    if(!bPlaying){ leapVisualizer.drawFrame(leap); }
     
     
-	if (leapCameraCalibrator.calibrated && bUseVirtualProjector){
-        leapCameraCalibrator.projector.endAsCamera();
-    }
-    else {
-        cam.end();
-    }
-    
+    cam.end();
+    glDisable(GL_DEPTH_TEST);
+
+
+    // end fbo
     if (bUseFbo){
         fbo.end();
-        ofSetColor(255,255,255);
-        fbo.draw(0,0);
     }
     
-    // draw the playback video and recorded mouse position
+    
+    // draw fbo
+    ofSetColor(255);
+    fbo.draw(0,0);
+    
+}
+
+//--------------------------------------------------------------
+void testApp::drawPlayback(){
+    
+    if(leapCameraCalibrator.calibrated){
+        ofSetColor(255);
+        video.draw(0, 0);
+    }
+    
+    
+    // start fbo
+    if (bUseFbo){
+        fbo.begin();
+        ofClear(0,0,0,0);
+    }
+    
+    // start camera
+    if (leapCameraCalibrator.calibrated && bUseVirtualProjector){
+        leapCameraCalibrator.projector.beginAsCamera();
+    }else {
+        glEnable(GL_DEPTH_TEST);
+        cam.begin();
+    }
+    
+    // draw grid
+    ofSetColor(255);
+    leapVisualizer.drawGrid();
+    
+    // draw world points
+    leapCameraCalibrator.drawWorldPoints();
+    
+    // draw leap from xml
+    if (bPlaying && !bRecording){
+        int nFrameTags = leapVisualizer.XML.getNumTags("FRAME");
+        if (nFrameTags > 0){
+            
+            playingFrame = video.getCurrentFrameID();
+            leapVisualizer.drawFrameFromXML(playingFrame);
+            
+            if( lastIndexVideoPos.x > 0 && lastIndexVideoPos.y > 0){
+                ofSetColor(ofColor::red);
+                ofDrawSphere(lastIndexLeapPos, 5.0f);
+            }
+            
+        }
+    }
+    
+    // end camera
+	if (leapCameraCalibrator.calibrated && bUseVirtualProjector){
+        leapCameraCalibrator.projector.endAsCamera();
+    }else {
+        if (leapCameraCalibrator.calibrated){
+            leapCameraCalibrator.projector.draw();
+        }
+        cam.end();
+        glDisable(GL_DEPTH_TEST);
+    }
+    
+    // end fbo
+    if (bUseFbo){
+        fbo.end();
+    }
+    
+    
+    
+    if (leapCameraCalibrator.calibrated) ofSetColor(255,255,255,200);
+    else ofSetColor(255,255,255,255);
+    
+    ofPushMatrix();
+        ofScale(1,-1,1);
+        fbo.draw(0,-fbo.getHeight());//,fbo.getWidth()*.5,fbo.getHeight()*.5);
+    ofPopMatrix();
+    
+    
+    // if calibrated and want to see view from projector
+    if (leapCameraCalibrator.calibrated){
+        leapCameraCalibrator.drawImagePoints();
+    }
+    
+    
     if(bPlaying && !bRecording){
         ofPushStyle();
         ofSetColor(255);
-
+        video.draw(cameraWidth, 0);
+        
         if( lastIndexVideoPos.x > 0 && lastIndexVideoPos.y > 0){
             ofNoFill();
             ofEllipse(lastIndexVideoPos,10,10);
@@ -243,11 +313,7 @@ void testApp::draw(){
             ofEllipse(lastIndexVideoPos,2,2);
         }
         
-        video.draw(480, 0);
-        ofPopStyle();
     }
-    
-    
 }
 
 //--------------------------------------------------------------
@@ -297,7 +363,7 @@ void testApp::finishRecording(){
     int totalImage = MIN(currentFrameNumber,imageSequence.size());
     for(int i = 0; i < totalImage; i++) {
         if(imageSequence[i].getWidth() == 0) break;
-        imageSequence[i].rotate90(1);
+        //imageSequence[i].rotate90(1);
         ofSaveImage(imageSequence[i], "recordings/"+folderName+"/camera/"+ofToString(i, 3, '0') + ".jpg");
     }
     
@@ -319,12 +385,11 @@ void testApp::finishRecording(){
 //--------------------------------------------------------------
 void testApp::loadAndPlayRecording(string folder){
     
-    
     leapVisualizer.loadXmlFile("recordings/"+folder+"/leap/leap.xml");
     video.load("recordings/"+folder+"/camera");
     
     indexRecorder.setup("recordings/"+folder+"/calib","fingerCalibPts.xml");
-    indexRecorder.setDrawOffsets(cameraHeight,0);
+    indexRecorder.setDrawOffsets(cameraWidth,0);
     
     bPlaying = true;
     playing = true;
@@ -333,11 +398,20 @@ void testApp::loadAndPlayRecording(string folder){
 }
 
 //--------------------------------------------------------------
+void testApp::calibrateFromXML( string calibFolderName ){
+    
+    leapCameraCalibrator.setup(cameraWidth, cameraHeight);
+    leapCameraCalibrator.loadFingerTipPoints("recordings/"+calibFolderName+"/calib/fingerCalibPts.xml");
+    leapCameraCalibrator.correctCamera();
+    
+}
+
+//--------------------------------------------------------------
 void testApp::keyPressed(int key){
 
 	if (key == 'c'){
 		// Reset the camera if the user presses 'c'.
-		cam.reset();
+		//cam.reset();
 	} else if ((key == 'p') || (key == 'P')){
 		
         if(bPlaying) playing = !playing;
@@ -384,6 +458,12 @@ void testApp::keyPressed(int key){
         case 'F':
             bUseFbo = !bUseFbo;
             break;
+        case 'm':
+            bInputMousePoints = !bInputMousePoints;
+            break;
+        case 'C':
+            calibrateFromXML(folderName);
+            break;
     }
     
 }
@@ -403,7 +483,7 @@ void testApp::mouseDragged(int x, int y, int button){
 //--------------------------------------------------------------
 void testApp::mousePressed(int x, int y, int button){
     
-    if(bPlaying){
+    if(bPlaying && bInputMousePoints){
         if(x > indexRecorder.xOffset && y > indexRecorder.yOffset){
             indexRecorder.recordPosition(x, y, leapVisualizer.getIndexFingertipFromXML(video.getCurrentFrameID()),video.getCurrentFrameID());
             lastIndexVideoPos.set(x,y);

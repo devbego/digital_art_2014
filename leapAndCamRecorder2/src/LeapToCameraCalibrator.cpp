@@ -15,6 +15,26 @@ void LeapToCameraCalibrator::setup(int camWidth, int camHeight){
     calibrated = false;
     hasFingerCalibPoints = false;
     switchYandZ = false;
+    
+	throwRatioX= 1.6f;
+	throwRatioY= 1.6f;
+	lensOffsetX= 0.0f;
+	lensOffsetY= -0.5f;
+	translationX = 0.0f;
+	translationY =0.0f;
+	translationZ= 0.0f;
+	rotationX= 0.0f;
+	rotationY= 0.0f;
+	rotationZ= 0.0f;
+    throwRatio = 1.62f;
+	lensOffset = ofVec2f(0.0f,0.5f);
+    
+    projector.setDefaultFar(10000.0f);
+	projector.setDefaultNear(50.0f);
+	projector.setWidth(resolution.x);
+	projector.setHeight(resolution.y);
+    
+    resetProjector();
 }
 
 void LeapToCameraCalibrator::loadFingerTipPoints(string filePath){
@@ -95,6 +115,10 @@ void LeapToCameraCalibrator::correctCamera(){
 	int flags = CV_CALIB_FIX_K1 | CV_CALIB_FIX_K2 | CV_CALIB_FIX_K3 | CV_CALIB_FIX_K4 | CV_CALIB_FIX_K5 | CV_CALIB_FIX_K6 |
     CV_CALIB_ZERO_TANGENT_DIST | CV_CALIB_USE_INTRINSIC_GUESS;
 
+    //if (this->fixAspectRatio) {
+    //    flags |= CV_CALIB_FIX_ASPECT_RATIO;
+	//}
+    
 	float error = cv::calibrateCamera(vector<vector<cv::Point3f> >(1, worldPoints),
                                 vector<vector<cv::Point2f> >(1, imagePoints),
                                 cv::Size(resolution.x, resolution.y),
@@ -151,3 +175,62 @@ void LeapToCameraCalibrator::setExtrinsics(cv::Mat rotation, cv::Mat translation
     
 	projector.setView(ofxCv::makeMatrix(rotation, translation));
 }
+
+
+void LeapToCameraCalibrator::resetProjector()
+{
+	//position = ofVec3f(1.0f,1.0f,1.0f);//cam.getPosition();
+	throwRatio = 1.62f;
+	lensOffset = ofVec2f(0.0f,0.5f);
+    
+	ofQuaternion rotation;
+	auto rotationQuat = ofQuaternion(rotationX, ofVec3f(1, 0, 0), rotationZ, ofVec3f(0, 0, 1), rotationY, ofVec3f(0, 1, 0));
+	ofMatrix4x4 pose = ofMatrix4x4(rotationQuat);
+	pose(3,0) = translationX;
+	pose(3,1) = translationY;
+	pose(3,2) = translationZ;
+	projector.setView(pose);
+    
+	ofMatrix4x4 projection;
+	projection(0,0) = throwRatioX;
+	projection(1,1) = -throwRatioY;
+	projection(2,3) = 1.0f;
+	projection(3,3) = 0.0f;
+	projection.postMultTranslate(-lensOffsetX, -lensOffsetY, 0.0f);
+	projector.setProjection(projection);
+    
+	projector.setWidth(resolution.x);
+	projector.setHeight(resolution.y);
+}
+
+
+void LeapToCameraCalibrator::drawWorldPoints(){
+	ofPushMatrix();
+    ofSetColor(ofColor::red);
+    for(int i = 0; i < calibVectorWorld.size(); i++){
+        ofDrawSphere(calibVectorWorld[i], 5.0f);
+    }
+	ofPopMatrix();
+}
+
+void LeapToCameraCalibrator::drawImagePoints(){
+	
+    auto count = this->calibVectorImage.size();
+	vector<cv::Point2f> evaluatedImagePoints(count);
+    
+	if (this->calibrated) {
+		cv::projectPoints(ofxCv::toCv(this->calibVectorWorld), this->rotation, this->translation, this->camera, this->distortion, evaluatedImagePoints);
+	}
+    
+	ofPushMatrix();
+    ofSetColor(ofColor::white);
+    for(int i = 0; i < calibVectorImage.size(); i++){
+        ofDrawSphere(calibVectorImage[i], 5.0f);
+        
+        if (this->calibrated) {
+            ofLine(calibVectorImage[i], ofxCv::toOf(evaluatedImagePoints[i]));
+        }
+    }
+	ofPopMatrix();
+}
+
