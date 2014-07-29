@@ -3,14 +3,14 @@
 #include "ofMain.h"
 #include "ofxLeapMotion.h"
 #include "ofxXmlSettings.h"
-#include "ofxCv.h"
+//#include "ofxCv.h"
 #include "ofxLibdc.h"
 #include "LeapFrame.h"
 #include "BufferedVideo.h"
 #include "LeapRecorder.h"
 #include "LeapVisualizer.h"
-#include "FingerTipVideoRecorder.h"
-
+#include "FingerTipCalibRecorder.h"
+#include "LeapToCameraCalibrator.h"
 /* 
  Made some sanity changes in ofxXmlSettings:
 	const float floatPrecision = 4; // changed by GL
@@ -60,12 +60,15 @@ class testApp : public ofBaseApp{
 	ofxLeapMotion leap;
     LeapVisualizer leapVisualizer;
     LeapRecorder leapRecorder;
+    LeapToCameraCalibrator leapCameraCalibrator;
     
 	ofEasyCam cam;
     ofFbo fbo;
 
     bool bPlaying;
     bool bRecording;
+    bool bUseVirtualProjector;
+    bool bUseFbo; 
 	int  playingFrame;
     string folderName;
 	
@@ -78,7 +81,7 @@ class testApp : public ofBaseApp{
     
 	//------------------------------
     // Calibration recording
-    FingerTipVideoRecorder indexRecorder;
+    FingerTipCalibRecorder indexRecorder;
     ofPoint lastIndexVideoPos;
     ofPoint lastIndexLeapPos;
     

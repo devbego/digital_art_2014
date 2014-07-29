@@ -81,6 +81,9 @@ void testApp::setup(){
 	bPlaying    = false;
 	playingFrame = 0;
 	bEndRecording = false;
+    playing = false;
+    bUseVirtualProjector = true;
+    bUseFbo = true;
     
 	string versionDisplay = "Using openFrameworks version: " + ofToString( ofGetVersionInfo());
 	cout << versionDisplay;
@@ -89,11 +92,14 @@ void testApp::setup(){
     string basePath = ofToDataPath("", true);
     ofSetDataPathRoot("../../../../../SharedData/");
     
-    playing = false;
     lastIndexVideoPos.set(0,0,0);
     lastIndexLeapPos.set(0,0,0);
-    //loadAndPlayRecording("2014-07-28-15-53-28-121");
-                        
+    
+    loadAndPlayRecording("2014-07-28-16-49-24-400");
+    leapCameraCalibrator.setup(cameraHeight, cameraWidth);
+    leapCameraCalibrator.loadFingerTipPoints("recordings/2014-07-28-16-49-24-400/calib/fingerCalibPts.xml");
+    leapCameraCalibrator.correctCamera();
+    
     fbo.allocate(cameraHeight,cameraWidth,GL_RGB);
 }
 
@@ -110,26 +116,22 @@ void testApp::update(){
         video.setPlaying(playing);
     }
     
-    
     bool bCameraHasNewFrame = false;
     
     //------------- Recording
-   // if(!bPlaying){
-        
-        #ifdef _USE_LIBDC_GRABBER
-            if (cameraLibdc.grabVideo(currentFrameImg)) {
-                bCameraHasNewFrame = true;
-                currentFrameImg.update();
-            }
-        #else
-            cameraVidGrabber.update();
-            bCameraHasNewFrame = cameraVidGrabber.isFrameNew();
-            if (bCameraHasNewFrame){
-                currentFrameImg.setFromPixels(cameraVidGrabber.getPixels(), cameraWidth,cameraHeight, OF_IMAGE_COLOR);
-            }
-        #endif
-    //}
-        
+    #ifdef _USE_LIBDC_GRABBER
+        if (cameraLibdc.grabVideo(currentFrameImg)) {
+            bCameraHasNewFrame = true;
+            currentFrameImg.update();
+        }
+    #else
+        cameraVidGrabber.update();
+        bCameraHasNewFrame = cameraVidGrabber.isFrameNew();
+        if (bCameraHasNewFrame){
+            currentFrameImg.setFromPixels(cameraVidGrabber.getPixels(), cameraWidth,cameraHeight, OF_IMAGE_COLOR);
+        }
+    #endif
+    
     if(bRecording && !bPlaying){
         
         if(!bEndRecording && currentFrameNumber >= imageSequence.size()){
@@ -185,18 +187,26 @@ void testApp::draw(){
     drawText();
 	
     // draw leap into fbo
-	fbo.begin();
-    ofClear(0,0,0,255);
-    cam.begin();
+    if (bUseFbo){
+        fbo.begin();
+        ofClear(0,0,0,255);
+    }
+    
+    if (leapCameraCalibrator.calibrated && bUseVirtualProjector){
+        leapCameraCalibrator.projector.beginAsCamera();
+    }
+    else {
+        cam.begin();
+    }
 		
         leapVisualizer.drawGrid();
-		if(!bPlaying)leapVisualizer.drawFrame(leap);
+		if (!bPlaying)leapVisualizer.drawFrame(leap);
 	
 		if (bPlaying && !bRecording){
 			int nFrameTags = leapVisualizer.XML.getNumTags("FRAME");
 			if (nFrameTags > 0){
                 
-                playingFrame= video.getCurrentFrameID();
+                playingFrame = video.getCurrentFrameID();
                 leapVisualizer.drawFrameFromXML(playingFrame);
                 
                 if( lastIndexVideoPos.x > 0 && lastIndexVideoPos.y > 0){
@@ -206,39 +216,38 @@ void testApp::draw(){
                 
 			}
 		}
-	cam.end();
-    fbo.end();
     
-    ofSetColor(255,255,255);
-    fbo.draw(0,0);
     
+	if (leapCameraCalibrator.calibrated && bUseVirtualProjector){
+        leapCameraCalibrator.projector.endAsCamera();
+    }
+    else {
+        cam.end();
+    }
+    
+    if (bUseFbo){
+        fbo.end();
+        ofSetColor(255,255,255);
+        fbo.draw(0,0);
+    }
     
     // draw the playback video and recorded mouse position
     if(bPlaying && !bRecording){
-        if(active) {
-            if (!video.isRolledOver()){
-                // export the mesh
-                // if (HCAAMB.bCalculatedMesh){
-                //	string fileOut = ofToDataPath("", true) + "recording-kyle-ply/" + ofToString(video.getCurrentFrameID(), 3, '0') + ".ply";
-                //	HCAAMB.handMesh.save(fileOut);
-                //	printf("Output %s!\n", fileOut.c_str());
-                // }
-            }
-        } else {
-            ofPushStyle();
-            ofSetColor(255);
+        ofPushStyle();
+        ofSetColor(255);
 
-            if( lastIndexVideoPos.x > 0 && lastIndexVideoPos.y > 0){
-                ofNoFill();
-                ofEllipse(lastIndexVideoPos,10,10);
-                ofFill();
-                ofEllipse(lastIndexVideoPos,2,2);
-            }
-            
-            video.draw(480, 0);
-            ofPopStyle();
+        if( lastIndexVideoPos.x > 0 && lastIndexVideoPos.y > 0){
+            ofNoFill();
+            ofEllipse(lastIndexVideoPos,10,10);
+            ofFill();
+            ofEllipse(lastIndexVideoPos,2,2);
         }
+        
+        video.draw(480, 0);
+        ofPopStyle();
     }
+    
+    
 }
 
 //--------------------------------------------------------------
@@ -292,11 +301,10 @@ void testApp::finishRecording(){
         ofSaveImage(imageSequence[i], "recordings/"+folderName+"/camera/"+ofToString(i, 3, '0') + ".jpg");
     }
     
-    // TODO: check if dir exists
     ofDirectory dir;
-    dir.createDirectory("recordings/"+folderName+"/leap");
+    dir.open("recordings/"+folderName+"/leap");
+    if(!dir.exists())dir.createDirectory("recordings/"+folderName+"/leap");
     leapRecorder.endRecording("recordings/"+folderName+"/leap/leap.xml");
-    
     
     imageSequence.clear();
     imageSequence.resize(300);
@@ -366,6 +374,15 @@ void testApp::keyPressed(int key){
             break;
         case 'l':
             if(bPlaying) bPlaying = false;
+            break;
+        case 'g':
+            leapVisualizer.bDrawGrid = !leapVisualizer.bDrawGrid;
+            break;
+        case 'v':
+            bUseVirtualProjector = !bUseVirtualProjector;
+            break;
+        case 'F':
+            bUseFbo = !bUseFbo;
             break;
     }
     
