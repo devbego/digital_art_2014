@@ -67,9 +67,12 @@ class testApp : public ofBaseApp{
 
     bool bPlaying;
     bool bRecording;
+    bool bRecordingForCalibration;
     bool bUseVirtualProjector;
     bool bUseFbo;
     bool bInputMousePoints;
+    bool bShowCalibPoints;
+    bool bRecordThisCalibFrame;
 	int  playingFrame;
     string folderName;
 	
@@ -89,8 +92,12 @@ class testApp : public ofBaseApp{
     void finishRecording();
     void loadAndPlayRecording(string folderName);
     void calibrateFromXML( string folderName);
+    void loadPlaybackFromDialog();
+    void loadCalibrationFromDialog();
+    void loadPlaybackFromDialogForCalibration();
     
     void drawLiveForRecording();
     void drawPlayback();
+    void drawLeapWorld();
     
 };

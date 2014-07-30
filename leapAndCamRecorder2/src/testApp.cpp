@@ -78,9 +78,12 @@ void testApp::setup(){
 	playingFrame = 0;
 	bEndRecording = false;
     playing = false;
-    bUseVirtualProjector = true;
+    bUseVirtualProjector = false;
     bUseFbo = true;
     bInputMousePoints = false;
+    bShowCalibPoints = true;
+    bRecordingForCalibration = false;
+    bRecordThisCalibFrame = false;
     
 	string versionDisplay = "Using openFrameworks version: " + ofToString( ofGetVersionInfo());
 	cout << versionDisplay;
@@ -92,9 +95,9 @@ void testApp::setup(){
     lastIndexVideoPos.set(0,0,0);
     lastIndexLeapPos.set(0,0,0);
     
-    string loadFolderName = "2014-07-29-15-52-05-291";
-    loadAndPlayRecording(loadFolderName);
-    calibrateFromXML(loadFolderName);
+    //string loadFolderName = "2014-07-29-15-52-05-291";
+    //loadAndPlayRecording(loadFolderName);
+    //calibrateFromXML(loadFolderName);
 
     fbo.allocate(cameraWidth,cameraHeight,GL_RGBA);
     
@@ -144,20 +147,28 @@ void testApp::update(){
         if(!bEndRecording) {
             
             if(bCameraHasNewFrame){
-                leapRecorder.recordFrameXML(leap);
                 
-                ofPixels& target = imageSequence[currentFrameNumber];
-                memcpy (target.getPixels(),
-                        currentFrameImg.getPixels(),
-                        target.getWidth() * target.getHeight() * target.getNumChannels());
-                currentFrameNumber++;
-                // leap.markFrameAsOld();??????
+                // if in calibration record mode only record some frames
+                if( (bRecordingForCalibration && bRecordThisCalibFrame) || !bRecordingForCalibration){
+                    leapRecorder.recordFrameXML(leap);
+                    
+                    ofPixels& target = imageSequence[currentFrameNumber];
+                    memcpy (target.getPixels(),
+                            currentFrameImg.getPixels(),
+                            target.getWidth() * target.getHeight() * target.getNumChannels());
+                    currentFrameNumber++;
+                    
+                    if(bRecordingForCalibration){
+                        bRecordThisCalibFrame = false;
+                    }
+                    
+                    // leap.markFrameAsOld();??????
+                }
             }
             
         } else {
             
             finishRecording();
-            loadAndPlayRecording(folderName);
 
         }
     }
@@ -189,8 +200,9 @@ void testApp::drawLiveForRecording(){
     
     ofSetColor(ofColor::white);
     currentFrameImg.draw(cameraWidth,0);
+    drawLeapWorld();
     
-    if (bUseFbo){
+    /*if (bUseFbo){
         fbo.begin();
         ofClear(0,0,0,0);
     }
@@ -218,16 +230,40 @@ void testApp::drawLiveForRecording(){
     
     // draw fbo
     ofSetColor(255);
-    fbo.draw(0,0);
+    fbo.draw(0,0);*/
     
 }
 
 //--------------------------------------------------------------
 void testApp::drawPlayback(){
     
-    if(leapCameraCalibrator.calibrated){
+    drawLeapWorld();
+    
+    // if calibrated and want to see view from projector
+    if (leapCameraCalibrator.calibrated && bShowCalibPoints){
+        leapCameraCalibrator.drawImagePoints();
+    }
+    
+    
+    if(bPlaying && !bRecording){
+        ofPushStyle();
         ofSetColor(255);
-        video.draw(0, 0);
+        video.draw(cameraWidth, 0);
+        
+        if(bInputMousePoints){
+            indexRecorder.drawPointHistory(video.getCurrentFrameID() );
+        }
+
+        ofPopStyle();
+    }
+}
+
+void testApp::drawLeapWorld(){
+    
+    if(leapCameraCalibrator.calibrated && bUseVirtualProjector){
+        ofSetColor(255);
+        if(bPlaying )video.draw(0, 0);
+        else currentFrameImg.draw(0,0);
     }
     
     
@@ -250,13 +286,15 @@ void testApp::drawPlayback(){
     leapVisualizer.drawGrid();
     
     // draw world points
-    leapCameraCalibrator.drawWorldPoints();
+    if(leapCameraCalibrator.calibrated && bShowCalibPoints){
+        leapCameraCalibrator.drawWorldPoints();
+    }
     
     // draw leap from xml
     if (bPlaying && !bRecording){
         int nFrameTags = leapVisualizer.XML.getNumTags("FRAME");
         if (nFrameTags > 0){
-            
+            ofFill();
             playingFrame = video.getCurrentFrameID();
             leapVisualizer.drawFrameFromXML(playingFrame);
             
@@ -266,6 +304,8 @@ void testApp::drawPlayback(){
             }
             
         }
+    }else{
+        leapVisualizer.drawFrame(leap);
     }
     
     // end camera
@@ -285,46 +325,30 @@ void testApp::drawPlayback(){
     }
     
     
-    
     if (leapCameraCalibrator.calibrated) ofSetColor(255,255,255,200);
     else ofSetColor(255,255,255,255);
     
     ofPushMatrix();
+    if(bUseVirtualProjector){
         ofScale(1,-1,1);
         fbo.draw(0,-fbo.getHeight());//,fbo.getWidth()*.5,fbo.getHeight()*.5);
+    }else{
+        fbo.draw(0,0);
+    }
     ofPopMatrix();
     
-    
-    // if calibrated and want to see view from projector
-    if (leapCameraCalibrator.calibrated){
-        leapCameraCalibrator.drawImagePoints();
-    }
-    
-    
-    if(bPlaying && !bRecording){
-        ofPushStyle();
-        ofSetColor(255);
-        video.draw(cameraWidth, 0);
-        
-        if( lastIndexVideoPos.x > 0 && lastIndexVideoPos.y > 0){
-            ofNoFill();
-            ofEllipse(lastIndexVideoPos,10,10);
-            ofFill();
-            ofEllipse(lastIndexVideoPos,2,2);
-        }
-        
-    }
+
 }
 
 //--------------------------------------------------------------
 void testApp::drawText(){
 	
-	float textY = 20;
+	float textY = 500;
 	
 	ofSetColor(ofColor::white);
-	ofDrawBitmapString("Display, record & playback Leap 2.0 Controller data.", 20, textY); textY+=15;
-	ofDrawBitmapString("Built in openFrameworks by Golan Levin, golan@flong.com", 20, textY); textY+=15;
-	textY+=15;
+	//ofDrawBitmapString("Display, record & playback Leap 2.0 Controller data.", 20, textY); textY+=15;
+	//ofDrawBitmapString("Built in openFrameworks by Golan Levin, golan@flong.com", 20, textY); textY+=15;
+	//textY+=15;
 
 	ofSetColor( (leap.isConnected()) ?  ofColor::green : ofColor(255,51,51)) ;
 	ofDrawBitmapString( (leap.isConnected() ? "Leap is Connected!" : "Leap is NOT CONNECTED!"), 20, textY);
@@ -335,23 +359,83 @@ void testApp::drawText(){
 	ofDrawBitmapString("Press 's' (Space key) to flip display mode", 20, textY); textY+=15;
 	ofDrawBitmapString("Press 'c' to restore camera", 20, textY); textY+=15;
 	ofDrawBitmapString("Press 'g' to toggle grid", 20, textY); textY+=15;
+    ofDrawBitmapString("Press 'v' to toggle virtual proejctor", 20, textY); textY+=15;
+    ofDrawBitmapString("Press '1' to select recording from directory", 20, textY); textY+=15;
+    ofDrawBitmapString("Press '2' to select calibration from directory", 20, textY); textY+=15;
+    ofDrawBitmapString("Press '3' to select calibration recording from directory", 20, textY); textY+=15;
+    ofDrawBitmapString("Press 'w' to toggle calibration points draw", 20, textY); textY+=15;
+    ofDrawBitmapString("Press 'C' to load current folder's calibration", 20, textY); textY+=15;
+    ofDrawBitmapString("Press 'm' to allow mouse input points", 20, textY); textY+=15;
+    ofDrawBitmapString("Press 'left/right' to advance frame by frame", 20, textY); textY+=15;
+
+
 	textY+=15;
 	
-	if (leap.isConnected()){
-		ofDrawBitmapString("Press 'r' to toggle RECORDING", 20, textY); textY+=15;
+    textY = 500;
+    int textX = 610;
+    
+    ofDrawBitmapString("All folders must be in SharedData/recordings", textX, textY); textY+=15;
+    textY+=15;
+    
+    ofDrawBitmapString("Press 'l' to return to live mode", textX, textY); textY+=15;
+    
+    if (leap.isConnected()){
+		ofDrawBitmapString("Press 'r' to toggle RECORDING", textX, textY); textY+=15;
+        ofDrawBitmapString("Press 'R' to toggle RECORDING for CALIBRATION", textX, textY); textY+=15;
 	}
 	if (leapVisualizer.XML.getNumTags("FRAME") > 0){
-		ofDrawBitmapString("Press 'p' to toggle PLAYBACK",  20, textY); textY+=15;
+		ofDrawBitmapString("Press 'p' to pause PLAYBACK",  textX, textY); textY+=15;
 	}
 	
 	if (bPlaying){
 		ofSetColor(ofColor::green);
-		ofDrawBitmapString("PLAYING! " + ofToString(playingFrame), 20, textY);
+		ofDrawBitmapString("PLAYING! " + ofToString(playingFrame), textX, textY);
 	} else if (bRecording){
 		ofSetColor(ofColor::red);
-		ofDrawBitmapString("RECORDING! " + ofToString(leapRecorder.recordingFrameCount), 20, textY);
+		ofDrawBitmapString("RECORDING! " + ofToString(leapRecorder.recordingFrameCount), textX, textY);
 	}
 	
+}
+
+//--------------------------------------------------------------
+void testApp::loadPlaybackFromDialogForCalibration(){
+    
+    //Open the Open File Dialog
+    ofFileDialogResult openFileResult= ofSystemLoadDialog("Choose a recording folder:",true);
+    
+    if (openFileResult.bSuccess){
+        
+        string filePath = openFileResult.getName();
+        folderName = filePath;
+        loadAndPlayRecording(filePath);
+        playing = false;
+    }
+}
+
+//--------------------------------------------------------------
+void testApp::loadPlaybackFromDialog(){
+    
+    //Open the Open File Dialog
+    ofFileDialogResult openFileResult= ofSystemLoadDialog("Choose a recording folder:",true);
+    
+    if (openFileResult.bSuccess){
+        
+        string filePath = openFileResult.getName();
+        folderName = filePath;
+        loadAndPlayRecording(filePath);
+        
+    }
+}
+
+//--------------------------------------------------------------
+void testApp::loadCalibrationFromDialog(){
+    //Open the Open File Dialog
+    ofFileDialogResult openFileResult= ofSystemLoadDialog("Choose a recording folder:",true);
+    
+    if (openFileResult.bSuccess){
+        string filePath = openFileResult.getName();
+        calibrateFromXML(filePath);
+    }
 }
 
 //--------------------------------------------------------------
@@ -360,17 +444,34 @@ void testApp::finishRecording(){
     bRecording = false;
     bEndRecording = false;
     
-    int totalImage = MIN(currentFrameNumber,imageSequence.size());
-    for(int i = 0; i < totalImage; i++) {
-        if(imageSequence[i].getWidth() == 0) break;
-        //imageSequence[i].rotate90(1);
-        ofSaveImage(imageSequence[i], "recordings/"+folderName+"/camera/"+ofToString(i, 3, '0') + ".jpg");
+    ofFileDialogResult openFileResult= ofSystemSaveDialog(folderName,"Make a folder in SharedData/recordings:");
+    
+    if (openFileResult.bSuccess){
+        folderName = openFileResult.getName();
+        //string subFolder = "camera";
+        //if(bRecordingForCalibration) subFolder = "calib";
+        
+        int totalImage = MIN(currentFrameNumber,imageSequence.size());
+        for(int i = 0; i < totalImage; i++) {
+            if(imageSequence[i].getWidth() == 0) break;
+            //imageSequence[i].rotate90(1);
+            ofSaveImage(imageSequence[i], "recordings/"+folderName+"/camera/"+ofToString(i, 3, '0') + ".jpg");
+        }
+        
+        ofDirectory dir;
+        dir.open("recordings/"+folderName+"/leap");
+        if(!dir.exists())dir.createDirectory("recordings/"+folderName+"/leap");
+        leapRecorder.endRecording("recordings/"+folderName+"/leap/leap.xml");
+        
+        loadAndPlayRecording(folderName);
+
+        if(bRecordingForCalibration){
+            playing = false;
+        }
+
     }
     
-    ofDirectory dir;
-    dir.open("recordings/"+folderName+"/leap");
-    if(!dir.exists())dir.createDirectory("recordings/"+folderName+"/leap");
-    leapRecorder.endRecording("recordings/"+folderName+"/leap/leap.xml");
+    
     
     imageSequence.clear();
     imageSequence.resize(300);
@@ -411,12 +512,8 @@ void testApp::keyPressed(int key){
 
 	if (key == 'c'){
 		// Reset the camera if the user presses 'c'.
-		//cam.reset();
-	} else if ((key == 'p') || (key == 'P')){
-		
-        if(bPlaying) playing = !playing;
-    
-    } else if ((key == 'r') || (key == 'R')){
+		cam.reset();
+	} else if ((key == 'r') || (key == 'R')){
 		if (leap.isConnected()){
 			// Toggle Recording.
 			//reset so we don't store extra tags
@@ -429,14 +526,11 @@ void testApp::keyPressed(int key){
                 leapVisualizer.XML.clear();
                 bPlaying = false;
                 currentFrameNumber = 0;
-                
+                if( key == 'R') bRecordingForCalibration = true;
 			}
 
 		}
 	
-	}else if(key == 's'){
-		// When the user presses a key, flip the rendering mode.
-        leapVisualizer.bDrawSimple = !leapVisualizer.bDrawSimple;
 	}
     
     switch(key){
@@ -446,24 +540,46 @@ void testApp::keyPressed(int key){
         case OF_KEY_RIGHT:
             video.goToNext();
             break;
-        case 'l':
-            if(bPlaying) bPlaying = false;
-            break;
-        case 'g':
-            leapVisualizer.bDrawGrid = !leapVisualizer.bDrawGrid;
-            break;
-        case 'v':
-            bUseVirtualProjector = !bUseVirtualProjector;
+        case 'C':
+            calibrateFromXML(folderName);
             break;
         case 'F':
             bUseFbo = !bUseFbo;
             break;
+        case 'g':
+            leapVisualizer.bDrawGrid = !leapVisualizer.bDrawGrid;
+            break;
+        case 'l':
+            if(bPlaying) bPlaying = false;
+            break;
         case 'm':
             bInputMousePoints = !bInputMousePoints;
             break;
-        case 'C':
-            calibrateFromXML(folderName);
+        case 'p':
+            if(bPlaying) playing = !playing;
             break;
+        case 's':
+            leapVisualizer.bDrawSimple = !leapVisualizer.bDrawSimple;
+            break;
+        case 'v':
+            bUseVirtualProjector = !bUseVirtualProjector;
+            break;
+        case '1':
+            loadPlaybackFromDialog();
+            break;
+        case '2':
+            loadCalibrationFromDialog();
+            break;
+        case '3':
+            loadPlaybackFromDialogForCalibration();
+            break;
+        case 'w':
+            bShowCalibPoints = !bShowCalibPoints;
+            break;
+        case ' ':
+            if(bRecordingForCalibration) bRecordThisCalibFrame = true;
+            break;
+            
     }
     
 }

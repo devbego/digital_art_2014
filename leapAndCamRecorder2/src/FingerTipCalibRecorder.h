@@ -49,7 +49,18 @@ class FingerTipCalibRecorder{
         
         ofPoint mouseCoord = ofPoint((mouseX-xOffset),mouseY-yOffset);
         
-        if(lastFrameCount != frameCount) lastTagNumber	= XML.addTag("CALIB_READ");
+        // check if we have this frame
+        int numTags = XML.getNumTags("CALIB_READ");
+        bool bFoundTag = false;
+        for(int i = 0; i < numTags; i++){
+            int frameNum = XML.getAttribute("CALIB_READ","frame",0,i);
+            if(frameNum == frameCount){
+                lastTagNumber = i;
+                bFoundTag = true;
+            }
+        }
+    
+        if(!bFoundTag) lastTagNumber = XML.addTag("CALIB_READ");
 		
         XML.setAttribute("CALIB_READ", "frame", frameCount,lastTagNumber);
         
@@ -68,8 +79,28 @@ class FingerTipCalibRecorder{
 		}
 		XML.popTag();
 		XML.saveFile(filePath);
+        
         lastFrameCount = frameCount;
 
+    }
+    
+    
+    void drawPointHistory(int thisFrame){
+        
+        int numTags = XML.getNumTags("CALIB_READ");
+        
+        for(int i = 0; i < numTags; i++){
+            int frameNum = XML.getAttribute("CALIB_READ","frame",0,i);
+            XML.pushTag("CALIB_READ", i) ;
+            float mx = XML.getValue("MOUSE:X",0);
+            float my = XML.getValue("MOUSE:Y",0);
+            ofNoFill();
+            if(thisFrame == frameNum) ofSetColor(255,0,0);
+            else ofSetColor(255,200);
+            ofEllipse(mx+xOffset,my,10,10);
+            XML.popTag();
+            
+        }
     }
     
 };

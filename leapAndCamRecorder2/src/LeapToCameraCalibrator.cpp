@@ -58,8 +58,8 @@ void LeapToCameraCalibrator::loadFingerTipPoints(string filePath){
             float ly = XML.getValue("FINGER:Y", 0);
             float lz = XML.getValue("FINGER:Z", 0);
             
-            cout << "mouse pt " << mx << " " << my << endl;
-            cout << "finger   " << lx << " " << ly << " " << lz << endl;
+            //cout << "mouse pt " << mx << " " << my << endl;
+            //cout << "finger   " << lx << " " << ly << " " << lz << endl;
             
             calibVectorImage.push_back(ofVec2f(mx,my));
             
