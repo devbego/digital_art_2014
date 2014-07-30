@@ -33,6 +33,10 @@ class FingerTipCalibRecorder{
             dir.createDirectory(dirPath);
         
         this->filePath = dirPath+"/"+fileName;
+        
+        // load any previous points
+        XML.clear();
+        XML.loadFile(this->filePath);
     }
     
     void setDrawOffsets(int x, int y){

@@ -41,8 +41,10 @@ public:
 	void load(string directoryName) {
 		loaded = 0;
         currentFrame = 0;
+        newFrame = false;
         directory.listDir(directoryName);
-		images.resize(directory.size());
+		images.clear();
+        images.resize(directory.size());
 		loadNextAvailable();
 		texture.allocate(images[0]);
 		bRolledOver = false; 

@@ -189,6 +189,18 @@ void testApp::draw(){
         drawLiveForRecording();
     }else{
         drawPlayback();
+        
+        if(bPlaying && bInputMousePoints){
+            ofPushStyle();
+            ofNoFill();
+            ofSetColor(0,255,0);
+            ofEllipse(mouseX, mouseY-20, 16, 16);
+            ofLine(mouseX,mouseY,mouseX,mouseY-12);
+            ofLine(mouseX,mouseY-28,mouseX,mouseY-40);
+            ofLine(mouseX-8,mouseY-20,mouseX-20,mouseY-20);
+            ofLine(mouseX+8,mouseY-20,mouseX+20,mouseY-20);
+            ofPopStyle();
+        }
     }
 	
     drawText();
@@ -382,6 +394,8 @@ void testApp::drawText(){
     if (leap.isConnected()){
 		ofDrawBitmapString("Press 'r' to toggle RECORDING", textX, textY); textY+=15;
         ofDrawBitmapString("Press 'R' to toggle RECORDING for CALIBRATION", textX, textY); textY+=15;
+        ofDrawBitmapString("Press ' ' to record CALIBRATION frame", textX, textY); textY+=15;
+
 	}
 	if (leapVisualizer.XML.getNumTags("FRAME") > 0){
 		ofDrawBitmapString("Press 'p' to pause PLAYBACK",  textX, textY); textY+=15;
@@ -408,8 +422,12 @@ void testApp::loadPlaybackFromDialogForCalibration(){
         string filePath = openFileResult.getName();
         folderName = filePath;
         loadAndPlayRecording(filePath);
+        video.setPlaying(true);
+        video.update();
         playing = false;
-    }
+        folderName = filePath;
+        indexRecorder.setup("recordings/"+folderName+"/calib","fingerCalibPts.xml");
+        indexRecorder.setDrawOffsets(cameraWidth,0);    }
 }
 
 //--------------------------------------------------------------
@@ -448,8 +466,6 @@ void testApp::finishRecording(){
     
     if (openFileResult.bSuccess){
         folderName = openFileResult.getName();
-        //string subFolder = "camera";
-        //if(bRecordingForCalibration) subFolder = "calib";
         
         int totalImage = MIN(currentFrameNumber,imageSequence.size());
         for(int i = 0; i < totalImage; i++) {
@@ -527,6 +543,7 @@ void testApp::keyPressed(int key){
                 bPlaying = false;
                 currentFrameNumber = 0;
                 if( key == 'R') bRecordingForCalibration = true;
+                else bRecordingForCalibration = false;
 			}
 
 		}
@@ -569,6 +586,7 @@ void testApp::keyPressed(int key){
             break;
         case '2':
             loadCalibrationFromDialog();
+            bUseVirtualProjector = true;
             break;
         case '3':
             loadPlaybackFromDialogForCalibration();
@@ -590,6 +608,9 @@ void testApp::keyReleased(int key){
 
 //--------------------------------------------------------------
 void testApp::mouseMoved(int x, int y ){
+    
+    
+    
 }
 
 //--------------------------------------------------------------
@@ -601,8 +622,8 @@ void testApp::mousePressed(int x, int y, int button){
     
     if(bPlaying && bInputMousePoints){
         if(x > indexRecorder.xOffset && y > indexRecorder.yOffset){
-            indexRecorder.recordPosition(x, y, leapVisualizer.getIndexFingertipFromXML(video.getCurrentFrameID()),video.getCurrentFrameID());
-            lastIndexVideoPos.set(x,y);
+            indexRecorder.recordPosition(x, y-20, leapVisualizer.getIndexFingertipFromXML(video.getCurrentFrameID()),video.getCurrentFrameID());
+            lastIndexVideoPos.set(x,y-20);
             lastIndexLeapPos = leapVisualizer.getIndexFingertipFromXML(video.getCurrentFrameID());
         }
     }
