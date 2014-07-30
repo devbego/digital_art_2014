@@ -403,11 +403,17 @@ void testApp::drawText(){
 	
 	if (bPlaying){
 		ofSetColor(ofColor::green);
-		ofDrawBitmapString("PLAYING! " + ofToString(playingFrame), textX, textY);
+		ofDrawBitmapString("PLAYING! " + ofToString(playingFrame), textX, textY); textY+=15;
 	} else if (bRecording){
 		ofSetColor(ofColor::red);
-		ofDrawBitmapString("RECORDING! " + ofToString(leapRecorder.recordingFrameCount), textX, textY);
+		ofDrawBitmapString("RECORDING! " + ofToString(leapRecorder.recordingFrameCount), textX, textY); textY+=15;
 	}
+    
+    textY+=15;
+    ofSetColor(ofColor::white);
+    ofDrawBitmapString("Playback folder: "+folderName,  textX, textY); textY+=15;
+    ofDrawBitmapString("Calibration file: "+leapCameraCalibrator.dirNameLoaded,  textX, textY); textY+=15;
+
 	
 }
 

@@ -35,6 +35,8 @@ void LeapToCameraCalibrator::setup(int camWidth, int camHeight){
 	projector.setHeight(resolution.y);
     
     resetProjector();
+    
+    dirNameLoaded = "";
 }
 
 void LeapToCameraCalibrator::loadFingerTipPoints(string filePath){
@@ -43,6 +45,8 @@ void LeapToCameraCalibrator::loadFingerTipPoints(string filePath){
     
     ofxXmlSettings XML;
     if( XML.loadFile(filePath) ){
+        
+        dirNameLoaded = filePath;
         
         calibVectorImage.clear();
         calibVectorWorld.clear();
