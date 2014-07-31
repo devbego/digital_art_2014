@@ -3,7 +3,7 @@
 #include "ofMain.h"
 #include "ofxLeapMotion.h"
 #include "ofxXmlSettings.h"
-//#include "ofxCv.h"
+#include "ofxCv.h"
 #include "ofxCvMin.h"
 #include "ofxLibdc.h"
 #include "LeapFrame.h"
@@ -19,7 +19,7 @@
 	fprintf( cfile, "\t" ); // instead of 4 spaces, GOLAN fprintf( cfile, "    " );
  */
 
-
+#define _USE_CORRECTED_CAMERA
 #define _USE_LIBDC_GRABBER
 
 // uncomment this to use a libdc firewire camera standard of an OF video grabber
@@ -50,11 +50,13 @@ class testApp : public ofBaseApp{
     //------------------------------
 	// For recording the CAMERA.
 	ofxLibdc::PointGrey cameraLibdc;
-	ofVideoGrabber 		cameraVidGrabber;
-    int               cameraWidth,cameraHeight;
+	ofVideoGrabber cameraVidGrabber;
+    int cameraWidth,cameraHeight;
 	
 	ofImage currentFrameImg; // where we store the current frame we grabbed from the Camera
-	int currentFrameNumber;
+    ofImage processFrameImg; // where we store the processed frame for calibration/display
+
+    int currentFrameNumber;
 	vector<ofPixels> imageSequence;
 	
     
@@ -76,7 +78,9 @@ class testApp : public ofBaseApp{
     bool bInputMousePoints;
     bool bShowCalibPoints;
     bool bRecordThisCalibFrame;
-    bool bUseUndistort;
+    bool bUseCorrectedCamera;
+    bool bShowLargeCamImageOnTop;
+    
 	int  playingFrame;
     string folderName;
 	
@@ -95,6 +99,10 @@ class testApp : public ofBaseApp{
     ofPoint lastIndexLeapPos;
     
     //------------------------------
+    // get camera calibration pre-calculated
+    ofxCv::Calibration myCalibration;
+
+    //------------------------------
     void finishRecording();
     void loadAndPlayRecording(string folderName);
     void calibrateFromXML( string folderName);
@@ -105,5 +113,7 @@ class testApp : public ofBaseApp{
     void drawLiveForRecording();
     void drawPlayback();
     void drawLeapWorld();
+    
+    bool useCorrectedCam();
     
 };

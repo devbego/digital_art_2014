@@ -39,15 +39,15 @@ void testApp::setup(){
 
     cameraLibdc.setImageType(OF_IMAGE_COLOR);
     cameraLibdc.setSize (cameraWidth, cameraHeight);
+    //cameraLibdc.setBayerMode(DC1394_COLOR_FILTER_GRBG); // check this, why grayscale???
+
     cameraLibdc.setup();
-	//cameraLibdc.setBayerMode(DC1394_COLOR_FILTER_GRBG); // check this, why grayscale???
-	cameraLibdc.setBlocking(true);
+	//cameraLibdc.setBlocking(true);
     cameraLibdc.setShutterAbs(1. / 31.0);
-	//cameraLibdc.setExposure(1.0);
-	//cameraLibdc.setBrightness(0);
-	//cameraLibdc.setGain(0);
-	//cameraLibdc.setExposure(1.0);
-	//cameraLibdc.setGammaAbs(1);
+	cameraLibdc.setExposure(1.0);
+	cameraLibdc.setBrightness(0);
+	cameraLibdc.setGain(0);
+	cameraLibdc.setGammaAbs(1);
     
 #else
 	cameraVidGrabber.setVerbose(true);
@@ -60,10 +60,50 @@ void testApp::setup(){
 	imageSequence.resize(500);
 
     currentFrameImg.allocate(cameraWidth, cameraHeight, OF_IMAGE_COLOR);
+    processFrameImg.allocate(cameraWidth, cameraHeight, OF_IMAGE_COLOR);
+    
 	for(int i = 0; i < imageSequence.size(); i++) {
 		imageSequence[i].allocate(cameraWidth,cameraHeight, OF_IMAGE_COLOR);
 	}
 	
+#ifdef _USE_CORRECTED_CAMERA
+    ofxCv::FileStorage settings (ofToDataPath("settingsForCameraCalibrator.yml"), ofxCv::FileStorage::READ);
+	if(settings.isOpened()) {
+        
+        //cameraW = settings["cameraW"];
+        //cameraH = settings["cameraH"];
+       // minTimeBetweenSnapshots = (float) settings["minTimeBetweenSnapshots"];
+       // motionThreshold = (float) settings["motionThreshold"];
+        //maxSamples = settings["maxSamples"];
+		
+        int patternXCount = settings["patternXCount"];
+        int patternYCount = settings["patternYCount"];
+        myCalibration.setPatternSize(patternXCount, patternYCount);
+        float squareSize = settings["squareSize"];
+        myCalibration.setSquareSize(squareSize);
+		
+        ofxCv::CalibrationPattern patternType = ofxCv::CHESSBOARD;
+        switch(settings["patternType"]) {
+            default:
+            case 0: patternType = ofxCv::CHESSBOARD; break;
+            case 1: patternType = ofxCv::CIRCLES_GRID; break;
+            case 2: patternType = ofxCv::ASYMMETRIC_CIRCLES_GRID; break;
+        }
+        myCalibration.setPatternType(patternType);
+		
+	}
+    
+    ofxCv::FileStorage prevCalibrationFile (ofToDataPath("calibration.yml"), ofxCv::FileStorage::READ);
+    if (prevCalibrationFile.isOpened()){
+        prevCalibrationFile.release();
+        myCalibration.load("calibration.yml");
+        myCalibration.calibrate();
+        if (myCalibration.isReady()){
+            cout << "calibration ready" << endl;
+        }
+    }
+#endif
+    
     // Setup leap
 	leap.open();
 	cam.setOrientation(ofPoint(-55, 0, 0));
@@ -81,7 +121,8 @@ void testApp::setup(){
     bShowCalibPoints = true;
     bRecordingForCalibration = false;
     bRecordThisCalibFrame = false;
-    bUseUndistort = true;
+    bUseCorrectedCamera = true;
+    bShowLargeCamImageOnTop = false;
     folderName = ofGetTimestampString();
     lastIndexVideoPos.set(0,0,0);
     lastIndexLeapPos.set(0,0,0);
@@ -138,6 +179,17 @@ void testApp::update(){
         }
     #endif
     
+    
+    if(useCorrectedCam()){
+        if (myCalibration.size() > 0) {
+            myCalibration.undistort(ofxCv::toCv(currentFrameImg), ofxCv::toCv(processFrameImg));
+            processFrameImg.update();
+        }
+    }else{
+        processFrameImg = currentFrameImg;
+        processFrameImg.update();
+    }
+    
     if(bRecording && !bPlaying){
         
         if(!bEndRecording && currentFrameNumber >= imageSequence.size()){
@@ -154,7 +206,7 @@ void testApp::update(){
                     
                     ofPixels& target = imageSequence[currentFrameNumber];
                     memcpy (target.getPixels(),
-                            currentFrameImg.getPixels(),
+                            processFrameImg.getPixels(),
                             target.getWidth() * target.getHeight() * target.getNumChannels());
                    
                     currentFrameNumber++;
@@ -205,7 +257,12 @@ void testApp::draw(){
         }
     }
 	
-    drawText();
+    // drawText();
+    
+    if(bShowLargeCamImageOnTop){
+        ofSetColor(255);
+        processFrameImg.draw(0,0,1024,768);
+    }
 
 }
 
@@ -215,9 +272,9 @@ void testApp::drawLiveForRecording(){
     // darw live image
     ofSetColor(ofColor::white);
 #ifdef _USE_LIBDC_GRABBER
-    currentFrameImg.draw(drawW,0,drawW,drawH);
+    processFrameImg.draw(drawW,0,drawW,drawH);
 #else
-    currentFrameImg.draw(drawW,0,drawW,drawH);
+    processFrameImg.draw(drawW,0,drawW,drawH);
 #endif
             
     
@@ -262,9 +319,9 @@ void testApp::drawLeapWorld(){
             video.draw(0, 0, drawW,drawH);
         }else{
             #ifdef _USE_LIBDC_GRABBER
-                currentFrameImg.draw(0,0,drawW,drawH);
+                processFrameImg.draw(0,0,drawW,drawH);
             #else
-                currentFrameImg.draw(0,0,drawW,drawH);
+                processFrameImg.draw(0,0,drawW,drawH);
             #endif
         }
     }
@@ -520,8 +577,24 @@ void testApp::calibrateFromXML( string calibFolderName ){
     
     leapCameraCalibrator.setup(cameraWidth, cameraHeight);
     leapCameraCalibrator.loadFingerTipPoints("recordings/"+calibFolderName+"/calib/fingerCalibPts.xml");
-    leapCameraCalibrator.correctCamera();
     
+    if(useCorrectedCam()){
+        leapCameraCalibrator.correctCameraPNP(myCalibration);
+    }else{
+        leapCameraCalibrator.correctCamera();
+
+    }
+}
+
+bool testApp::useCorrectedCam(){
+
+#ifdef _USE_CORRECTED_CAMERA
+    if(bUseCorrectedCamera) return true;
+    else return false;
+#else
+    return false;
+#endif
+
 }
 
 //--------------------------------------------------------------
@@ -599,7 +672,13 @@ void testApp::keyPressed(int key){
             if(bRecordingForCalibration) bRecordThisCalibFrame = true;
             break;
         case 'u':
-            bUseUndistort = !bUseUndistort;
+            bUseCorrectedCamera = !bUseCorrectedCamera;
+            break;
+        case '0':
+            bShowLargeCamImageOnTop = !bShowLargeCamImageOnTop;
+            break;
+        case 'f':
+            ofToggleFullscreen();
             break;
             
     }

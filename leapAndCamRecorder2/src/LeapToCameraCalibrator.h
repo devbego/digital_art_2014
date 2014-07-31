@@ -11,6 +11,7 @@
 #include "ofMain.h"
 #include "ofxRay.h"
 #include "ofxCvMin.h"
+#include "ofxCv.h"
 
 class LeapToCameraCalibrator{
     
@@ -21,6 +22,7 @@ class LeapToCameraCalibrator{
     
     void resetProjector();
     void correctCamera();
+    void correctCameraPNP(ofxCv::Calibration & myCalibration);
     void setIntrinsics(cv::Mat cameraMatrix);
     void setExtrinsics(cv::Mat rotation, cv::Mat translation);
     
@@ -49,7 +51,6 @@ class LeapToCameraCalibrator{
     ofProjector projector;
     string dirNameLoaded;
     
-    // flags
-
+    
 
 };

@@ -37,6 +37,9 @@ void LeapToCameraCalibrator::setup(int camWidth, int camHeight){
     resetProjector();
     
     dirNameLoaded = "";
+    
+    
+
 }
 
 void LeapToCameraCalibrator::loadFingerTipPoints(string filePath){
@@ -87,6 +90,54 @@ void LeapToCameraCalibrator::loadFingerTipPoints(string filePath){
     
 }
 
+void LeapToCameraCalibrator::correctCameraPNP(ofxCv::Calibration & myCalibration){
+    
+    vector<cv::Point2f> imagePoints;
+	vector<cv::Point3f> worldPoints;
+    
+	if( hasFingerCalibPoints ){
+		for(int i = 0; i < calibVectorImage.size(); i++){
+			imagePoints.push_back(ofxCvMin::toCv(calibVectorImage[i]));
+			worldPoints.push_back(ofxCvMin::toCv(calibVectorWorld[i]));
+		}
+	}
+	else{
+		cout << "not enough control points" << endl;
+		return;
+	}
+    
+    cout << "myCalibration.getDistCoeffs() " << myCalibration.getDistCoeffs() << endl;
+    cout << "myCalibration.getUndistortedIntrinsics().getCameraMatrix() " << myCalibration.getUndistortedIntrinsics().getCameraMatrix() << endl;
+    
+    cv::Mat rvec(3,1,cv::DataType<double>::type);
+    cv::Mat tvec(3,1,cv::DataType<double>::type);
+
+    cv::solvePnP(worldPoints,imagePoints,
+     myCalibration.getUndistortedIntrinsics().getCameraMatrix(), myCalibration.getDistCoeffs(),
+     rvec, tvec, false );
+  
+    
+//     solvePnP( InputArray objectPoints, InputArray imagePoints,
+//     InputArray cameraMatrix, InputArray distCoeffs,
+//     OutputArray rvec, OutputArray tvec,
+//     bool useExtrinsicGuess=false );
+     
+    
+    
+    calibrated = true;
+    
+	setExtrinsics(rvec, tvec);
+	setIntrinsics(myCalibration.getUndistortedIntrinsics().getCameraMatrix());
+    
+	this->camera = myCalibration.getUndistortedIntrinsics().getCameraMatrix();
+	
+    cv::Mat distortionCoefficients = cv::Mat::zeros(5, 1, CV_64F);
+    this->distortion = distortionCoefficients;
+	
+    this->rotation = rvec;
+	this->translation = tvec;
+ 
+}
 
 void LeapToCameraCalibrator::correctCamera(){
 
@@ -118,12 +169,8 @@ void LeapToCameraCalibrator::correctCamera(){
     
 	vector<cv::Mat> rotations, translations;
     
-	int flags = CV_CALIB_FIX_K1 | CV_CALIB_FIX_K2 | CV_CALIB_FIX_K3 | CV_CALIB_FIX_K4 | CV_CALIB_FIX_K5 | CV_CALIB_FIX_K6 |
-    CV_CALIB_ZERO_TANGENT_DIST | CV_CALIB_USE_INTRINSIC_GUESS;
+	int flags = CV_CALIB_FIX_K1 | CV_CALIB_FIX_K2 | CV_CALIB_FIX_K3 | CV_CALIB_FIX_K4 | CV_CALIB_FIX_K5 | CV_CALIB_FIX_K6 |CV_CALIB_ZERO_TANGENT_DIST | CV_CALIB_USE_INTRINSIC_GUESS;
 
-    //if (this->fixAspectRatio) {
-    //    flags |= CV_CALIB_FIX_ASPECT_RATIO;
-	//}
     
 	float error = cv::calibrateCamera(vector<vector<cv::Point3f> >(1, worldPoints),
                                 vector<vector<cv::Point2f> >(1, imagePoints),
@@ -135,7 +182,9 @@ void LeapToCameraCalibrator::correctCamera(){
                                 flags);
     
     cout << " cameraMatrix " << cameraMatrix << endl;
-
+    
+   
+        
 	calibrated = true;
 
 	setExtrinsics(rotations[0], translations[0]);
