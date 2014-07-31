@@ -16,16 +16,20 @@ class FingerTipCalibRecorder{
     public:
     
     int xOffset, yOffset;
+    float scaleX,scaleY;
     int lastTagNumber;
     int lastFrameCount;
     string filePath;
     ofxXmlSettings XML;
     
     void setup(string dirPath, string fileName){
+        
         lastTagNumber = 0;
         lastFrameCount = -1;
         xOffset = 0;
         yOffset = 0;
+        scaleX = 1;
+        scaleY = 1;
         
         ofDirectory dir;
         dir.open(dirPath);
@@ -36,22 +40,29 @@ class FingerTipCalibRecorder{
         
         // load any previous points
         XML.clear();
-        XML.loadFile(this->filePath);
+        if(XML.loadFile(this->filePath)){
+        }else{
+            cout << "no find file at " << this->filePath << endl;
+        };
     }
     
-    void setDrawOffsets(int x, int y){
+    void setDrawOffsets(int x, int y,float scaleX=1,float scaleY=1){
         xOffset = x;
         yOffset = y;
+        this->scaleX = scaleX;
+        this->scaleY = scaleY;
     }
     
-    void recordPosition(float mouseX, float mouseY, ofPoint fingerCoord, int frameCount=0){
+    void recordPosition(float x, float y, ofPoint fingerCoord, int frameCount=0){
+        
         
         if (fingerCoord == ofVec3f(-1.0f,-1.0f,-1.0f)){
 			cout << "NOTHING RECORDED" << endl;
 			return;
 		}
         
-        ofPoint mouseCoord = ofPoint((mouseX-xOffset),mouseY-yOffset);
+        ofPoint mouseCoord = ofPoint((x-xOffset)*scaleX,(y-yOffset)*scaleY);
+        cout << "record position " << mouseCoord.x << " , " << mouseCoord.y << endl;
         
         // check if we have this frame
         int numTags = XML.getNumTags("CALIB_READ");
@@ -101,7 +112,7 @@ class FingerTipCalibRecorder{
             ofNoFill();
             if(thisFrame == frameNum) ofSetColor(255,0,0);
             else ofSetColor(255,200);
-            ofEllipse(mx+xOffset,my,10,10);
+            ofEllipse((mx/scaleX+xOffset),(my/scaleY+yOffset),10,10);
             XML.popTag();
             
         }

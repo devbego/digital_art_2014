@@ -29,7 +29,7 @@ void LeapToCameraCalibrator::setup(int camWidth, int camHeight){
     throwRatio = 1.62f;
 	lensOffset = ofVec2f(0.0f,0.5f);
     
-    projector.setDefaultFar(10000.0f);
+    projector.setDefaultFar(100000.0f);
 	projector.setDefaultNear(50.0f);
 	projector.setWidth(resolution.x);
 	projector.setHeight(resolution.y);
@@ -40,6 +40,8 @@ void LeapToCameraCalibrator::setup(int camWidth, int camHeight){
 }
 
 void LeapToCameraCalibrator::loadFingerTipPoints(string filePath){
+    
+    cout << "calibrate from " << filePath << endl;
     
     hasFingerCalibPoints = false;
     
@@ -95,8 +97,8 @@ void LeapToCameraCalibrator::correctCamera(){
     
 	if( hasFingerCalibPoints ){
 		for(int i = 0; i < calibVectorImage.size(); i++){
-			imagePoints.push_back(ofxCv::toCv(calibVectorImage[i]));
-			worldPoints.push_back(ofxCv::toCv(calibVectorWorld[i]));
+			imagePoints.push_back(ofxCvMin::toCv(calibVectorImage[i]));
+			worldPoints.push_back(ofxCvMin::toCv(calibVectorWorld[i]));
 		}
 	}
 	else{
@@ -159,14 +161,14 @@ void LeapToCameraCalibrator::setIntrinsics(cv::Mat cameraMatrix)
 	lensOffsetX = (ppx /  resolution.x) - 0.5f; // not sure if this is + or -ve (if wrong, then both this and ofxCvMin::Helpers::makeProjectionMatrix should be switched
 	lensOffsetY = (ppy /  resolution.y) - 0.5f;
     
-	const auto newProjection = ofxCv::makeProjectionMatrix(cameraMatrix, cv::Size(resolution.x, resolution.y) );
+	const auto newProjection = ofxCvMin::makeProjectionMatrix(cameraMatrix, cv::Size(resolution.x, resolution.y) );
 	projector.setProjection(newProjection);
 }
 
 //----------
 void LeapToCameraCalibrator::setExtrinsics(cv::Mat rotation, cv::Mat translation)
 {
-	const auto rotationMatrix = ofxCv::makeMatrix(rotation, cv::Mat::zeros(3, 1, CV_64F));
+	const auto rotationMatrix = ofxCvMin::makeMatrix(rotation, cv::Mat::zeros(3, 1, CV_64F));
 	const auto rotationEuler = rotationMatrix.getRotate().getEuler();
     
 	translationX = translation.at<double>(0);
@@ -177,7 +179,7 @@ void LeapToCameraCalibrator::setExtrinsics(cv::Mat rotation, cv::Mat translation
 	rotationY = rotationEuler.y;
 	rotationZ = rotationEuler.z;
     
-	projector.setView(ofxCv::makeMatrix(rotation, translation));
+	projector.setView(ofxCvMin::makeMatrix(rotation, translation));
 }
 
 
@@ -223,7 +225,7 @@ void LeapToCameraCalibrator::drawImagePoints(){
 	vector<cv::Point2f> evaluatedImagePoints(count);
     
 	if (this->calibrated) {
-		cv::projectPoints(ofxCv::toCv(this->calibVectorWorld), this->rotation, this->translation, this->camera, this->distortion, evaluatedImagePoints);
+		cv::projectPoints(ofxCvMin::toCv(this->calibVectorWorld), this->rotation, this->translation, this->camera, this->distortion, evaluatedImagePoints);
 	}
     
 	ofPushMatrix();
@@ -232,7 +234,7 @@ void LeapToCameraCalibrator::drawImagePoints(){
         ofDrawSphere(calibVectorImage[i], 5.0f);
         
         if (this->calibrated) {
-            ofLine(calibVectorImage[i], ofxCv::toOf(evaluatedImagePoints[i]));
+            ofLine(calibVectorImage[i], ofxCvMin::toOf(evaluatedImagePoints[i]));
         }
     }
 	ofPopMatrix();

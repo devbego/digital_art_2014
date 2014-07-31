@@ -48,5 +48,8 @@ class LeapToCameraCalibrator{
     cv::Mat rotation, translation;
     ofProjector projector;
     string dirNameLoaded;
+    
+    // flags
+
 
 };

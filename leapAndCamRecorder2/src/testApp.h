@@ -4,6 +4,7 @@
 #include "ofxLeapMotion.h"
 #include "ofxXmlSettings.h"
 //#include "ofxCv.h"
+#include "ofxCvMin.h"
 #include "ofxLibdc.h"
 #include "LeapFrame.h"
 #include "BufferedVideo.h"
@@ -11,6 +12,7 @@
 #include "LeapVisualizer.h"
 #include "FingerTipCalibRecorder.h"
 #include "LeapToCameraCalibrator.h"
+
 /* 
  Made some sanity changes in ofxXmlSettings:
 	const float floatPrecision = 4; // changed by GL
@@ -19,6 +21,7 @@
 
 
 #define _USE_LIBDC_GRABBER
+
 // uncomment this to use a libdc firewire camera standard of an OF video grabber
 
 
@@ -48,7 +51,7 @@ class testApp : public ofBaseApp{
 	// For recording the CAMERA.
 	ofxLibdc::PointGrey cameraLibdc;
 	ofVideoGrabber 		cameraVidGrabber;
-    float               cameraWidth,cameraHeight;
+    int               cameraWidth,cameraHeight;
 	
 	ofImage currentFrameImg; // where we store the current frame we grabbed from the Camera
 	int currentFrameNumber;
@@ -73,9 +76,12 @@ class testApp : public ofBaseApp{
     bool bInputMousePoints;
     bool bShowCalibPoints;
     bool bRecordThisCalibFrame;
+    bool bUseUndistort;
 	int  playingFrame;
     string folderName;
 	
+    float drawW, drawH;
+    
     //------------------------------
     // Video buffer playback
     BufferedVideo video;
@@ -88,7 +94,7 @@ class testApp : public ofBaseApp{
     ofPoint lastIndexVideoPos;
     ofPoint lastIndexLeapPos;
     
-    
+    //------------------------------
     void finishRecording();
     void loadAndPlayRecording(string folderName);
     void calibrateFromXML( string folderName);
