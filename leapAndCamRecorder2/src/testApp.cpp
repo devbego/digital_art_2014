@@ -257,7 +257,7 @@ void testApp::draw(){
         }
     }
 	
-    // drawText();
+     drawText();
     
     if(bShowLargeCamImageOnTop){
         ofSetColor(255);
