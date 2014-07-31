@@ -257,7 +257,9 @@ void testApp::draw(){
         }
     }
 	
-     drawText();
+    if(bShowText){
+       drawText();
+    }
     
     if(bShowLargeCamImageOnTop){
         ofSetColor(255);
@@ -679,6 +681,18 @@ void testApp::keyPressed(int key){
             break;
         case 'f':
             ofToggleFullscreen();
+            break;
+        case '9':
+            if(drawW == 640){
+                drawW = 1024;
+                drawH = 768;
+                bShowText = false;
+                
+            }else{
+                drawW = 640;
+                drawH = 480;
+                bShowText = true;
+            }
             break;
             
     }

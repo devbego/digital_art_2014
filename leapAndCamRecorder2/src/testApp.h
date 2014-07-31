@@ -80,6 +80,7 @@ class testApp : public ofBaseApp{
     bool bRecordThisCalibFrame;
     bool bUseCorrectedCamera;
     bool bShowLargeCamImageOnTop;
+    bool bShowText;
     
 	int  playingFrame;
     string folderName;
