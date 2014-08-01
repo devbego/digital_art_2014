@@ -11,7 +11,9 @@ void ofApp::setup(){
 	
 	//------------------------
 	// Load the video; obtain its dimensions.
-	video.load("recordings/recording-kyle-01/camera/");
+	// video.load("recordings/recording-kyle-01/camera/");
+	video.load("recordings/play_chris_corrected_4/camera/");
+	
 	ofPixels& pixels0 = video.getFrame(0);
 	imgW = pixels0.getWidth();
 	imgH = pixels0.getHeight();
@@ -35,10 +37,7 @@ void ofApp::setup(){
 	
 	thresholder = new tmVisThresholderC1 (imgW, imgH);
 	
-	//------------------------
-	// Load the mask image; compute the maskROI and other info.
-	maskImage.loadImage("recordings/recording-kyle-01/mask.png");
-	computeMaskResources();
+
 	
 	
 	//------------------------
@@ -47,10 +46,16 @@ void ofApp::setup(){
 	bUseRedChannelForLuminance	= true;
 	bApplyMedianToLuminance		= false;
 	bComputeUnsharpedLuminance  = true;
-	bUseROIForFilters			= true;
+	bUseROIForFilters			= true;  // clobbered to false if !bUseMaskImage
 	bDoAdaptiveThresholding		= true;
 	bDoMorphologicalOps			= true;
 	bDoLaplacianEdgeDetect		= true;
+	bUseMaskImage				= false;
+	
+	//------------------------
+	// Load the mask image; compute the maskROI and other info.
+	computeMaskResources();
+	
 	
 	//------------------------
 	blurKernelSize				= 4.0;
@@ -99,6 +104,7 @@ void ofApp::setupGui() {
 	gui->addIntSlider ("edgeContourMinArea", 1, 1000, &edgeContourMinArea);
 	gui->addSlider("laplaceDelta",	0,255, &laplaceDelta);
 	gui->addSlider("laplaceSensitivity",0.0, 0.1, &laplaceSensitivity) ;
+	gui->addSlider("maxContourArea",  0.01, 0.50, &maxAllowableContourAreaAsAPercentOfImageSize);
 	
 	gui->addSpacer();
 	gui->addLabelToggle("bUseROIForFilters",			&bUseROIForFilters);
@@ -280,7 +286,9 @@ void ofApp::computeUnsharpedLuminanceImage(){
 void ofApp::applyMaskToLuminanceImage(){
 	// Clobber the luminance image with the "Mask" image,
 	// which excludes everything except a relevant-area region.
-	bitwise_and(maskMat, grayMat, grayMat);
+	if (bUseMaskImage){
+		bitwise_and(maskMat, grayMat, grayMat);
+	}
 }
 
 //--------------------------------------------------------------
@@ -392,65 +400,77 @@ void ofApp::computeMaskResources(){
 	// It also calculates the maskROI, which is used to optimize calculations.
 	// We can speed up many calculations if we only compute in a ROI.
 	
-	// Init default (guessed) values.
-	bLoadedMaskImage = false;
-	maskROI = cv::Rect (0,0, 768,1024);
-	maskROIQuarter = cv::Rect (0,0, 768/4,1024/4);
+	if (!bUseMaskImage){
+		bLoadedMaskImage = false;
+		bUseROIForFilters = false;
+		maskROI = cv::Rect (0,0, imgW,imgH);
 	
-	// Checking if the mask image is loaded,
-	if (maskImage.isAllocated()){
-		bLoadedMaskImage = true;
-		maskMat = toCv(maskImage);
+	}
+	
+	else if (bUseMaskImage){
+		maskImage.loadImage("recordings/recording-kyle-01/mask.png");
 		
-		// Fetch mask dimensions
-		int maskW = maskImage.getWidth();
-		int maskH = maskImage.getHeight();
-		int maskBpp = maskImage.bpp;
+		// Init default (guessed) values.
+		bLoadedMaskImage = false;
+		maskROI = cv::Rect (0,0, imgW,imgH);
+		// maskROIQuarter = cv::Rect (0,0, imgW/4, imgH/4);
 		
-		// Make absolutely certain that mask is grayscale.
-		if (maskBpp > 8){
-			Mat maskMatTmp = toCv(maskImage);
-			convertColor(maskMatTmp, maskMat, CV_RGB2GRAY);
-		}
-		
-		// Initialize variables for Roi search.
-		int maskRoiL = maskW;
-		int maskRoiR = 0;
-		int maskRoiT = maskH;
-		int maskRoiB = 0;
-		
-		// Search through the array, seeking the boundaries of the ROI.
-		// Assume the mask is a white trapezoid on a black background.
-		unsigned char* maskChars = maskMat.ptr();
-		int maskThreshold = 127;
-		for (int y=0; y<maskH; y++){
-			for (int x=0; x<maskW; x++){
-				int index = (y*maskW + x);
-				unsigned char val = maskChars[index];
-				if (val > maskThreshold){
-					if (x < maskRoiL){ maskRoiL = x; }
-					if (x > maskRoiR){ maskRoiR = x; }
-					if (y < maskRoiT){ maskRoiT = y; }
-					if (y > maskRoiB){ maskRoiB = y; }
+		// Checking if the mask image is loaded,
+		if (maskImage.isAllocated()){
+			bLoadedMaskImage = true;
+			maskMat = toCv(maskImage);
+			
+			// Fetch mask dimensions
+			int maskW = maskImage.getWidth();
+			int maskH = maskImage.getHeight();
+			int maskBpp = maskImage.bpp;
+			
+			// Make absolutely certain that mask is grayscale.
+			if (maskBpp > 8){
+				Mat maskMatTmp = toCv(maskImage);
+				convertColor(maskMatTmp, maskMat, CV_RGB2GRAY);
+			}
+			
+			// Initialize variables for Roi search.
+			int maskRoiL = maskW;
+			int maskRoiR = 0;
+			int maskRoiT = maskH;
+			int maskRoiB = 0;
+			
+			// Search through the array, seeking the boundaries of the ROI.
+			// Assume the mask is a white trapezoid on a black background.
+			unsigned char* maskChars = maskMat.ptr();
+			int maskThreshold = 127;
+			for (int y=0; y<maskH; y++){
+				for (int x=0; x<maskW; x++){
+					int index = (y*maskW + x);
+					unsigned char val = maskChars[index];
+					if (val > maskThreshold){
+						if (x < maskRoiL){ maskRoiL = x; }
+						if (x > maskRoiR){ maskRoiR = x; }
+						if (y < maskRoiT){ maskRoiT = y; }
+						if (y > maskRoiB){ maskRoiB = y; }
+					}
 				}
 			}
-		}
-		
-		// If the calculated dimensions are kosher, use them.
-		// Otherwise, set the ROI to the entire image size.
-		if ((maskRoiL < maskRoiR) && (maskRoiT < maskRoiB)){
-			int maskRoiW = maskRoiR - maskRoiL;
-			int maskRoiH = maskRoiB - maskRoiT;
-			maskROI = cv::Rect (maskRoiL, maskRoiT, maskRoiW, maskRoiH);
-			maskROIQuarter = cv::Rect (maskRoiL/4, maskRoiT/4, maskRoiW/4, maskRoiH/4);
-		} else {
-			maskROI = cv::Rect (0,0, maskW, maskH);
-			maskROIQuarter = cv::Rect (0,0, maskW/4, maskH/4);
-		}
-		
-		
+			
+			// If the calculated dimensions are kosher, use them.
+			// Otherwise, set the ROI to the entire image size.
+			if ((maskRoiL < maskRoiR) && (maskRoiT < maskRoiB)){
+				int maskRoiW = maskRoiR - maskRoiL;
+				int maskRoiH = maskRoiB - maskRoiT;
+				maskROI = cv::Rect (maskRoiL, maskRoiT, maskRoiW, maskRoiH);
+				// maskROIQuarter = cv::Rect (maskRoiL/4, maskRoiT/4, maskRoiW/4, maskRoiH/4);
+			} else {
+				maskROI = cv::Rect (0,0, maskW, maskH);
+				// maskROIQuarter = cv::Rect (0,0, maskW/4, maskH/4);
+			}
+			
+			
 
+		}
 	}
+	
 }
 
 //--------------------------------------------------------------
@@ -524,8 +544,10 @@ void ofApp::draw(){
 	ofNoFill();
 	ofSetColor(255,255,255, 128);
 	ofRect (0,0, imgW, imgH);
-	ofSetColor(255,255,0, 128);
-	ofRect (maskROI.x, maskROI.y, maskROI.width, maskROI.height);
+	if (bUseMaskImage){
+		ofSetColor(255,255,0, 128);
+		ofRect (maskROI.x, maskROI.y, maskROI.width, maskROI.height);
+	}
 	
 	
 	thresholder->renderHistogram(imgW+20, 10, 512, 200, false);

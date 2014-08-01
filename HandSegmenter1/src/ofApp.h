@@ -112,6 +112,7 @@ class ofApp : public ofBaseApp{
 	ofPolyline	handContourPolyline;
 	cv::Point2f	handContourCentroid;
 	
+	bool bUseMaskImage;
 	bool bDoAdaptiveThresholding;
 	bool bDoLaplacianEdgeDetect;
 	bool bDoCannyEdgeDetect;
