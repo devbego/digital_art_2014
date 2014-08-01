@@ -70,12 +70,6 @@ void testApp::setup(){
     ofxCv::FileStorage settings (ofToDataPath("settingsForCameraCalibrator.yml"), ofxCv::FileStorage::READ);
 	if(settings.isOpened()) {
         
-        //cameraW = settings["cameraW"];
-        //cameraH = settings["cameraH"];
-       // minTimeBetweenSnapshots = (float) settings["minTimeBetweenSnapshots"];
-       // motionThreshold = (float) settings["motionThreshold"];
-        //maxSamples = settings["maxSamples"];
-		
         int patternXCount = settings["patternXCount"];
         int patternYCount = settings["patternYCount"];
         myCalibration.setPatternSize(patternXCount, patternYCount);
@@ -123,6 +117,8 @@ void testApp::setup(){
     bRecordThisCalibFrame = false;
     bUseCorrectedCamera = true;
     bShowLargeCamImageOnTop = false;
+    bShowText = true;
+    
     folderName = ofGetTimestampString();
     lastIndexVideoPos.set(0,0,0);
     lastIndexLeapPos.set(0,0,0);
