@@ -23,7 +23,7 @@ cp -f ../../../addons/ofxLeapMotion/libs/lib/osx/libLeap.dylib "$TARGET_BUILD_DI
 //--------------------------------------------------------------
 void testApp::setup(){
     
-    // all data will be in SharedData
+    // All data will be in SharedData
     string basePath = ofToDataPath("", true);
     ofSetDataPathRoot("../../../../../SharedData/");
     
@@ -32,29 +32,34 @@ void testApp::setup(){
 	drawW = 640;
     drawH = 480;
     
-#ifdef _USE_LIBDC_GRABBER
+    
+    //--------------- Setup camera grabber
+    #ifdef _USE_LIBDC_GRABBER
 	
     // For the ofxLibdc::PointGrey cameraLibdc;
 	cout << "libdc cameras found: " << cameraLibdc.getCameraCount() << endl;
 
     cameraLibdc.setImageType(OF_IMAGE_COLOR);
     cameraLibdc.setSize (cameraWidth, cameraHeight);
-    //cameraLibdc.setBayerMode(DC1394_COLOR_FILTER_GRBG); // check this, why grayscale???
+    //cameraLibdc.setBayerMode(DC1394_COLOR_FILTER_GRBG); // why turns video grayscale???
 
     cameraLibdc.setup();
-	//cameraLibdc.setBlocking(true);
     cameraLibdc.setShutterAbs(1. / 31.0);
 	cameraLibdc.setExposure(1.0);
 	cameraLibdc.setBrightness(0);
 	cameraLibdc.setGain(0);
 	cameraLibdc.setGammaAbs(1);
-    
-#else
+    //cameraLibdc.setBlocking(true);
+
+    #else
 	cameraVidGrabber.setVerbose(true);
 	cameraVidGrabber.initGrabber(cameraWidth,cameraHeight);
-#endif
+    #endif
+
 	
-	// Setup video saver
+    
+    
+	//--------------- Setup video saver
 	bRecording = false;
 	currentFrameNumber = 0;
 	imageSequence.resize(500);
@@ -66,10 +71,13 @@ void testApp::setup(){
 		imageSequence[i].allocate(cameraWidth,cameraHeight, OF_IMAGE_COLOR);
 	}
 	
-#ifdef _USE_CORRECTED_CAMERA
+    
+    //--------------- Set up corrected camera calibration
+    #ifdef _USE_CORRECTED_CAMERA
     ofxCv::FileStorage settings (ofToDataPath("settingsForCameraCalibrator.yml"), ofxCv::FileStorage::READ);
 	if(settings.isOpened()) {
         
+        // needed if not calibrating??
         int patternXCount = settings["patternXCount"];
         int patternYCount = settings["patternYCount"];
         myCalibration.setPatternSize(patternXCount, patternYCount);
@@ -96,17 +104,19 @@ void testApp::setup(){
             cout << "calibration ready" << endl;
         }
     }
-#endif
+    #endif
     
-    // Setup leap
+    
+    
+    //--------------- Setup leap
 	leap.open();
-	cam.setOrientation(ofPoint(-55, 0, 0));
-    
     leapVisualizer.setup();
     leapRecorder.setup();
+	cam.setOrientation(ofPoint(-55, 0, 0));
+    fbo.allocate(cameraWidth,cameraHeight,GL_RGBA);
 
-	bPlaying = false;
-	playingFrame = 0;
+    playingFrame = 0;
+    bPlaying = false;
 	bEndRecording = false;
     playing = false;
     bUseVirtualProjector = false;
@@ -116,28 +126,25 @@ void testApp::setup(){
     bRecordingForCalibration = false;
     bRecordThisCalibFrame = false;
     bUseCorrectedCamera = true;
-    bShowLargeCamImageOnTop = false;
     bShowText = true;
-    
+    bShowLargeCamImageOnTop = false;    // temp for quickly showing on hand video only
+
     folderName = ofGetTimestampString();
     lastIndexVideoPos.set(0,0,0);
     lastIndexLeapPos.set(0,0,0);
     
-    fbo.allocate(cameraWidth,cameraHeight,GL_RGBA);
     
-    
-    
-    
+    //--------------- App settings
     // ofSetFrameRate(60);
     ofSetVerticalSync(false);
 	ofSetLogLevel(OF_LOG_WARNING);
 	ofSetCylinderResolution (16, 1, 16);
     
-    
     ofEnableAlphaBlending();
     glEnable(GL_NORMALIZE); // needed??
 	glEnable(GL_DEPTH);
     // glEnable(GL_DEPTH_TEST); // why is this messing the render up in the projector cam??????
+    
     
     string versionDisplay = "Using openFrameworks version: " + ofToString( ofGetVersionInfo());
 	cout << versionDisplay;
@@ -267,7 +274,7 @@ void testApp::draw(){
 //--------------------------------------------------------------
 void testApp::drawLiveForRecording(){
     
-    // darw live image
+    // draw live image
     ofSetColor(ofColor::white);
 #ifdef _USE_LIBDC_GRABBER
     processFrameImg.draw(drawW,0,drawW,drawH);
@@ -276,7 +283,7 @@ void testApp::drawLiveForRecording(){
 #endif
             
     
-    // darw leap
+    // draw leap
     drawLeapWorld();
     
 }
@@ -310,7 +317,7 @@ void testApp::drawPlayback(){
 
 void testApp::drawLeapWorld(){
     
-    // draw video below calibration
+    // draw video underneath calibration to see alignment
     if(leapCameraCalibrator.calibrated && bUseVirtualProjector){
         ofSetColor(255);
         if(bPlaying ){
@@ -331,7 +338,7 @@ void testApp::drawLeapWorld(){
         ofClear(0,0,0,0);
     }
     
-    // start camera
+    // start camera (either calibrated projection or easy cam)
     if (leapCameraCalibrator.calibrated && bUseVirtualProjector){
         leapCameraCalibrator.projector.beginAsCamera();
     }else {
@@ -372,7 +379,7 @@ void testApp::drawLeapWorld(){
         leapCameraCalibrator.projector.endAsCamera();
     }else {
         
-        // draw calibration projector
+        // draw calibration projector for debugging
         if (leapCameraCalibrator.calibrated){
             leapCameraCalibrator.projector.draw();
         }
@@ -386,12 +393,15 @@ void testApp::drawLeapWorld(){
     }
     
     
+    // if we are calibrated draw fbo with transparency to see overlay better
     if (leapCameraCalibrator.calibrated) ofSetColor(255,255,255,200);
     else ofSetColor(255,255,255,255);
     
+    
+    // draw the fbo
     ofPushMatrix();
    if(bUseVirtualProjector){
-        ofScale(1,-1,1);
+        ofScale(1,-1,1);    // flip fbo
         fbo.draw(0,-drawH,drawW,drawH);
     }else{
         fbo.draw(0,0,drawW,drawH);
@@ -417,17 +427,19 @@ void testApp::drawText(){
 	textY+=15;
 	
 	ofSetColor(ofColor::white);
-	ofDrawBitmapString("Press 's' (Space key) to flip display mode", 20, textY); textY+=15;
-	ofDrawBitmapString("Press 'c' to restore camera", 20, textY); textY+=15;
+	ofDrawBitmapString("Press '1' to open playback recording from a directory", 20, textY); textY+=15;
+    ofDrawBitmapString("Press '2' to apply calibration from a directory", 20, textY); textY+=15;
+    ofDrawBitmapString("Press '3' to open calibration frames for calibration input", 20, textY); textY+=15;
+    textY+=15;
+    ofDrawBitmapString("Press 's' to toggle hand skeleton/cylinders", 20, textY); textY+=15;
+	ofDrawBitmapString("Press 'c' to restore easy-cam orientation", 20, textY); textY+=15;
 	ofDrawBitmapString("Press 'g' to toggle grid", 20, textY); textY+=15;
-    ofDrawBitmapString("Press 'v' to toggle virtual proejctor", 20, textY); textY+=15;
-    ofDrawBitmapString("Press '1' to select recording from directory", 20, textY); textY+=15;
-    ofDrawBitmapString("Press '2' to select calibration from directory", 20, textY); textY+=15;
-    ofDrawBitmapString("Press '3' to select calibration recording from directory", 20, textY); textY+=15;
+    ofDrawBitmapString("Press 'v' to toggle virtual projector", 20, textY); textY+=15;
     ofDrawBitmapString("Press 'w' to toggle calibration points draw", 20, textY); textY+=15;
-    ofDrawBitmapString("Press 'C' to load current folder's calibration", 20, textY); textY+=15;
+    ofDrawBitmapString("Press 'C' to load current playback folder's calibration", 20, textY); textY+=15;
     ofDrawBitmapString("Press 'm' to allow mouse input points", 20, textY); textY+=15;
     ofDrawBitmapString("Press 'left/right' to advance frame by frame", 20, textY); textY+=15;
+    ofDrawBitmapString("Press '' (space) to pause/play", 20, textY); textY+=15;
 
 
 	textY+=15;
@@ -524,7 +536,6 @@ void testApp::finishRecording(){
         int totalImage = MIN(currentFrameNumber,imageSequence.size());
         for(int i = 0; i < totalImage; i++) {
             if(imageSequence[i].getWidth() == 0) break;
-            //imageSequence[i].rotate90(1);
             ofSaveImage(imageSequence[i], "recordings/"+folderName+"/camera/"+ofToString(i, 3, '0') + ".jpg");
         }
         
@@ -598,10 +609,7 @@ bool testApp::useCorrectedCam(){
 //--------------------------------------------------------------
 void testApp::keyPressed(int key){
 
-	if (key == 'c'){
-		// Reset the camera if the user presses 'c'.
-		cam.reset();
-	} else if ((key == 'r') || (key == 'R')){
+	if ((key == 'r') || (key == 'R')){
 		if (leap.isConnected()){
 			// Toggle Recording.
 			//reset so we don't store extra tags
@@ -624,10 +632,13 @@ void testApp::keyPressed(int key){
     
     switch(key){
         case OF_KEY_LEFT:
-            video.goToPrevious();
+            if(video.isLoaded()) video.goToPrevious();
             break;
         case OF_KEY_RIGHT:
-            video.goToNext();
+             if(video.isLoaded()) video.goToNext();
+            break;
+        case 'c':
+            cam.reset();
             break;
         case 'C':
             calibrateFromXML(folderName);
@@ -667,7 +678,8 @@ void testApp::keyPressed(int key){
             bShowCalibPoints = !bShowCalibPoints;
             break;
         case ' ':
-            if(bRecordingForCalibration) bRecordThisCalibFrame = true;
+            if(bPlaying) playing = !playing;
+            else if(bRecordingForCalibration) bRecordThisCalibFrame = true;
             break;
         case 'u':
             bUseCorrectedCamera = !bUseCorrectedCamera;
@@ -744,61 +756,6 @@ void testApp::exit(){
     // let's close down Leap and kill the controller
     leap.close();
 }
-
-
-
-
-
-/*
- 
- // WORKING, FROM KYLE'S RECORDER
- 
- void testApp::update() {
- // grabVideo() will place the most recent frame into curFrame. If it's a new
- // frame, grabFrame returns true. If there are multiple frames available, it
- // will drop old frames and only give you the newest. This guarantees the
- // lowest latency. If you prefer to not drop frames, set the second argument
- // (dropFrames) to false. By default, capture is non-blocking.
- if(camera.grabVideo(curFrame)) {
- curFrame.update();
- 
- 
- if(recording) {
- if(currentFrame < imageSequence.size()) {
- ofPixels& target = imageSequence[currentFrame];
- memcpy(target.getPixels(), curFrame.getPixels(), target.getWidth() * target.getHeight() * target.getNumChannels());
- currentFrame++;
- } else {
- recording = false;
- for(int i = 0; i < imageSequence.size(); i++) {
- imageSequence[i].rotate90(1);
- ofSaveImage(imageSequence[i], ofToString(i, 3, '0') + ".jpg");
- }
- }
- }
- }
- }
- 
- void testApp::draw() {
- // If the camera isn't ready, the curFrame will be empty.
- if(camera.isReady()) {
- // Camera doesn't draw itself, curFrame does.
- curFrame.draw(0, 0);
- ofDrawBitmapString(ofToString((int) ofGetFrameRate()) + " fps " + (recording ? "recording" : "") , 10, 20);
- }
- }
- 
- void testApp::keyPressed(int key) {
- if(key == 'r') {
- recording = true;
- currentFrame = 0;
- }
- if(key == 'i') {
- printf("Attempting save\n");
- curFrame.saveImage(ofToString(ofGetFrameNum()) + ".png");
- }
- }
- */
 
 
 

@@ -105,8 +105,8 @@ class testApp : public ofBaseApp{
 
     //------------------------------
     void finishRecording();
-    void loadAndPlayRecording(string folderName);
     void calibrateFromXML( string folderName);
+    void loadAndPlayRecording(string folderName);
     void loadPlaybackFromDialog();
     void loadCalibrationFromDialog();
     void loadPlaybackFromDialogForCalibration();

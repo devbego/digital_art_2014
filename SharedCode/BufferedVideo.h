@@ -35,7 +35,11 @@ public:
 	,loaded(0) {
 		timer.setFramerate(30);
 	}
-	void setFrameRate(float frameRate) {
+	bool isLoaded(){
+        if(loaded > 0) return true;
+        return false;
+    }
+    void setFrameRate(float frameRate) {
 		timer.setFramerate(frameRate);
 	}
 	void load(string directoryName) {
