@@ -6,6 +6,7 @@
 #include "ofxCv.h"
 #include "ofxUI.h"
 
+#include "ipp.h"
 #include "BufferedVideo.h"
 #include "tmVisThresholderC1.h"
 
@@ -47,6 +48,7 @@ class ofApp : public ofBaseApp{
 	
 	bool	bSecondToggler;
 	bool	bUseRedChannelForLuminance;
+	bool	bDoHistogramEqualization;
 	bool	bApplyMedianToLuminance;
 	bool	bComputeUnsharpedLuminance;
 	bool	bUseROIForFilters;
@@ -65,11 +67,17 @@ class ofApp : public ofBaseApp{
 	void applyMorphologicalOpsToLuminanceImage();
 	void applyEdgeAmplification();
 	void computeUnsharpedLuminanceImage();
-	void doAdaptiveThresholding(); 
+	void doAdaptiveThresholding();
+	void doHistogramEqualization();
+	void applyLaplacianEdgeDetect(); 
 	
+	ofxCvColorImage colorVideo;
+	ofxCvColorImage colorVideoHalfScale;
 	
+	Mat videoMatOrig;		// cv::Mat version of the current video frame, at original scale
 	Mat	videoMat;			// cv::Mat version of the current video frame. 
 	Mat grayMat;			// grayscale version of hand input
+	Mat grayMatHistEq;
 	Mat blurredGrayMat;		// blurred version of grayMat.
 	Mat unsharpedMat;		// unsharp-masked version of grayMat.
 	
@@ -112,9 +120,11 @@ class ofApp : public ofBaseApp{
 	ofPolyline	handContourPolyline;
 	cv::Point2f	handContourCentroid;
 	
+	bool bWorkAtHalfScale;
 	bool bUseMaskImage;
 	bool bDoAdaptiveThresholding;
 	bool bDoLaplacianEdgeDetect;
+	bool bSuppressLaplacianPalmEdges;
 	bool bDoCannyEdgeDetect;
 	bool bDoMorphologicalOps;
 	bool bHandyBool;
@@ -128,6 +138,8 @@ class ofApp : public ofBaseApp{
 	
 	int imgW; // width of our images for computer vision
 	int imgH; // height of our images
+	int origW;
+	int origH;
 	
 	float elapsed; 
 	

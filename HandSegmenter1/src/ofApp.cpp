@@ -15,11 +15,38 @@ void ofApp::setup(){
 	video.load("recordings/play_chris_corrected_4/camera/");
 	
 	ofPixels& pixels0 = video.getFrame(0);
-	imgW = pixels0.getWidth();
-	imgH = pixels0.getHeight();
+	origW = pixels0.getWidth();
+	origH = pixels0.getHeight();
+	
+	//------------------------
+	bWorkAtHalfScale			= true;
+	bVideoPlaying				= true;
+	bSecondToggler				= true;
+	bUseRedChannelForLuminance	= true;
+	bDoHistogramEqualization	= true; 
+	bApplyMedianToLuminance		= false;
+	bComputeUnsharpedLuminance  = true;
+	bUseROIForFilters			= true;  // clobbered to false if !bUseMaskImage
+	bDoAdaptiveThresholding		= false;
+	bDoMorphologicalOps			= true;
+	bDoLaplacianEdgeDetect		= true;
+	bSuppressLaplacianPalmEdges	= true;
+	bUseMaskImage				= false;
+	
+	imgW = origW;
+	imgH = origH;
+	if (bWorkAtHalfScale){
+		imgW = origW/2;
+		imgH = origH/2;
+	}
+	
+	colorVideo.allocate(origW, origH);
+	colorVideoHalfScale.allocate(imgW, imgH);
 	
 	grayMat.create				(imgH, imgW, CV_8UC1);
+	grayMatHistEq.create		(imgH, imgW, CV_8UC1);
 	blurredGrayMat.create		(imgH, imgW, CV_8UC1);
+	blurred.create				(imgH, imgW, CV_8UC1);
 	unsharpedMat.create			(imgH, imgW, CV_8UC1);
 	thresholded.create			(imgH, imgW, CV_8UC1);
 	thresholdedFinal.create		(imgH, imgW, CV_8UC1);
@@ -38,24 +65,9 @@ void ofApp::setup(){
 	thresholder = new tmVisThresholderC1 (imgW, imgH);
 	
 
-	
-	
-	//------------------------
-	bVideoPlaying = true;
-	bSecondToggler				= true;
-	bUseRedChannelForLuminance	= true;
-	bApplyMedianToLuminance		= false;
-	bComputeUnsharpedLuminance  = true;
-	bUseROIForFilters			= true;  // clobbered to false if !bUseMaskImage
-	bDoAdaptiveThresholding		= true;
-	bDoMorphologicalOps			= true;
-	bDoLaplacianEdgeDetect		= true;
-	bUseMaskImage				= false;
-	
 	//------------------------
 	// Load the mask image; compute the maskROI and other info.
 	computeMaskResources();
-	
 	
 	//------------------------
 	blurKernelSize				= 4.0;
@@ -68,11 +80,11 @@ void ofApp::setup(){
 	
 	
 	laplaceDelta				= 100;
-	laplaceSensitivity			= 0.025;
+	laplaceSensitivity			= 2.5;
 	
 	
 	minAllowableContourAreaAsAPercentOfImageSize = 0.05;
-	maxAllowableContourAreaAsAPercentOfImageSize = 0.12; // approx 100000.0 / (768*1024);
+	maxAllowableContourAreaAsAPercentOfImageSize = 0.33; // approx 100000.0 / (768*1024);
 	
 	
 	//------------------------
@@ -103,15 +115,17 @@ void ofApp::setupGui() {
 	gui->addSlider("minLaplaceEdgeStrength", 0, 255, &minLaplaceEdgeStrength);
 	gui->addIntSlider ("edgeContourMinArea", 1, 1000, &edgeContourMinArea);
 	gui->addSlider("laplaceDelta",	0,255, &laplaceDelta);
-	gui->addSlider("laplaceSensitivity",0.0, 0.1, &laplaceSensitivity) ;
+	gui->addSlider("laplaceSensitivity",0.0, 4.0, &laplaceSensitivity) ;
 	gui->addSlider("maxContourArea",  0.01, 0.50, &maxAllowableContourAreaAsAPercentOfImageSize);
 	
 	gui->addSpacer();
 	gui->addLabelToggle("bUseROIForFilters",			&bUseROIForFilters);
 	gui->addLabelToggle("bUseRedChannelForLuminance",	&bUseRedChannelForLuminance);
-	gui->addLabelToggle("bDoAdaptiveThresholding",		&bDoAdaptiveThresholding);
+	gui->addLabelToggle("bDoHistogramEqualization",		&bDoHistogramEqualization);
+//	gui->addLabelToggle("bDoAdaptiveThresholding",		&bDoAdaptiveThresholding);
 	gui->addLabelToggle("bDoMorphologicalOps",			&bDoMorphologicalOps);
 	gui->addLabelToggle("bDoLaplacianEdgeDetect",		&bDoLaplacianEdgeDetect);
+	gui->addLabelToggle("bSuppressLaplacianPalmEdges",	&bSuppressLaplacianPalmEdges);
 	
 	
 	gui->addSpacer();
@@ -149,6 +163,7 @@ void ofApp::update(){
 		double then = ofGetElapsedTimeMicros();
 		
 		extractLuminanceChannelFromVideoFrame();
+		doHistogramEqualization();
 		applyMaskToLuminanceImage();
 		
 		applyMedianFilterToLuminanceImage();
@@ -166,6 +181,7 @@ void ofApp::update(){
 		*/
 		
 		doAdaptiveThresholding();
+		//applyLaplacianEdgeDetect();
 		applyEdgeAmplification();
 		
 		
@@ -217,10 +233,53 @@ void ofApp::update(){
 }
 
 
+//--------------------------------------------------------------
+void ofApp::extractLuminanceChannelFromVideoFrame(){
+	
+	//------------------------
+	// Fetch the (color) video
+	if (bWorkAtHalfScale){
+		//Mat videoMatOrig = toCv(video);
+		colorVideo.setFromPixels(video.getPixelsRef());
+		colorVideoHalfScale.scaleIntoMe (colorVideo);
+		videoMat = toCv(colorVideoHalfScale);
+	} else {
+		videoMat = toCv(video);
+	}
+	
+	
+	//------------------------
+	// Extract (or compute) the grayscale luminance channel.
+	// Either use the red channel (a good proxy for skin),
+	// Or use the properly weighted components.
+	if (bUseRedChannelForLuminance){
+		vector<Mat> rgbChannelMats;
+		split(videoMat, rgbChannelMats);
+		grayMat = rgbChannelMats[0];
+	} else {
+		convertColor(videoMat, grayMat, CV_RGB2GRAY);
+	}
+	
+	//if (bWorkAtHalfScale){
+}
+
+
+//--------------------------------------------------------------
+void ofApp::doHistogramEqualization(){
+	// output buffer, grayMatHistEq, is not currently used.
+	
+	if (bDoHistogramEqualization){
+		unsigned char* bufferIn;
+		unsigned char* bufferOut;
+		
+		bufferIn  = grayMat.ptr();
+		bufferOut = grayMatHistEq.ptr();
+		thresholder->modImageByHistogram (bufferIn, bufferOut, -1);
+	}
+}
 
 //--------------------------------------------------------------
 void ofApp::doAdaptiveThresholding(){
-	
 	
 	if (bDoAdaptiveThresholding){
 		
@@ -278,8 +337,7 @@ void ofApp::computeUnsharpedLuminanceImage(){
 	cv::Mat unsharpDst   = (bUseROIForFilters) ? unsharpedMat(maskROI)   : unsharpedMat;
 	
 	GaussianBlur (matToBlurSrc, matToBlurDst, cv::Size(kernelSize,kernelSize), blurSigma, blurSigma, BORDER_DEFAULT);
-	addWeighted (matToBlurSrc, (1.0+unsharpAmount), matToBlurDst, (0.0-unsharpAmount), 0, unsharpDst);
-
+	addWeighted  (matToBlurSrc, (1.0+unsharpAmount), matToBlurDst, (0.0-unsharpAmount), 0, unsharpDst);
 }
 
 //--------------------------------------------------------------
@@ -338,10 +396,16 @@ void ofApp::applyEdgeAmplification(){
 		
 		int		kSize = 7;
 		double	delta = (double)laplaceDelta;
-		double	sensitivity = (double)laplaceSensitivity;
+		double	sensitivity = (double)laplaceSensitivity / 100.0;
 		int		edgeThreshold = (int) minLaplaceEdgeStrength;
 		
 		cv::Laplacian (srcForLaplacian, dstForLaplacian, -1, kSize, (double)sensitivity, delta, cv::BORDER_DEFAULT );
+		
+		if (bSuppressLaplacianPalmEdges){
+			
+		}
+		
+		
 		cv::threshold (dstForLaplacian, matTemp1, edgeThreshold, 255, cv::THRESH_BINARY);
 		
 		// Extract contours of the thresholded blobs (= "edges").
@@ -373,25 +437,60 @@ void ofApp::applyEdgeAmplification(){
 	
 }
 
+
 //--------------------------------------------------------------
-void ofApp::extractLuminanceChannelFromVideoFrame(){
+void ofApp::applyLaplacianEdgeDetect(){
 	
-	//------------------------
-	// Fetch the (color) video
-	Mat videoMat = toCv(video);
-	
-	//------------------------
-	// Extract (or compute) the grayscale luminance channel.
-	// Either use the red channel (a good proxy for skin),
-	// Or use the properly weighted components.
-	if (bUseRedChannelForLuminance){
-		vector<Mat> rgbChannelMats;
-		split(videoMat, rgbChannelMats);
-		grayMat = rgbChannelMats[0];
+	if (bDoLaplacianEdgeDetect){
+		
+		cv::Mat srcForLaplacian = (bUseROIForFilters) ? grayMat(maskROI)			: grayMat;
+		cv::Mat dstForLaplacian = (bUseROIForFilters) ? edgeDetected(maskROI)		: edgeDetected;
+		cv::Mat matTemp1		= (bUseROIForFilters) ? tempGrayscaleMat1(maskROI)	: tempGrayscaleMat1;
+		cv::Mat matTemp2        = (bUseROIForFilters) ? tempGrayscaleMat2(maskROI)	: tempGrayscaleMat2;
+		cv::Mat matGoodEdges	= (bUseROIForFilters) ? goodEdgesImg(maskROI)		: goodEdgesImg;
+		cv::Mat matThresholded	= (bUseROIForFilters) ? thresholded(maskROI)		: thresholded;
+		cv::Mat matFinal		= (bUseROIForFilters) ? thresholdedFinal(maskROI)	: thresholdedFinal;
+		cv::Mat matBlurred		= (bUseROIForFilters) ? blurred(maskROI)			: blurred;
+		
+		
+		int		kSize = 7;
+		double	delta = (double)laplaceDelta;
+		double	sensitivity = (double)laplaceSensitivity / 100.0;
+		int		edgeThreshold = (int) minLaplaceEdgeStrength;
+		
+		cv::Laplacian (srcForLaplacian, matTemp1, -1, kSize, (double)sensitivity, delta, cv::BORDER_DEFAULT );
+		matTemp1 =  cv::Scalar::all(255) - matTemp1; // subtract from 255
+		
+		cv::Laplacian (srcForLaplacian, matTemp2, -1, kSize, (double)sensitivity, 255.0-delta, cv::BORDER_DEFAULT );
+		unsigned char *matTemp1Chars = matTemp1.ptr();
+		unsigned char *matTemp2Chars = matTemp2.ptr();
+		unsigned char *matGoodEdgesChars = matGoodEdges.ptr();
+		unsigned char *srcForLaplacianChars = srcForLaplacian.ptr();
+		unsigned char *blurryChars = matBlurred.ptr();
+		
+		for (int i=0; i<(imgW*imgH); i++){
+			int anEdgePixel = min(matTemp1Chars[i], matTemp2Chars[i]);
+			if (anEdgePixel < 160) anEdgePixel = 0;
+			matGoodEdgesChars[i] = anEdgePixel;
+		}
+		
+		cv::blur(matGoodEdges, matGoodEdges, cv::Size(5,5));
+		
+		// cvAddWeighted(&matTemp1, 0.5, &matTemp2, 0.5, 0.0, &matGoodEdges);
+		
+		
+		// cv::threshold (dstForLaplacian, matTemp1, edgeThreshold, 255, cv::THRESH_BINARY);
+		// Mask ('and') the good edge blobs against the thresholded image.
+		// cv::bitwise_and(matGoodEdges, matThresholded, matFinal);
+		thresholdedFinal = thresholded.clone();
+		
 	} else {
-		convertColor(videoMat, grayMat, CV_RGB2GRAY);
+		thresholdedFinal = thresholded.clone();
 	}
+	
 }
+
+
 
 
 //--------------------------------------------------------------
@@ -404,7 +503,6 @@ void ofApp::computeMaskResources(){
 		bLoadedMaskImage = false;
 		bUseROIForFilters = false;
 		maskROI = cv::Rect (0,0, imgW,imgH);
-	
 	}
 	
 	else if (bUseMaskImage){
@@ -510,15 +608,21 @@ void ofApp::draw(){
 			drawMat(grayMat,0,0);
 			break;
 		case 2:
-			drawMat(thresholded,0,0);
+			drawMat(grayMatHistEq,0,0);
 			break;
 		case 3:
-			drawMat(adaptiveThreshImg,0,0);
+			drawMat(thresholded,0,0);
 			break;
 		case 4:
-			drawMat(goodEdgesImg,0,0);
+			drawMat(adaptiveThreshImg,0,0);
 			break;
 		case 5:
+			drawMat(edgeDetected,0,0);
+			break;
+		case 6:
+			drawMat(goodEdgesImg,0,0);
+			break;
+		case 7:
 			drawMat(thresholdedFinal,0,0);
 			break;
 	}
@@ -533,8 +637,8 @@ void ofApp::draw(){
 	}
 	
 	if (bValidHandContourExists){
-	ofSetColor(0,255,0);
-	handContourPolyline.draw();
+		ofSetColor(0,255,0);
+		handContourPolyline.draw();
 	}
 	 
 	
@@ -563,40 +667,34 @@ void ofApp::draw(){
 		ofScale(miniScale, miniScale);
 		
 		int xItem = 0;
+		ofSetColor(ofColor::white);
 		drawMat(grayMat,			imgW * xItem, 0); xItem++;
+		drawMat(grayMatHistEq,		imgW * xItem, 0); xItem++;
 		drawMat(thresholded,		imgW * xItem, 0); xItem++;
 		drawMat(adaptiveThreshImg,	imgW * xItem, 0); xItem++;
+		drawMat(edgeDetected,		imgW * xItem, 0); xItem++;
 		drawMat(goodEdgesImg,		imgW * xItem, 0); xItem++;
 		drawMat(thresholdedFinal,	imgW * xItem, 0); xItem++;
+		
 		
 		ofPopMatrix();
 	}
 	
 	
-	//ofSetColor(255,255,0);
-	//ofDrawBitmapString ( "FPS: " + ofToString(ofGetFrameRate()), 20, 20);
+	ofSetColor(ofColor::brown);
+	ofDrawBitmapString ( "FPS: " + ofToString(ofGetFrameRate()), 20, 20);
+	ofDrawBitmapString ( "uS:  " + ofToString(elapsedMicros), 20, 40);
+	
 }
 
 //--------------------------------------------------------------
 void ofApp::keyPressed(int key){
 	
+	if (key >= '1' && key <= '7'){
+		whichImageToDraw = key - '0';
+	}
+	
 	switch(key){
-		case '1':
-			whichImageToDraw = 1;
-			break;
-		case '2':
-			whichImageToDraw = 2;
-			break;
-		case '3':
-			whichImageToDraw = 3;
-			break;
-		case '4':
-			whichImageToDraw = 4;
-			break;
-		case '5':
-			whichImageToDraw = 5;
-			break;
-			
 		case 'v':
 		case 'V':
 			bDrawDiagnostics = !bDrawDiagnostics;
