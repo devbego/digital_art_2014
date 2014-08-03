@@ -350,7 +350,7 @@ void testApp::drawLeapWorld(){
     
     // start camera (either calibrated projection or easy cam)
     if (leapCameraCalibrator.calibrated && bUseVirtualProjector){
-        glEnable(GL_DEPTH_TEST); // why is this messing the render up in the projector cam??????
+        // glEnable(GL_DEPTH_TEST); // why is this messing the render up in the projector cam??????
         leapCameraCalibrator.projector.beginAsCamera();
 		
 	
