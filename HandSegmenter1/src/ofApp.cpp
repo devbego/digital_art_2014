@@ -259,8 +259,7 @@ void ofApp::extractLuminanceChannelFromVideoFrame(){
 	} else {
 		convertColor(videoMat, grayMat, CV_RGB2GRAY);
 	}
-	
-	//if (bWorkAtHalfScale){
+
 }
 
 
