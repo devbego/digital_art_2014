@@ -2328,8 +2328,7 @@
 					"$(LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_50)",
 					"$(LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_51)",
 					"$(LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_52)",
-					/Users/golan/Desktop/HAND/of_v0.8.3_osx_release/addons/ofxLeapMotion/libs/lib/osx,
-					/Users/golan/Desktop/HAND/of_v0.8.3_osx_release/addons/ofxLeapMotion/libs/lib/winvs,
+					../../../addons/ofxLeapMotion/libs/lib/osx,
 				);
 				PRODUCT_NAME = "$(TARGET_NAME)Debug";
 				SDKROOT = macosx10.8;
@@ -2502,8 +2501,7 @@
 					"$(LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_49)",
 					"$(LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_50)",
 					"$(LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_51)",
-					/Users/golan/Desktop/HAND/of_v0.8.3_osx_release/addons/ofxLeapMotion/libs/lib/osx,
-					/Users/golan/Desktop/HAND/of_v0.8.3_osx_release/addons/ofxLeapMotion/libs/lib/winvs,
+					../../../addons/ofxLeapMotion/libs/lib/osx,
 				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx10.8;

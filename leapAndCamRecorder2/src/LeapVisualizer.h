@@ -28,11 +28,13 @@ class LeapVisualizer{
     
     // xml drawing
     void drawFrameFromXML(int whichFrame);
-    void drawHandFromXML(int whichHand);
-    void drawFingersFromXML();
-    void drawFingerFromXML();
-    void drawPalmFromXML();
-    void drawArmFromXML();
+    void drawFrameFromXML(int whichFrame, ofxXmlSettings & myXML);
+
+    void drawHandFromXML(int whichHand, ofxXmlSettings & XML);
+    void drawFingersFromXML(ofxXmlSettings & XML);
+    void drawFingerFromXML(ofxXmlSettings & XML);
+    void drawPalmFromXML(ofxXmlSettings & XML);
+    void drawArmFromXML(ofxXmlSettings & XML);
   
     // live drawing
     void drawFrame(ofxLeapMotion & leap);

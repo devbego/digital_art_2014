@@ -65,6 +65,8 @@ class testApp : public ofBaseApp{
 	ofxLeapMotion leap;
     LeapVisualizer leapVisualizer;
     LeapRecorder   leapRecorder;
+    LeapRecorder   prevLeapFrameRecorder;
+
     LeapToCameraCalibrator leapCameraCalibrator;
     
 	ofEasyCam cam;
@@ -81,6 +83,8 @@ class testApp : public ofBaseApp{
     bool bUseCorrectedCamera;
     bool bShowLargeCamImageOnTop;
     bool bShowText;
+    bool bShowOffBy1Frame;
+    int framesBackToPlay;
     
 	int  playingFrame;
     string folderName;
@@ -102,7 +106,7 @@ class testApp : public ofBaseApp{
     //------------------------------
     // get camera calibration pre-calculated
     ofxCv::Calibration myCalibration;
-
+    
     //------------------------------
     void finishRecording();
     void calibrateFromXML( string folderName);

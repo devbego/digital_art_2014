@@ -481,6 +481,26 @@ void LeapVisualizer::drawArm (Hand & hand,ofxLeapMotion & leap){
 	} // Close if arm isValid
 }
 
+void LeapVisualizer::drawFrameFromXML(int whichFrame, ofxXmlSettings & myXML){
+
+    int nFrameTags = myXML.getNumTags("FRAME");
+	if ((whichFrame >= 0) && (whichFrame < nFrameTags)){
+		
+		//we push into the which'h FRAME tag; this temporarily treats the tag as the document root.
+		myXML.pushTag("FRAME", whichFrame);
+		
+		int nHandTags = myXML.getNumTags("H");
+		if (nHandTags > 0){
+			for (int h=0; h<nHandTags; h++){
+				drawHandFromXML(h,myXML);
+			}
+		}
+        
+		//this pops us out of the FRAME tag, sets the root back to the xml document
+		myXML.popTag();
+	}
+
+}
 
 //--------------------------------------------------------------
 void LeapVisualizer::drawFrameFromXML(int whichFrame){
@@ -494,41 +514,41 @@ void LeapVisualizer::drawFrameFromXML(int whichFrame){
 		int nHandTags = XML.getNumTags("H");
 		if (nHandTags > 0){
 			for (int h=0; h<nHandTags; h++){
-				drawHandFromXML(h);
+				drawHandFromXML(h,this->XML);
 			}
 		}
-		
+
 		//this pops us out of the FRAME tag, sets the root back to the xml document
 		XML.popTag();
 	}
 }
 
 //--------------------------------------------------------------
-void LeapVisualizer::drawHandFromXML (int whichHand){
+void LeapVisualizer::drawHandFromXML(int whichHand,ofxXmlSettings & XML){
 	XML.pushTag("H", whichHand);
 	
-	drawFingersFromXML();
-	drawPalmFromXML();
-	drawArmFromXML();
+	drawFingersFromXML(XML);
+	drawPalmFromXML(XML);
+	drawArmFromXML(XML);
 	
 	XML.popTag();
 }
 
 //--------------------------------------------------------------
-void LeapVisualizer::drawFingersFromXML(){
+void LeapVisualizer::drawFingersFromXML(ofxXmlSettings & XML){
 	
 	int nFingerTags = XML.getNumTags("F");
 	if (nFingerTags > 0){
 		for (int f=0; f<nFingerTags; f++){
 			XML.pushTag("F", f);
-			drawFingerFromXML();
+			drawFingerFromXML(XML);
 			XML.popTag();
 		}
 	}
 }
 
 //--------------------------------------------------------------
-void LeapVisualizer::drawFingerFromXML(){
+void LeapVisualizer::drawFingerFromXML(ofxXmlSettings & XML){
 	
 	Finger::Type	fingerType =  (Finger::Type) XML.getValue("TYPE", 0);
 	float			fingerWidth = XML.getValue("WIDTH", 0.0);
@@ -572,7 +592,7 @@ void LeapVisualizer::drawFingerFromXML(){
 
 
 //--------------------------------------------------------------
-void LeapVisualizer::drawPalmFromXML(){
+void LeapVisualizer::drawPalmFromXML(ofxXmlSettings & XML){
 	
 	int nFingerTags = XML.getNumTags("F");
 	if (nFingerTags > 0){
@@ -635,7 +655,7 @@ void LeapVisualizer::drawPalmFromXML(){
 
 
 //--------------------------------------------------------------
-void LeapVisualizer::drawArmFromXML(){
+void LeapVisualizer::drawArmFromXML(ofxXmlSettings & XML){
 	
 	float armWidth = XML.getValue("AW", 0.0);
 	float basisLen = 50.0;

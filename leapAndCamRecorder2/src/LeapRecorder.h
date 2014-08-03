@@ -37,7 +37,8 @@ class LeapRecorder{
 	int lastTagNumber;
 	int recordingFrameCount;
 	int recordingStartTimeMillis;
-    
+    //int recordingStartTimestamp;
+
     ofxXmlSettings XML;
 
 

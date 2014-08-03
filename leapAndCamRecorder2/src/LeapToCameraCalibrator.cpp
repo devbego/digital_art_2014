@@ -38,8 +38,6 @@ void LeapToCameraCalibrator::setup(int camWidth, int camHeight){
     
     dirNameLoaded = "";
     
-    
-
 }
 
 void LeapToCameraCalibrator::loadFingerTipPoints(string filePath){
@@ -115,15 +113,12 @@ void LeapToCameraCalibrator::correctCameraPNP(ofxCv::Calibration & myCalibration
     cv::solvePnP(worldPoints,imagePoints,
      myCalibration.getUndistortedIntrinsics().getCameraMatrix(), myCalibration.getDistCoeffs(),
      rvec, tvec, false );
-  
-    
+      
 //     solvePnP( InputArray objectPoints, InputArray imagePoints,
 //     InputArray cameraMatrix, InputArray distCoeffs,
 //     OutputArray rvec, OutputArray tvec,
 //     bool useExtrinsicGuess=false );
-     
-    
-    
+  
     calibrated = true;
     
 	setExtrinsics(rvec, tvec);

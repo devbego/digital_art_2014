@@ -50,9 +50,9 @@ void testApp::setup(){
 	cameraLibdc.setGain(0);
 	cameraLibdc.setGammaAbs(1);
     //cameraLibdc.setBlocking(true);
-
     #else
-	cameraVidGrabber.setVerbose(true);
+	cameraVidGrabber.setDeviceID(1);
+    cameraVidGrabber.setVerbose(true);
 	cameraVidGrabber.initGrabber(cameraWidth,cameraHeight);
     #endif
 
@@ -107,11 +107,11 @@ void testApp::setup(){
     #endif
     
     
-    
     //--------------- Setup leap
 	leap.open();
     leapVisualizer.setup();
     leapRecorder.setup();
+    prevLeapFrameRecorder.setup();
 	cam.setOrientation(ofPoint(-55, 0, 0));
     fbo.allocate(cameraWidth,cameraHeight,GL_RGBA);
 
@@ -128,7 +128,9 @@ void testApp::setup(){
     bUseCorrectedCamera = true;
     bShowText = true;
     bShowLargeCamImageOnTop = false;    // temp for quickly showing on hand video only
-
+    bShowOffBy1Frame = false;
+    framesBackToPlay = 1;
+    
     folderName = ofGetTimestampString();
     lastIndexVideoPos.set(0,0,0);
     lastIndexLeapPos.set(0,0,0);
@@ -140,17 +142,16 @@ void testApp::setup(){
 	ofSetLogLevel(OF_LOG_WARNING);
 	ofSetCylinderResolution (16, 1, 16);
     
-    ofEnableAlphaBlending();
-    glEnable(GL_NORMALIZE); // needed??
-	glEnable(GL_DEPTH);
-    // glEnable(GL_DEPTH_TEST); // why is this messing the render up in the projector cam??????
+   // ofEnableAlphaBlending();
+    //glEnable(GL_NORMALIZE); // needed??
+	//glEnable(GL_DEPTH);
+    //glEnable(GL_DEPTH_TEST); // why is this messing the render up in the projector cam??????
     
     
     string versionDisplay = "Using openFrameworks version: " + ofToString( ofGetVersionInfo());
 	cout << versionDisplay;
 	
 
-    
 }
 
 
@@ -208,6 +209,7 @@ void testApp::update(){
                     leapRecorder.recordFrameXML(leap);
                     
                     ofPixels& target = imageSequence[currentFrameNumber];
+                    
                     memcpy (target.getPixels(),
                             processFrameImg.getPixels(),
                             target.getWidth() * target.getHeight() * target.getNumChannels());
@@ -233,6 +235,8 @@ void testApp::update(){
     //-------------  Leap update
 	leap.markFrameAsOld();
     
+    
+
 }
 
 
@@ -268,7 +272,14 @@ void testApp::draw(){
         ofSetColor(255);
         processFrameImg.draw(0,0,1024,768);
     }
-
+    
+    
+    //------------- Store last frame
+    if(prevLeapFrameRecorder.XML.getNumTags("FRAME") > 5){
+        prevLeapFrameRecorder.XML.removeTag("FRAME",0);
+    }
+    prevLeapFrameRecorder.recordFrameXML(leap);
+    
 }
 
 //--------------------------------------------------------------
@@ -310,7 +321,6 @@ void testApp::drawPlayback(){
         if(bInputMousePoints){
             indexRecorder.drawPointHistory(video.getCurrentFrameID() );
         }
-
         ofPopStyle();
     }
 }
@@ -318,6 +328,7 @@ void testApp::drawPlayback(){
 void testApp::drawLeapWorld(){
     
     // draw video underneath calibration to see alignment
+    glDisable(GL_DEPTH_TEST);
     if(leapCameraCalibrator.calibrated && bUseVirtualProjector){
         ofSetColor(255);
         if(bPlaying ){
@@ -331,7 +342,6 @@ void testApp::drawLeapWorld(){
         }
     }
     
-    
     // start fbo
     if (bUseFbo){
         fbo.begin();
@@ -340,6 +350,7 @@ void testApp::drawLeapWorld(){
     
     // start camera (either calibrated projection or easy cam)
     if (leapCameraCalibrator.calibrated && bUseVirtualProjector){
+        glEnable(GL_DEPTH_TEST); // why is this messing the render up in the projector cam??????
         leapCameraCalibrator.projector.beginAsCamera();
     }else {
         glEnable(GL_DEPTH_TEST);
@@ -361,17 +372,30 @@ void testApp::drawLeapWorld(){
         if (nFrameTags > 0){
             ofFill();
             playingFrame = video.getCurrentFrameID();
-            leapVisualizer.drawFrameFromXML(playingFrame);
-            
+            if(playingFrame > 0 && bShowOffBy1Frame){
+                int whichFrame = playingFrame - framesBackToPlay;
+                if(whichFrame <0) whichFrame = 0;
+                leapVisualizer.drawFrameFromXML(whichFrame);
+            }
+            else{ leapVisualizer.drawFrameFromXML(playingFrame); }
+
             if( lastIndexVideoPos.x > 0 && lastIndexVideoPos.y > 0){
                 ofSetColor(ofColor::red);
                 ofDrawSphere(lastIndexLeapPos, 5.0f);
             }
-            
         }
     }else{
         // draw live leap
-        leapVisualizer.drawFrame(leap);
+        
+        if(bShowOffBy1Frame){
+            int totalFramesSaved = prevLeapFrameRecorder.XML.getNumTags("FRAME");
+            int whichFrame = totalFramesSaved-framesBackToPlay;
+            if(whichFrame<0) whichFrame = 0;
+            leapVisualizer.drawFrameFromXML(whichFrame,prevLeapFrameRecorder.XML);
+
+        }else{
+            leapVisualizer.drawFrame(leap);
+        }
     }
     
     // end camera
@@ -440,6 +464,9 @@ void testApp::drawText(){
     ofDrawBitmapString("Press 'm' to allow mouse input points", 20, textY); textY+=15;
     ofDrawBitmapString("Press 'left/right' to advance frame by frame", 20, textY); textY+=15;
     ofDrawBitmapString("Press '' (space) to pause/play", 20, textY); textY+=15;
+    
+    string usePrev = bShowOffBy1Frame ? "on" : "off";
+    ofDrawBitmapString("Press 'o' toggle use prev "+usePrev+" {} frames behind: "+ofToString(framesBackToPlay), 20, textY); textY+=15;
 
 
 	textY+=15;
@@ -695,14 +722,22 @@ void testApp::keyPressed(int key){
                 drawW = 1024;
                 drawH = 768;
                 bShowText = false;
-                
             }else{
                 drawW = 640;
                 drawH = 480;
                 bShowText = true;
             }
             break;
-            
+        case 'o':
+            bShowOffBy1Frame= !bShowOffBy1Frame;
+            break;
+        case '{':
+            framesBackToPlay--;
+            if(framesBackToPlay <0) framesBackToPlay = 5;
+        case '}':
+            framesBackToPlay++;
+            if(framesBackToPlay > 5) framesBackToPlay = 1;
+            break;
     }
     
 }
@@ -759,3 +794,22 @@ void testApp::exit(){
 
 
 
+/// makeTimeStampFbo();
+//fboTimeStamp.readToPixels(processFrameImg.getPixelsRef());
+
+/*
+void testApp::makeTimeStampFbo(){
+ 
+    fboTimeStamp.begin();
+    ofClear(0,255);
+    ofSetColor(255);
+    processFrameImg.draw(0,0);
+    
+    int cameraNowTime = cameraLibdc.getTimestamp()-cameraRecordTimestampStart;
+    cout << cameraNowTime<< " camera time" << endl << endl;;
+    ofDrawBitmapString( ofToString(cameraNowTime), 10, cameraHeight-30);
+    
+    fboTimeStamp.end();
+}
+
+*/

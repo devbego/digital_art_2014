@@ -115,9 +115,13 @@ void LeapRecorder::recordFrameXML(ofxLeapMotion &leap){
     lastTagNumber = XML.addTag("FRAME");
     if( XML.pushTag("FRAME", lastTagNumber) ){
         
+        
         int frameTime = ofGetElapsedTimeMillis() - recordingStartTimeMillis;
         XML.setValue("COUNT", recordingFrameCount,lastTagNumber);
         XML.setValue("TIME", frameTime, lastTagNumber);
+        //int leapTime = leap.getMillis()-recordingStartTimestamp;
+        //cout << leapTime << " leap time" << endl;
+        //XML.setValue("TIMESTAMP",leapTime,lastTagNumber);//ofToString(ofGetElapsedTimeMillis()));
         XML.setValue("NH", (int)hands.size(), lastTagNumber);
         
         // For each hand, get the current hand
