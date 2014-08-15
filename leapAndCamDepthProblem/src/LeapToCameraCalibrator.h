@@ -19,7 +19,6 @@ class LeapToCameraCalibrator{
     
     void setup(int camWidth, int camHeight);
     void loadFingerTipPoints(string filePath);
-	
     
     void resetProjector();
     void correctCamera();

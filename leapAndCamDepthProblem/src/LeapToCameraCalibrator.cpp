@@ -12,32 +12,32 @@
 void LeapToCameraCalibrator::setup(int camWidth, int camHeight){
     
     resolution.set(camWidth,camHeight);
-    calibrated				= false;
-    hasFingerCalibPoints	= false;
-    switchYandZ				= false;
+    calibrated = false;
+    hasFingerCalibPoints = false;
+    switchYandZ = false;
     
-	throwRatioX		= 1.6f;
-	throwRatioY		= 1.6f;
-	lensOffsetX		= 0.0f;
-	lensOffsetY		= -0.5f;
-	translationX	= 0.0f;
-	translationY	= 0.0f;
-	translationZ	= 0.0f;
-	rotationX		= 0.0f;
-	rotationY		= 0.0f;
-	rotationZ		= 0.0f;
-    throwRatio		= 1.62f;
-	lensOffset		= ofVec2f(0.0f,0.5f);
+	throwRatioX= 1.6f;
+	throwRatioY= 1.6f;
+	lensOffsetX= 0.0f;
+	lensOffsetY= -0.5f;
+	translationX = 0.0f;
+	translationY =0.0f;
+	translationZ= 0.0f;
+	rotationX= 0.0f;
+	rotationY= 0.0f;
+	rotationZ= 0.0f;
+    throwRatio = 1.62f;
+	lensOffset = ofVec2f(0.0f,0.5f);
     
     projector.setDefaultFar(1000.0f);
 	projector.setDefaultNear(10.0f);
 	projector.setWidth(resolution.x);
 	projector.setHeight(resolution.y);
-
     
     resetProjector();
     
     dirNameLoaded = "";
+    
 }
 
 void LeapToCameraCalibrator::loadFingerTipPoints(string filePath){
@@ -88,13 +88,13 @@ void LeapToCameraCalibrator::loadFingerTipPoints(string filePath){
     
 }
 
-void LeapToCameraCalibrator::correctCameraPNP (ofxCv::Calibration & myCalibration){
+void LeapToCameraCalibrator::correctCameraPNP(ofxCv::Calibration & myCalibration){
     
     vector<cv::Point2f> imagePoints;
 	vector<cv::Point3f> worldPoints;
     
 	if( hasFingerCalibPoints ){
-		for (int i=0; i<calibVectorImage.size(); i++){
+		for(int i = 0; i < calibVectorImage.size(); i++){
 			imagePoints.push_back(ofxCvMin::toCv(calibVectorImage[i]));
 			worldPoints.push_back(ofxCvMin::toCv(calibVectorWorld[i]));
 		}
@@ -111,16 +111,14 @@ void LeapToCameraCalibrator::correctCameraPNP (ofxCv::Calibration & myCalibratio
     cv::Mat tvec(3,1,cv::DataType<double>::type);
 
     cv::solvePnP(worldPoints,imagePoints,
-				 myCalibration.getUndistortedIntrinsics().getCameraMatrix(), myCalibration.getDistCoeffs(),
-				 rvec, tvec, false );
+     myCalibration.getUndistortedIntrinsics().getCameraMatrix(), myCalibration.getDistCoeffs(),
+     rvec, tvec, false );
+      
+//     solvePnP( InputArray objectPoints, InputArray imagePoints,
+//     InputArray cameraMatrix, InputArray distCoeffs,
+//     OutputArray rvec, OutputArray tvec,
+//     bool useExtrinsicGuess=false );
   
-    
-	//     solvePnP( InputArray objectPoints, InputArray imagePoints,
-	//     InputArray cameraMatrix, InputArray distCoeffs,
-	//     OutputArray rvec, OutputArray tvec,
-	//     bool useExtrinsicGuess=false );
-		 
-    
     calibrated = true;
     
 	setExtrinsics(rvec, tvec);
@@ -130,18 +128,9 @@ void LeapToCameraCalibrator::correctCameraPNP (ofxCv::Calibration & myCalibratio
 	
     cv::Mat distortionCoefficients = cv::Mat::zeros(5, 1, CV_64F);
     this->distortion = distortionCoefficients;
-
 	
     this->rotation = rvec;
 	this->translation = tvec;
-	
-	cout << "camera:\n";
-	cout << this->camera << "\n";
-	cout << "RVEC:\n";
-	cout << rvec << "\n";
-	cout << "TVEC:\n";
-	cout << tvec << "\n";
-	cout << "--------\n";
  
 }
 
@@ -189,6 +178,8 @@ void LeapToCameraCalibrator::correctCamera(){
     
     cout << " cameraMatrix " << cameraMatrix << endl;
     
+   
+        
 	calibrated = true;
 
 	setExtrinsics(rotations[0], translations[0]);
@@ -211,8 +202,7 @@ void LeapToCameraCalibrator::setIntrinsics(cv::Mat cameraMatrix)
 	throwRatioX = fovx / resolution.x;
 	throwRatioY = fovy / resolution.y;
     
-	lensOffsetX = (ppx /  resolution.x) - 0.5f; // not sure if this is + or -ve (if wrong, then both this and
-												// ofxCvMin::Helpers::makeProjectionMatrix should be switched
+	lensOffsetX = (ppx /  resolution.x) - 0.5f; // not sure if this is + or -ve (if wrong, then both this and ofxCvMin::Helpers::makeProjectionMatrix should be switched
 	lensOffsetY = (ppy /  resolution.y) - 0.5f;
     
 	const auto newProjection = ofxCvMin::makeProjectionMatrix(cameraMatrix, cv::Size(resolution.x, resolution.y) );

@@ -59,9 +59,18 @@ class testApp : public ofBaseApp{
     
     //------------------------------
 	// For recording the CAMERA.
+	void initializeCamera();
 	ofxLibdc::PointGrey cameraLibdc;
 	ofVideoGrabber cameraVidGrabber;
-    int cameraWidth,cameraHeight;
+	
+	
+	int		cameraWidth;
+	int		cameraHeight;
+	int		imgW;
+	int		imgH;
+	int		drawW;
+	int		drawH;
+    
 	
 	ofImage currentFrameImg; // where we store the current frame we grabbed from the Camera
     ofImage processFrameImg; // where we store the processed frame for calibration/display
@@ -70,20 +79,19 @@ class testApp : public ofBaseApp{
 	vector<ofPixels> imageSequence;
 	
 	
+
 	
 	// Computer Vision
-	int		imgW;
-	int		imgH;
-	Mat		leapFboMat;
+	Mat		leapDiagnosticFboMat;
 	ofPixels leapFboPixels;
-	void	renderLeapFboAndExtractItsPixelData();
+	void	renderDiagnosticLeapFboAndExtractItsPixelData();
     
     //------------------------------
     // Leap
 	ofxLeapMotion leap;
     LeapVisualizer leapVisualizer;
     LeapRecorder   leapRecorder;
-    LeapToCameraCalibrator leapCameraCalibrator;
+    LeapToCameraCalibrator leapToCameraCalibrator;
 	
 	ofEasyCam	cam;
     ofFbo		leapDiagnosticFbo;
@@ -101,11 +109,12 @@ class testApp : public ofBaseApp{
     bool bShowLargeCamImageOnTop;
 	bool bUseRGBLeapFbo;
     bool bShowText;
+	bool bUseVoronoiExpansion;
     
 	int  playingFrame;
     string folderName;
 	
-    float drawW, drawH;
+
     
     //------------------------------
     // Video buffer playback
@@ -121,6 +130,7 @@ class testApp : public ofBaseApp{
     
     //------------------------------
     // get camera calibration pre-calculated
+	void initializeCameraCalibration();
     ofxCv::Calibration myCalibration;
 
     //------------------------------
@@ -151,9 +161,7 @@ class testApp : public ofBaseApp{
 	void guiEvent(ofxUIEventArgs &e);
 	std::string originalAppDataPath;
 	
-	int origW;
-	int origH;
-	int whichImageToDraw; 
+	int	 whichImageToDraw;
 	
 	void updateComputerVision();
 	void extractLuminanceChannelFromVideoFrame();
@@ -169,7 +177,9 @@ class testApp : public ofBaseApp{
 	ofxCvColorImage colorVideo;
 	ofxCvColorImage colorVideoHalfScale;
 	
-	Mat	videoMat;			// cv::Mat version of the current video frame.
+	Mat	videoMat;
+	// vector<Mat> rgbVideoChannelMats;
+	
 	Mat grayMat;
 	Mat graySmall;
 	Mat blurredSmall;
@@ -180,8 +190,15 @@ class testApp : public ofBaseApp{
 	
 	Mat thresholded;		// binarized hand, black-white only
 	Mat	thresholdedFinal;	//
+	Mat	thresholdedFinal8UC3;
+	Mat thresholdedFinalThrice[3];
+	Mat rgbVideoChannelMats[3];
+	Mat leapDiagnosticFboChannelMats[3]; 
 	Mat blurred;
 	Mat thresholdConstMat;
+	
+	Mat morphStructuringElt;
+	
 	
 	float blurKernelSize;
 	float thresholdValue;

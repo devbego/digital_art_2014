@@ -1,0 +1,10 @@
+%YAML:1.0
+cameraW: 1024
+cameraH: 768
+patternXCount: 7
+patternYCount: 10
+squareSize: 1.62
+patternType: 0
+maxSamples: 40
+minTimeBetweenSnapshots: 5
+motionThreshold: 2.5

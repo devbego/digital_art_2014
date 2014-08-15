@@ -11,7 +11,12 @@
 #include "ofMain.h"
 #include "ofxLeapMotion.h"
 #include "ofxXmlSettings.h"
+
+// For screenspace projections
 #include "ofxRay.h"
+
+// For Voronoi rendering
+#include "nbody.h"
 
 enum {
 	ID_NONE  = 0,
@@ -60,13 +65,43 @@ class LeapVisualizer{
     bool bDrawGrid;
 	
 	bool bDrawDiagnosticColors;
-	void setColorDiagnostically (Finger::Type fingerType, Bone::Type boneType, ofPoint bonePt0, ofPoint bonePt1);
+	ofVec3f getColorDiagnostically (Finger::Type fingerType, Bone::Type boneType, ofPoint bonePt0, ofPoint bonePt1);
 	void setProjector(ofxRay::Projector P);
 	ofxRay::Projector screenProjector;
 	bool bProjectorSet;
 	float diagnosticFingerScaling;
 	
 	
+	
+	//-------------------------
+	// For voronoi rendering.
+	void				enableVoronoiRendering (int imgW, int imgH, bool bHalved);
+	void				initPointsToVoronoi();
+	void				feedBogusPointsToVoronoi();
+	void				feedXMLFingerPointsToVoronoi (int whichFinger);
+	void				updateVoronoi();
+	void				drawVoronoi();
+	void				drawVoronoiFrameFromXML (int whichFrame);
+	void				drawVoronoiFrame (ofxLeapMotion & leap);
+	ofFbo				voronoiFbo;
+	
+	bool				bEnableVoronoiRendering;
+	bool				bActuallyDisplayVoronoiFbo;
+	bool				bUseVoronoiFbo;
+	bool				bWorkAtHalfScale;
+	nbody				*NB;
+
+	int 				nbody_w;
+	int 				nbody_h;
     
 
 };
+
+
+
+
+
+
+
+
+

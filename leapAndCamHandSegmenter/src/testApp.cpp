@@ -18,30 +18,203 @@ cp -f ../../../addons/ofxLeapMotion/libs/lib/osx/libLeap.dylib "$TARGET_BUILD_DI
 */
 
 
+/*
+ 
+ TODO
+ Angle testing
+ LEAP frame delay
+ 
+ */
+
 
 
 //--------------------------------------------------------------
 void testApp::setup(){
+	
+	// App settings
+    // ofSetFrameRate(60);
+    ofSetVerticalSync(false);
+	ofSetLogLevel(OF_LOG_WARNING);
+	ofSetCylinderResolution (16, 1, 16);
     
     // All data will be in SharedData
     string basePath = ofToDataPath("", true);
     ofSetDataPathRoot("../../../../../SharedData/");
     
-    cameraWidth = 1024;
-    cameraHeight = 768;
-	drawW = 640;
-    drawH = 480;
+    cameraWidth		= 1024;
+    cameraHeight	= 768;
+	drawW			= cameraWidth/2;
+    drawH			= cameraHeight/2;
+	
+	imgW			= cameraWidth;
+    imgH			= cameraHeight;
+	bWorkAtHalfScale = true;
+	if (bWorkAtHalfScale){
+		imgW		= cameraWidth/2;
+		imgH		= cameraHeight/2;
+	}
+	
+	
+    
+    initializeCamera();
+	initializeCameraCalibration();
+	
+    
+    //--------------- Setup video saver
+	bRecording = false;
+	currentFrameNumber = 0;
+	imageSequence.resize(500);
+	
+	// currentFrameImg and processFrameImg are both at the camera resolution.
+    currentFrameImg.allocate (cameraWidth, cameraHeight, OF_IMAGE_COLOR);
+    processFrameImg.allocate (cameraWidth, cameraHeight, OF_IMAGE_COLOR);
+	for(int i = 0; i < imageSequence.size(); i++) {
+		imageSequence[i].allocate (cameraWidth,cameraHeight, OF_IMAGE_COLOR);
+	}
+    
+
+    playingFrame				= 0;
+    bInPlaybackMode				= false;
+	bEndRecording				= false;
+    playing						= false;
+    bUseVirtualProjector		= false;
+    bUseFbo						= true;
+    bInputMousePoints			= false;
+    bShowCalibPoints			= true;
+    bRecordingForCalibration	= false;
+    bRecordThisCalibFrame		= false;
+    bUseCorrectedCamera			= true;
+    bShowText					= true;
+    bShowLargeCamImageOnTop		= false;    // temp for quickly showing on hand video only
+	bUseVoronoiExpansion		= true;
+	
+	
+	//--------------- Setup leap
+	leap.open();
+    leapVisualizer.setup();
+	leapVisualizer.enableVoronoiRendering (imgW, imgH, bWorkAtHalfScale);
+	leapVisualizer.bDrawGrid = false;
+	
+    leapRecorder.setup();
+	cam.setOrientation(ofPoint(-55, 0, 0));
+	
+	leapColorFbo.allocate		(imgW,imgH, GL_RGBA);
+    leapDiagnosticFbo.allocate	(imgW,imgH, GL_RGB);
+
+	
+    folderName = ofGetTimestampString();
+    lastIndexVideoPos.set(0,0,0);
+    lastIndexLeapPos.set(0,0,0);
     
     
-    //--------------- Setup camera grabber
-    #ifdef _USE_LIBDC_GRABBER
+    ofEnableAlphaBlending();
+	
+    glEnable(GL_NORMALIZE); // needed??
+	glDisable (GL_DEPTH);
+    glDisable(GL_DEPTH_TEST);
+    
+    string versionDisplay = "Using openFrameworks version: " + ofToString( ofGetVersionInfo());
+	cout << versionDisplay;
+	
+	
+	
+	//-------------------------------------------
+	bUseROIForFilters			= false;
+	bUseRedChannelForLuminance	= true;
+	bDoMorphologicalOps			= true;
+	bDoAdaptiveThresholding		= false;
+
+	blurKernelSize				= 4.0;
+	blurredStrengthWeight		= 0.07;
+	thresholdValue				= 26;
+	prevThresholdValue			= 0;
+
+	colorVideo.allocate			(cameraWidth, cameraHeight);
+	colorVideoHalfScale.allocate(imgW, imgH);
+	leapFboPixels.allocate		(imgW, imgH, OF_IMAGE_COLOR);
+	
+	
+	
+	grayMat.create				(imgH, imgW, CV_8UC1);
+	blurred.create				(imgH, imgW, CV_8UC1);
+	thresholded.create			(imgH, imgW, CV_8UC1);
+	thresholdedFinal.create		(imgH, imgW, CV_8UC1);
+	adaptiveThreshImg.create	(imgH, imgW, CV_8UC1);
+	thresholdConstMat.create	(imgH, imgW, CV_8UC1);
+	tempGrayscaleMat1.create	(imgH, imgW, CV_8UC1);
+	tempGrayscaleMat2.create	(imgH, imgW, CV_8UC1);
+	
+	videoMat.create				(imgH, imgW, CV_8UC3);
+	leapDiagnosticFboMat.create	(imgH, imgW, CV_8UC3); // 3-channel
+	coloredBinarizedImg.create	(imgH, imgW, CV_8UC3); // 3-channel
+	thresholdedFinal8UC3.create (imgH, imgW, CV_8UC3);
+	
+	graySmall.create			(imgH/4, imgW/4, CV_8UC1);
+	blurredSmall.create			(imgH/4, imgW/4, CV_8UC1);
+	
+	rgbVideoChannelMats[0].create (imgH, imgW, CV_8UC1);
+	rgbVideoChannelMats[1].create (imgH, imgW, CV_8UC1);
+	rgbVideoChannelMats[2].create (imgH, imgW, CV_8UC1);
+	
+	leapDiagnosticFboChannelMats[0].create (imgH, imgW, CV_8UC1);
+	leapDiagnosticFboChannelMats[1].create (imgH, imgW, CV_8UC1);
+	leapDiagnosticFboChannelMats[2].create (imgH, imgW, CV_8UC1);
+
+	
+	//-------------------------------------
+	// Clear the contents of all images.
+	grayMat.setTo(0);
+	blurred.setTo(0);
+	thresholded.setTo(0);
+	thresholdedFinal.setTo(0);
+	adaptiveThreshImg.setTo(0);
+	thresholdConstMat.setTo(0);
+	tempGrayscaleMat1.setTo(0);
+	tempGrayscaleMat2.setTo(0);
+	
+	leapDiagnosticFboMat.setTo(0);
+	coloredBinarizedImg.setTo(0);
+	graySmall.setTo(0);
+	blurredSmall.setTo(0);
+	//-------------------------------------
+	
+	
+	whichImageToDraw = 5;
+	setupGui();
+	
+	// Get us ready to demo in a hurry
+	string filePathCalib = "calib_chris_corrected_4";
+	calibrateFromXML(filePathCalib);
+	
+	string filePathPlay = "play_chris_corrected_4";
+	folderName = filePathPlay;
+	loadAndPlayRecording(filePathPlay);
+	bUseVirtualProjector = true;
+	
+	
+	
+	int morph_size = 1;
+	int morph_type = cv::MORPH_ELLIPSE;
+	morphStructuringElt = getStructuringElement(morph_type,
+												cv::Size( 2*morph_size + 1, 2*morph_size+1 ),
+												cv::Point(  morph_size,       morph_size ) );
+	
+}
+
+
+
+//--------------------------------------------------------------
+void testApp::initializeCamera(){
+	
+	//--------------- Setup camera grabber
+	#ifdef _USE_LIBDC_GRABBER
 		// For the ofxLibdc::PointGrey cameraLibdc;
 		cout << "libdc cameras found: " << cameraLibdc.getCameraCount() << endl;
-
+		
 		cameraLibdc.setImageType(OF_IMAGE_COLOR);
 		cameraLibdc.setSize (cameraWidth, cameraHeight);
 		//cameraLibdc.setBayerMode(DC1394_COLOR_FILTER_GRBG); // why turns camera video grayscale???
-
+		
 		cameraLibdc.setup();
 		cameraLibdc.setShutterAbs(1. / 31.0);
 		cameraLibdc.setExposure(1.0);
@@ -49,27 +222,18 @@ void testApp::setup(){
 		cameraLibdc.setGain(0);
 		cameraLibdc.setGammaAbs(1);
 		//cameraLibdc.setBlocking(true);
-    #else
+	
+	#else
 		cameraVidGrabber.setVerbose(true);
 		cameraVidGrabber.initGrabber(cameraWidth,cameraHeight);
-    #endif
+	#endif
+}
 
+//--------------------------------------------------------------
+void testApp::initializeCameraCalibration(){
 	
-
-	//--------------- Setup video saver
-	bRecording = false;
-	currentFrameNumber = 0;
-	imageSequence.resize(500);
-
-    currentFrameImg.allocate(cameraWidth, cameraHeight, OF_IMAGE_COLOR);
-    processFrameImg.allocate(cameraWidth, cameraHeight, OF_IMAGE_COLOR);
-	for(int i = 0; i < imageSequence.size(); i++) {
-		imageSequence[i].allocate(cameraWidth,cameraHeight, OF_IMAGE_COLOR);
-	}
-	
-    
-    //--------------- Set up corrected camera calibration
-    #ifdef _USE_CORRECTED_CAMERA
+	//--------------- Set up corrected camera calibration
+	#ifdef _USE_CORRECTED_CAMERA
 		// We are undistorting the camera.
 		ofxCv::FileStorage settings (ofToDataPath("settingsForCameraCalibrator.yml"), ofxCv::FileStorage::READ);
 		if(settings.isOpened()) {
@@ -100,127 +264,8 @@ void testApp::setup(){
 				cout << "calibration ready" << endl;
 			}
 		}
-    #endif
-    
-    
-    
-
-    playingFrame			= 0;
-    bInPlaybackMode			= false;
-	bEndRecording			= false;
-    playing					= false;
-    bUseVirtualProjector	= false;
-    bUseFbo					= true;
-    bInputMousePoints		= false;
-    bShowCalibPoints		= true;
-    bRecordingForCalibration = false;
-    bRecordThisCalibFrame = false;
-    bUseCorrectedCamera		= true;
-    bShowText				= true;
-    bShowLargeCamImageOnTop = false;    // temp for quickly showing on hand video only
-	bUseRGBLeapFbo			= false;
-	
-	
-	//--------------- Setup leap
-	leap.open();
-    leapVisualizer.setup();
-    leapRecorder.setup();
-	cam.setOrientation(ofPoint(-55, 0, 0));
-	leapColorFbo.allocate(cameraWidth,cameraHeight, GL_RGBA);
-    leapDiagnosticFbo.allocate (cameraWidth,cameraHeight, GL_RGB); //GL_RED);
-	leapVisualizer.bDrawDiagnosticColors = !bUseRGBLeapFbo;
-	
-	
-
-    folderName = ofGetTimestampString();
-    lastIndexVideoPos.set(0,0,0);
-    lastIndexLeapPos.set(0,0,0);
-    
-    
-    //--------------- App settings
-    // ofSetFrameRate(60);
-    ofSetVerticalSync(false);
-	ofSetLogLevel(OF_LOG_WARNING);
-	ofSetCylinderResolution (16, 1, 16);
-    
-    ofEnableAlphaBlending();
-	
-    glEnable(GL_NORMALIZE); // needed??
-	//glDisable(GL_DEPTH);
-	glDisable (GL_DEPTH);
-    glDisable(GL_DEPTH_TEST); // why is this messing the render up in the projector cam??????
-    
-    
-    string versionDisplay = "Using openFrameworks version: " + ofToString( ofGetVersionInfo());
-	cout << versionDisplay;
-	
-	
-	
-	//-------------------------------------------
-	imgW = cameraWidth;
-    imgH = cameraHeight;
-	
-	printf("imgW = %d %d\n", imgW, imgH);
-	leapFboPixels.allocate(imgW, imgH, OF_IMAGE_COLOR);
-	leapFboMat.create (imgH, imgW, CV_8UC3);
-	
-	
-	
-	
-	
-	bWorkAtHalfScale = false;
-	bUseROIForFilters = false;
-	bUseRedChannelForLuminance = true;
-	bDoMorphologicalOps = true;
-	bDoAdaptiveThresholding = false;
-
-	/* restore later
-	imgW = origW;
-	imgH = origH;
-	if (bWorkAtHalfScale){
-		imgW = origW/2;
-		imgH = origH/2;
-	}
-	 */
-	
-	blurKernelSize				= 4.0;
-	blurredStrengthWeight		= 0.07;
-	thresholdValue				= 26;
-	prevThresholdValue			= 0;
-
-	colorVideo.allocate(origW, origH);
-	colorVideoHalfScale.allocate(imgW, imgH);
-	
-	grayMat.create				(imgH, imgW, CV_8UC1);
-	blurred.create				(imgH, imgW, CV_8UC1);
-	thresholded.create			(imgH, imgW, CV_8UC1);
-	thresholdedFinal.create		(imgH, imgW, CV_8UC1);
-	adaptiveThreshImg.create	(imgH, imgW, CV_8UC1);
-	thresholdConstMat.create	(imgH, imgW, CV_8UC1);
-	tempGrayscaleMat1.create	(imgH, imgW, CV_8UC1);
-	tempGrayscaleMat2.create	(imgH, imgW, CV_8UC1);
-	
-	coloredBinarizedImg.create	(imgH, imgW, CV_8UC3);
-
-	graySmall.create			(imgH/4, imgW/4, CV_8UC1);
-	blurredSmall.create			(imgH/4, imgW/4, CV_8UC1);
-	
-	whichImageToDraw = 5;
-	setupGui();
-	
-	
-	// Get us ready to demo in a hurry
-	string filePathCalib = "calib_chris_corrected_4";
-	calibrateFromXML(filePathCalib);
-	
-	string filePathPlay = "play_chris_corrected_4";
-	folderName = filePathPlay;
-	loadAndPlayRecording(filePathPlay);
-	bUseVirtualProjector = true;
-	
+	#endif
 }
-
-
 
 //--------------------------------------------------------------
 void testApp::setupGui() {
@@ -243,7 +288,6 @@ void testApp::setupGui() {
 	gui->addLabelToggle("bDoAdaptiveThresholding",		&bDoAdaptiveThresholding);
 	gui->addLabelToggle("bDoMorphologicalOps",			&bDoMorphologicalOps);
 
-	
 	gui->autoSizeToFitWidgets();
 	gui->loadSettings(originalAppDataPath + "HandSegmenterSettings.xml");
 	
@@ -251,23 +295,27 @@ void testApp::setupGui() {
 
 
 
-
-
 //--------------------------------------------------------------
 void testApp::update(){
 	
+	if (bUseVoronoiExpansion){
+		leapVisualizer.updateVoronoi();
+	}
+	
     updateBufferedVideoPlayback();
 	updateProcessFrameImg();
-	renderLeapFboAndExtractItsPixelData();
+	renderDiagnosticLeapFboAndExtractItsPixelData();
 	
 	
 	// when live: use color img from processFrameImg
 	// when playing, use color img from buffered video
 	
 	updateComputerVision();
-    
+	
+
 }
 
+//--------------------------------------------------------------
 void testApp::updateComputerVision(){
 	
 	// currentFrameImg comes directly from the camera, unless there's no camera, in which case it's just black & exists.
@@ -279,7 +327,6 @@ void testApp::updateComputerVision(){
 		thresholdLuminanceImage();
 		applyMorphologicalOps();
 	}
-
 }
 
 
@@ -289,11 +336,12 @@ void testApp::updateComputerVision(){
 //--------------------------------------------------------------
 void testApp::extractLuminanceChannelFromVideoFrame(){
 	
-
+	// videoMat is a cv::Mat version of the current video frame.
+	// It's an intermediary on the way to computing grayMat.
+	
 	//------------------------
 	// Fetch the (color) video
 	if (bWorkAtHalfScale){
-		//Mat videoMatOrig = toCv(video);
 		colorVideo.setFromPixels(video.getPixelsRef());
 		colorVideoHalfScale.scaleIntoMe (colorVideo);
 		videoMat = toCv(colorVideoHalfScale);
@@ -306,14 +354,12 @@ void testApp::extractLuminanceChannelFromVideoFrame(){
 	// Either use the red channel (a good proxy for skin),
 	// Or use the properly weighted components.
 	if (bUseRedChannelForLuminance){
-		vector<Mat> rgbChannelMats;
-		split(videoMat, rgbChannelMats);
-		grayMat = rgbChannelMats[0];
+		split(videoMat, rgbVideoChannelMats);
+		grayMat = rgbVideoChannelMats[0];
 	} else {
 		convertColor(videoMat, grayMat, CV_RGB2GRAY);
 	}
 
-	
 }
 
 
@@ -353,93 +399,102 @@ void testApp::thresholdLuminanceImage(){
 		cv::threshold (tempGrayscaleMat1, thresholded, 1, 255, thresholdMode);
 		
 	} else {
+		
 		// If we are not adaptive thresholding, just use a regular threshold.
 		threshold(grayMat, thresholded, thresholdValue);
 	}
-	
 }
-
 
 //--------------------------------------------------------------
 void testApp::applyMorphologicalOps(){
 	
 	if (bDoMorphologicalOps){
-		cv::Mat matToFilter = thresholded;
 		
-		int morph_size = 1;
-		int morph_type = cv::MORPH_ELLIPSE;
-		Mat morphElement = getStructuringElement( morph_type,
-												 cv::Size( 2*morph_size + 1, 2*morph_size+1 ),
-												 cv::Point(  morph_size,       morph_size ) );
 		// Apply the erosion operation
-		cv::erode ( matToFilter, matToFilter,		morphElement );
-		cv::erode ( matToFilter, matToFilter,		morphElement );
-		cv::dilate( matToFilter, thresholdedFinal,	morphElement );
+		cv::erode ( thresholded, thresholded,		morphStructuringElt );
+		cv::erode ( thresholded, thresholded,		morphStructuringElt );
+		cv::dilate( thresholded, thresholdedFinal,	morphStructuringElt );
 	}
 }
 
 
 
-
-
-
-
-
-
-
-
-
 //--------------------------------------------------------------
-void testApp::renderLeapFboAndExtractItsPixelData(){
-	// For the purposes of computer vision, not display
+void testApp::renderDiagnosticLeapFboAndExtractItsPixelData(){
 	
-	leapDiagnosticFbo.begin();
-	ofClear(0,0,0,0);
-	
-	
-
-	glDisable(GL_DEPTH_TEST);
-	
-	
-
-    if (leapCameraCalibrator.calibrated && bUseVirtualProjector){
-        leapCameraCalibrator.projector.beginAsCamera();
+	// For the purposes of computer vision, not display:
+	// Render the Leap into leapDiagnosticFbo using diagnostic colors,
+	// Colors which encode the orientation and identity of the fingers, etc.
+	{
+		leapDiagnosticFbo.begin();
+		ofClear(0,0,0,0);
+		glEnable(GL_DEPTH_TEST);
 		
-		leapVisualizer.bDrawDiagnosticColors = true;
-		leapVisualizer.setProjector(leapCameraCalibrator.projector);
-								
-		if (bInPlaybackMode && !bRecording){
-			// draw leap from xml
-			int nFrameTags = leapVisualizer.XML.getNumTags("FRAME");
-			if (nFrameTags > 0){
-				ofFill();
-				playingFrame = video.getCurrentFrameID();
-				leapVisualizer.drawFrameFromXML(playingFrame);
+		if (leapToCameraCalibrator.calibrated && bUseVirtualProjector){
+			leapToCameraCalibrator.projector.beginAsCamera();
+			
+			leapVisualizer.bDrawDiagnosticColors = true;
+			leapVisualizer.setProjector(leapToCameraCalibrator.projector);
+			ofFill();
+									
+			if (bInPlaybackMode && !bRecording){ // CANNED LEAP
+				// draw leap from xml
+				int nFrameTags = leapVisualizer.XML.getNumTags("FRAME");
+				if (nFrameTags > 0){
+					playingFrame = video.getCurrentFrameID();
+					
+					// "Fluff out" the hand rendering with a voronoi-based halo
+					// computed through OpenGL tricks on the graphics card. 
+					if (bUseVoronoiExpansion){
+						leapVisualizer.drawVoronoiFrameFromXML(playingFrame);
+						leapToCameraCalibrator.projector.endAsCamera();
+						glDisable(GL_DEPTH_TEST);
+						leapVisualizer.drawVoronoi();
+						glEnable(GL_DEPTH_TEST);
+						leapToCameraCalibrator.projector.beginAsCamera();
+					}
+					
+					leapVisualizer.drawFrameFromXML(playingFrame);
+				}
+				
+			} else { // LIVE LEAP
+				// "Fluff out" the hand rendering with a voronoi-based halo
+				// computed through OpenGL tricks on the graphics card.
+				if (bUseVoronoiExpansion){
+					leapVisualizer.drawVoronoiFrame (leap);
+					leapToCameraCalibrator.projector.endAsCamera();
+					glDisable(GL_DEPTH_TEST);
+					leapVisualizer.drawVoronoi();
+					glEnable(GL_DEPTH_TEST);
+					leapToCameraCalibrator.projector.beginAsCamera();
+				}
+				
+				// draw live leap
+				leapVisualizer.drawFrame(leap);
+				
 			}
-		} else{
-			// draw live leap
-			leapVisualizer.drawFrame(leap);
+			leapToCameraCalibrator.projector.endAsCamera();
 		}
-		
-		leapCameraCalibrator.projector.endAsCamera();
-    }
-	
-	glDisable(GL_DEPTH_TEST);
-	
-	leapDiagnosticFbo.end();
-	
-	// Extract monochrome pixel data from leapFbo
-	leapDiagnosticFbo.readToPixels(leapFboPixels);
-	unsigned char *leapFboPixelData = leapFboPixels.getPixels();
-	leapFboMat = Mat(imgH, imgW, CV_8UC3, leapFboPixelData);
-	cv::flip(leapFboMat, leapFboMat, 0);
-	
-	cv::Mat thresholdedFinal8UC3;
-	cv::Mat in[] = {thresholdedFinal, thresholdedFinal, thresholdedFinal};
-	cv::merge(in, 3, thresholdedFinal8UC3);
-	cv::bitwise_and(leapFboMat, thresholdedFinal8UC3, coloredBinarizedImg);
-}
 
+		glDisable(GL_DEPTH_TEST);
+		leapDiagnosticFbo.end();
+	}
+	
+	// Extract 8UC3 pixel data from leapDiagnosticFbo into leapFboPixels
+	leapDiagnosticFbo.readToPixels(leapFboPixels);
+	unsigned char *leapDiagnosticFboPixelData = leapFboPixels.getPixels();
+	leapDiagnosticFboMat.data = leapDiagnosticFboPixelData;
+	cv::flip(leapDiagnosticFboMat, leapDiagnosticFboMat, 0);
+	
+	
+	// Composite the colored orientation image (in leapFboMat) against
+	// the thresholdedFinal (in an RGBfied version), to produce the coloredBinarizedImg
+	thresholdedFinalThrice[0] = thresholdedFinal;
+	thresholdedFinalThrice[1] = thresholdedFinal;
+	thresholdedFinalThrice[2] = thresholdedFinal;
+	cv::merge(thresholdedFinalThrice, 3, thresholdedFinal8UC3);
+	cv::bitwise_and(leapDiagnosticFboMat, thresholdedFinal8UC3, coloredBinarizedImg);
+}
 
 
 
@@ -449,6 +504,7 @@ void testApp::renderLeapFboAndExtractItsPixelData(){
 void testApp::updateBufferedVideoPlayback(){
 	
 	//------------- Playback
+	// Updates the BufferedVideo playback object, which fetches images from disk.
     if (bInPlaybackMode && !bRecording){
         video.update();
         video.setPlaying(playing);
@@ -459,7 +515,8 @@ void testApp::updateBufferedVideoPlayback(){
 void testApp::updateProcessFrameImg(){
 	
 	
-    //------------- Recording
+    //------------- Frame grabbing.
+	// Copy fresh camera data into currentFrameImg.
     bool bCameraHasNewFrame = false;
 	#ifdef _USE_LIBDC_GRABBER
 		if (cameraLibdc.grabVideo(currentFrameImg)) {
@@ -474,7 +531,9 @@ void testApp::updateProcessFrameImg(){
 		}
 	#endif
     
-    
+	//------------- Camera undistortion.
+    // If selected, undistort the currentFrameImg into processFrameImg.
+	// (Otherwise, just copy currentFrameImg into processFrameImg).
     if (useCorrectedCam()){
         if (myCalibration.size() > 0) {
             myCalibration.undistort(ofxCv::toCv(currentFrameImg), ofxCv::toCv(processFrameImg));
@@ -485,8 +544,10 @@ void testApp::updateProcessFrameImg(){
         processFrameImg.update();
     }
     
+	
+	//------------- Recording (state machine).
+	// Stash camera images to disk, as appropriate.
     if (bRecording && !bInPlaybackMode){
-        
         if (!bEndRecording && currentFrameNumber >= imageSequence.size()){
             bEndRecording = true;
         }
@@ -494,7 +555,7 @@ void testApp::updateProcessFrameImg(){
         if (!bEndRecording) {
             if(bCameraHasNewFrame){
                 
-                // if in calibration record mode only record some frames
+                // If in calibration record, mode only record some frames
                 if( (bRecordingForCalibration && bRecordThisCalibFrame) || !bRecordingForCalibration){
                     leapRecorder.recordFrameXML(leap);
                     
@@ -508,13 +569,11 @@ void testApp::updateProcessFrameImg(){
                     if(bRecordingForCalibration){
                         bRecordThisCalibFrame = false;
                     }
-                    
                     // leap.markFrameAsOld();??????
                 }
             }
             
         } else {
-            
             finishRecording();
         }
     }
@@ -533,9 +592,9 @@ void testApp::draw(){
     ofBackground(20);
 	gui->setPosition(20,20);
     
-    if(!bInPlaybackMode){
+    if (!bInPlaybackMode){
         drawLiveForRecording();
-    }else{
+    } else {
         drawPlayback();
         
         // draw mouse cursor for calibration input
@@ -565,7 +624,7 @@ void testApp::draw(){
 	//drawMat(leapFboMat, mouseX, mouseY, 320,240);
 	
 	
-	if(true) {
+	if (true) {
 		ofPushMatrix();
 		float miniScale = 0.15;
 		ofTranslate(0, ofGetHeight() - (miniScale * imgH));
@@ -573,34 +632,45 @@ void testApp::draw(){
 		
 		int xItem = 0;
 		ofSetColor(ofColor::white);
-		drawMat(grayMat,			imgW * xItem, 0); xItem++;
-		drawMat(thresholded,		imgW * xItem, 0); xItem++;
-		drawMat(adaptiveThreshImg,	imgW * xItem, 0); xItem++;
-		drawMat(thresholdedFinal,	imgW * xItem, 0); xItem++;
-		drawMat(coloredBinarizedImg,imgW * xItem, 0); xItem++;
+		drawMat(grayMat,				imgW * xItem, 0); xItem++;
+		drawMat(thresholded,			imgW * xItem, 0); xItem++;
+		drawMat(adaptiveThreshImg,		imgW * xItem, 0); xItem++;
+		drawMat(thresholdedFinal,		imgW * xItem, 0); xItem++;
+		drawMat(leapDiagnosticFboMat,	imgW * xItem, 0); xItem++;
+		drawMat(coloredBinarizedImg,	imgW * xItem, 0); xItem++;
+		
+		ofSetColor(ofColor::orange);
+		for (int i=0; i<6; i++){
+			ofDrawBitmapString( ofToString(i+1), imgW*i +5, 15/miniScale);
+		}
+		
 		ofPopMatrix();
 	}
 	
 	
+	
+	
+	float insetX = ofGetWidth()-drawW;
+	float insetY = ofGetHeight()-drawH;
+	ofPushMatrix();
+	ofTranslate (insetX, insetY);
 	ofSetColor(ofColor::white);
 	switch(whichImageToDraw){
-		case 1:
 		default:
-			drawMat(grayMat,ofGetWidth()-320, ofGetHeight()-240, 320,240);
-			break;
-		case 2:
-			drawMat(thresholded,ofGetWidth()-320, ofGetHeight()-240, 320,240);
-			break;
-		case 3:
-			drawMat(adaptiveThreshImg,ofGetWidth()-320, ofGetHeight()-240, 320,240);
-			break;
-		case 4:
-			drawMat(thresholdedFinal,ofGetWidth()-320, ofGetHeight()-240, 320,240);
-			break;
-		case 5:
-			drawMat(coloredBinarizedImg, ofGetWidth()-320, ofGetHeight()-240, 320,240);
-			break;
+		case 1:		drawMat(grayMat,				0,0, drawW,drawH);	break;
+		case 2:		drawMat(thresholded,			0,0, drawW,drawH);	break;
+		case 3:		drawMat(adaptiveThreshImg,		0,0, drawW,drawH);	break;
+		case 4:		drawMat(thresholdedFinal,		0,0, drawW,drawH);	break;
+		case 5:		drawMat(leapDiagnosticFboMat,	0,0, drawW,drawH);	break;
+		case 6:		drawMat(coloredBinarizedImg,	0,0, drawW,drawH);	break;
+		
 	}
+	ofPopMatrix();
+	
+	ofPushMatrix();
+	//ofTranslate(mouseX, mouseY);
+	//leapVisualizer.drawVoronoi();
+	ofPopMatrix();
 
 }
 
@@ -627,10 +697,10 @@ void testApp::drawPlayback(){
     drawLeapWorld();
     
     // if calibrated and want to see view from projector
-    if (leapCameraCalibrator.calibrated && bShowCalibPoints && bUseVirtualProjector){
+    if (leapToCameraCalibrator.calibrated && bShowCalibPoints && bUseVirtualProjector){
         ofPushMatrix();
         ofScale(drawW/(float)cameraWidth, drawH/(float)cameraHeight);
-        leapCameraCalibrator.drawImagePoints();
+        leapToCameraCalibrator.drawImagePoints();
         ofPopMatrix();
     }
     
@@ -651,8 +721,7 @@ void testApp::drawPlayback(){
 void testApp::drawLeapWorld(){
     
     // draw video underneath calibration to see alignment
-	
-    if (leapCameraCalibrator.calibrated && bUseVirtualProjector){
+    if (leapToCameraCalibrator.calibrated && bUseVirtualProjector){
         ofSetColor(255);
         if(bInPlaybackMode ){
             video.draw(0, 0, drawW,drawH);
@@ -664,8 +733,6 @@ void testApp::drawLeapWorld(){
             #endif
         }
     }
-
-    
     
     // start leapColorFbo
 	leapVisualizer.bDrawDiagnosticColors = false;
@@ -675,8 +742,12 @@ void testApp::drawLeapWorld(){
     }
     
     // start camera (either calibrated projection or easy cam)
-    if (leapCameraCalibrator.calibrated && bUseVirtualProjector){
-        leapCameraCalibrator.projector.beginAsCamera();
+    if (leapToCameraCalibrator.calibrated && bUseVirtualProjector){
+        leapToCameraCalibrator.projector.beginAsCamera();
+		
+		//glEnable(GL_DEPTH);
+		glEnable(GL_DEPTH_TEST);
+		
     } else {
 		glEnable(GL_DEPTH);
 		glEnable(GL_DEPTH_TEST);
@@ -688,8 +759,8 @@ void testApp::drawLeapWorld(){
     leapVisualizer.drawGrid();
     
     // draw world points
-    if (leapCameraCalibrator.calibrated && bShowCalibPoints){
-        leapCameraCalibrator.drawWorldPoints();
+    if (leapToCameraCalibrator.calibrated && bShowCalibPoints){
+        leapToCameraCalibrator.drawWorldPoints();
     }
     
     // draw leap from xml
@@ -711,19 +782,17 @@ void testApp::drawLeapWorld(){
     }
     
     // end camera
-	if (leapCameraCalibrator.calibrated && bUseVirtualProjector){
-        leapCameraCalibrator.projector.endAsCamera();
+	if (leapToCameraCalibrator.calibrated && bUseVirtualProjector){
+        leapToCameraCalibrator.projector.endAsCamera();
 		glDisable(GL_DEPTH_TEST);
-    }else {
-        
+    } else {
         // draw calibration projector for debugging
-        if (leapCameraCalibrator.calibrated){
-            leapCameraCalibrator.projector.draw();
+        if (leapToCameraCalibrator.calibrated){
+            leapToCameraCalibrator.projector.draw();
         }
         cam.end();
 		glDisable(GL_DEPTH_TEST);
 		//glDisable(GL_DEPTH);
-        //
     }
     
     // end fbo
@@ -731,9 +800,9 @@ void testApp::drawLeapWorld(){
         leapColorFbo.end();
     }
     
-    
+    //-------------------------- Display semitransparent leapColorFbo
     // if we are calibrated draw leapFbo with transparency to see overlay better
-    if (leapCameraCalibrator.calibrated) {
+    if (leapToCameraCalibrator.calibrated) {
 		ofSetColor(255,255,255,200);
 	} else {
 		ofSetColor(255,255,255,255);
@@ -813,7 +882,7 @@ void testApp::drawText(){
     textY+=15;
     ofSetColor(ofColor::white);
     ofDrawBitmapString("Playback folder: "+folderName,  textX, textY); textY+=15;
-    ofDrawBitmapString("Calibration file: "+leapCameraCalibrator.dirNameLoaded,  textX, textY); textY+=15;
+    ofDrawBitmapString("Calibration file: "+leapToCameraCalibrator.dirNameLoaded,  textX, textY); textY+=15;
 
 	
 }
@@ -924,26 +993,24 @@ void testApp::loadAndPlayRecording(string folder){
 //--------------------------------------------------------------
 void testApp::calibrateFromXML( string calibFolderName ){
     
-    leapCameraCalibrator.setup(cameraWidth, cameraHeight);
-    leapCameraCalibrator.loadFingerTipPoints("recordings/"+calibFolderName+"/calib/fingerCalibPts.xml");
-    
-    if(useCorrectedCam()){
-        leapCameraCalibrator.correctCameraPNP(myCalibration);
-    }else{
-        leapCameraCalibrator.correctCamera();
-
+    leapToCameraCalibrator.setup (cameraWidth, cameraHeight);
+    leapToCameraCalibrator.loadFingerTipPoints("recordings/"+calibFolderName+"/calib/fingerCalibPts.xml");
+	
+    if (useCorrectedCam()){
+        leapToCameraCalibrator.correctCameraPNP(myCalibration);
+    } else{
+        leapToCameraCalibrator.correctCamera();
     }
 }
 
+//--------------------------------------------------------------
 bool testApp::useCorrectedCam(){
-
-#ifdef _USE_CORRECTED_CAMERA
-    if(bUseCorrectedCamera) return true;
-    else return false;
-#else
-    return false;
-#endif
-
+	#ifdef _USE_CORRECTED_CAMERA
+		if(bUseCorrectedCamera) return true;
+		else return false;
+	#else
+		return false;
+	#endif
 }
 
 //--------------------------------------------------------------
@@ -1048,6 +1115,7 @@ void testApp::keyPressed(int key){
 		case '#':	whichImageToDraw = 3; break;
 		case '$':	whichImageToDraw = 4; break;
 		case '%':	whichImageToDraw = 5; break;
+		case '^':	whichImageToDraw = 6; break;
             
     }
     
