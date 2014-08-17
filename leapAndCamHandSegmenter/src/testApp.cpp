@@ -307,11 +307,19 @@ void testApp::setupGui() {
 //--------------------------------------------------------------
 void testApp::update(){
 	
+	updateBufferedVideoPlayback();
+	
+	
+	// The leapVisualizer's "voronoi expansion" is a colored halo
+	// that fills in unlabeled regions of the camera-based silhouette
+	// that aren't covered by the geometrically-rendered LEAP hand.
+	// The red/green channels indicate the local orientation of the finger
+	// (which is used to suppress orthogonal creases), while the blue channel
+	// indicates which finger is which (including joint information).
 	if (bUseVoronoiExpansion){
 		leapVisualizer.updateVoronoi();
 	}
 	
-    updateBufferedVideoPlayback();
 	updateProcessFrameImg();
 	renderDiagnosticLeapFboAndExtractItsPixelData();
 	
