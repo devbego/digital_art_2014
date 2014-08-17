@@ -171,6 +171,7 @@ class testApp : public ofBaseApp{
 	void updateComputerVision();
 	void extractLuminanceChannelFromVideoFrame();
 	void applyMorphologicalOps();
+	void computeFrameDifferencing();
 	void thresholdLuminanceImage();
 	
 	bool bWorkAtHalfScale;
@@ -178,6 +179,7 @@ class testApp : public ofBaseApp{
 	bool bUseRedChannelForLuminance;
 	bool bDoMorphologicalOps;
 	bool bDoAdaptiveThresholding;
+	bool bComputePixelBasedFrameDifferencing;
 	
 	ofxCvColorImage colorVideo;
 	ofxCvColorImage colorVideoHalfScale;
@@ -186,6 +188,8 @@ class testApp : public ofBaseApp{
 	// vector<Mat> rgbVideoChannelMats;
 	
 	Mat grayMat;
+	Mat prevGrayMat;
+	Mat diffGrayMat;
 	Mat graySmall;
 	Mat blurredSmall;
 	Mat adaptiveThreshImg;	// blurred minus Constant; the per-pixel thresholds
@@ -210,6 +214,8 @@ class testApp : public ofBaseApp{
 	float prevThresholdValue;
 	float blurredStrengthWeight;
 	
-	
+	float amountOfPixelMotion01;
+	float amountOfLeapMotion01;
+	float motionAlpha; 
     
 };

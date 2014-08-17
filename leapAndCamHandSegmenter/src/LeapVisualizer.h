@@ -90,6 +90,11 @@ class LeapVisualizer{
 	ofPoint handOrientationY;
 	ofPoint handOrientationZ;
 	
+	void updateHandPointVectors();
+	float getMotionAmountFromHandPointVectors();
+	vector<ofPoint> prevHandPoints;
+	vector<ofPoint> currHandPoints;
+	
 	
 	//-------------------------
 	// For voronoi rendering.

@@ -622,6 +622,7 @@ void LeapVisualizer::drawVoronoiFrame (ofxLeapMotion & leap){
 
 //--------------------------------------------------------------
 void LeapVisualizer::drawFrame (ofxLeapMotion & leap){
+	updateHandPointVectors();
 	
 	// If hand(s) exist in the frame,
 	// Get the vector of Hands from ofxLeap.
@@ -715,6 +716,7 @@ void LeapVisualizer::drawBone (const Finger &finger, Bone &bone, ofxLeapMotion &
 	
 	// ofPoint bonePtC = leap.getofPoint ( bone.center()); // works, but:
 	ofPoint bonePtC = (bonePt0 + bonePt1)/2.0;
+	currHandPoints.push_back(bonePtC);
 	
 	if (bDrawSimple){
 		// Draw a simple white skeleton.
@@ -1037,7 +1039,45 @@ void LeapVisualizer::drawArm (Hand & hand,ofxLeapMotion & leap){
 
 
 //--------------------------------------------------------------
+void LeapVisualizer::updateHandPointVectors(){
+	
+	prevHandPoints.clear();
+	int nHandPoints = currHandPoints.size();
+	if (nHandPoints > 0){
+		for (int i=0; i<nHandPoints; i++){
+			ofPoint aPoint;
+			aPoint.set(currHandPoints[i]);
+			prevHandPoints.push_back(aPoint);
+		}
+	}
+	currHandPoints.clear();
+}
+
+
+//--------------------------------------------------------------
+float LeapVisualizer::getMotionAmountFromHandPointVectors(){
+	int nCurrHandPoints = currHandPoints.size();
+	int nPrevHandPoints = prevHandPoints.size();
+	float out = 0;
+	if ((nCurrHandPoints == nPrevHandPoints) && (nCurrHandPoints > 0)){
+		
+		for (int i=0; i<nCurrHandPoints; i++){
+			float dx = currHandPoints[i].x - prevHandPoints[i].x;
+			float dy = currHandPoints[i].y - prevHandPoints[i].y;
+			float dz = currHandPoints[i].z - prevHandPoints[i].z;
+			float dh = sqrt(dx*dx + dy*dy + dz*dz);
+			out += dh;
+		}
+		out /= (float) nCurrHandPoints;
+	}
+	return out;
+}
+
+
+
+//--------------------------------------------------------------
 void LeapVisualizer::drawFrameFromXML(int whichFrame, ofxXmlSettings & XML){ // should be XML, not myXML
+	updateHandPointVectors();
 	
     int nFrameTags = myXML.getNumTags("FRAME");
 	if ((whichFrame >= 0) && (whichFrame < nFrameTags)){
@@ -1060,6 +1100,7 @@ void LeapVisualizer::drawFrameFromXML(int whichFrame, ofxXmlSettings & XML){ // 
 
 //--------------------------------------------------------------
 void LeapVisualizer::drawFrameFromXML (int whichFrame){
+	updateHandPointVectors();
 	
 	int nFrameTags = this->myXML.getNumTags("FRAME");
 	if ((whichFrame >= 0) && (whichFrame < nFrameTags)){
@@ -1247,6 +1288,7 @@ void LeapVisualizer::drawFingerFromXML (ofxXmlSettings & XML){
 			}
 			bonePt1 = ofPoint(XML.getValue("P:X",0.0), XML.getValue("P:Y",0.0), XML.getValue("P:Z",0.0));
 			bonePtC = (bonePt0 + bonePt1)/2.0;
+			currHandPoints.push_back(bonePtC);
 			
 			if (bDrawSimple){
 				// Draw a simple skeleton.

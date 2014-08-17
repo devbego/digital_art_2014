@@ -31,7 +31,11 @@ cp -f ../../../addons/ofxLeapMotion/libs/lib/osx/libLeap.dylib "$TARGET_BUILD_DI
  trace contour
  
  redesign (simplified) mesh for hands.
+ DO COMPUTER VISION for NON-PLAYBACK MODE!
  
+ use ROI
+ use IPP
+ use Accelerate
  */
 
 
@@ -95,6 +99,7 @@ void testApp::setup(){
     bShowText					= true;
     bShowLargeCamImageOnTop		= false;    // temp for quickly showing on hand video only
 	bUseVoronoiExpansion		= true;
+	bComputePixelBasedFrameDifferencing = false;
 	
 	bShowOffBy1Frame			= false;
     framesBackToPlay			= 0;
@@ -146,6 +151,9 @@ void testApp::setup(){
 	
 	
 	grayMat.create				(imgH, imgW, CV_8UC1);
+	prevGrayMat.create			(imgH, imgW, CV_8UC1);
+	diffGrayMat.create			(imgH, imgW, CV_8UC1);
+	
 	blurred.create				(imgH, imgW, CV_8UC1);
 	thresholded.create			(imgH, imgW, CV_8UC1);
 	thresholdedFinal.create		(imgH, imgW, CV_8UC1);
@@ -201,6 +209,9 @@ void testApp::setup(){
 	loadAndPlayRecording(filePathPlay);
 	bUseVirtualProjector = true;
 
+	amountOfPixelMotion01 = 0;
+	amountOfLeapMotion01 = 0;
+	motionAlpha = 0.95;
 	
 	int morph_size = 1;
 	int morph_type = cv::MORPH_ELLIPSE;
@@ -284,7 +295,11 @@ void testApp::setupGui() {
 	gui->addLabel("Hand Segmentation");
 	gui->addSpacer();
 	gui->addFPS();
+	
 	// gui->addValuePlotter("elapsedMicros", 256, 0, 30000, &elapsedMicros);
+	// gui->addValuePlotter("amountOfPixelMotion01", 256, 0.00, 0.25, &amountOfPixelMotion01);
+	gui->addValuePlotter("amountOfLeapMotion01", 256, 0.00, 20.0, &amountOfLeapMotion01);
+	
 	
 	gui->addSpacer();
 	gui->addSlider("thresholdValue", 0.0, 64.0, &thresholdValue);
@@ -307,6 +322,8 @@ void testApp::setupGui() {
 //--------------------------------------------------------------
 void testApp::update(){
 	
+	// Update the BufferedVideo playback object,
+	// which fetches image sequences from disk.
 	updateBufferedVideoPlayback();
 	
 	
@@ -350,11 +367,13 @@ void testApp::updateComputerVision(){
 
 	if (bInPlaybackMode){
 		extractLuminanceChannelFromVideoFrame();
+		computeFrameDifferencing();
 		thresholdLuminanceImage();
 		applyMorphologicalOps();
 	}
-}
+	
 
+}
 
 
 
@@ -377,8 +396,8 @@ void testApp::extractLuminanceChannelFromVideoFrame(){
 	
 	//------------------------
 	// Extract (or compute) the grayscale luminance channel.
-	// Either use the red channel (a good proxy for skin),
-	// Or use the properly weighted components.
+	// Either use just the red channel (a very good proxy for skin),
+	// Or use the properly weighted components (more computationally expensive).
 	if (bUseRedChannelForLuminance){
 		split(videoMat, rgbVideoChannelMats);
 		grayMat = rgbVideoChannelMats[0];
@@ -388,6 +407,34 @@ void testApp::extractLuminanceChannelFromVideoFrame(){
 
 }
 
+
+//--------------------------------------------------------------
+void testApp::computeFrameDifferencing(){
+	if (bComputePixelBasedFrameDifferencing){
+	
+		// Compute frame-differencing in order to estimate the amount of motion in the frame.
+		// When there's too much motion in the frame (i.e. hands shaking around too much),
+		// then we'll use this information to decide whether or not to do the special effects.
+		// By not running the special effects when there's too much motion, we hope to
+		// encourage the visitor to hold still and move slowly :)
+		// Uses grayMat, prevGrayMat, and diffGrayMat.
+		
+		//frame-differencing parameters:
+		float diffThreshValue = 20;
+		
+		// Take the abs value of the difference between curr and prev,
+		// store in diff, then swap curr into prev:
+		absdiff (grayMat, prevGrayMat, diffGrayMat );
+		grayMat.copyTo (prevGrayMat);
+		
+		// Threshold the diffGrayMat into itself
+		cv::threshold (diffGrayMat, diffGrayMat, diffThreshValue, 255, cv::THRESH_BINARY);
+		
+		int count = countNonZero( diffGrayMat );
+		float motionf = (float) count / (float)(imgW * imgH);
+		amountOfPixelMotion01 = motionAlpha*amountOfPixelMotion01 + (1.0-motionAlpha)*motionf;
+	}
+}
 
 
 
@@ -448,8 +495,8 @@ void testApp::applyMorphologicalOps(){
 //--------------------------------------------------------------
 void testApp::renderDiagnosticLeapFboAndExtractItsPixelData(){
 	
-	// For the purposes of computer vision, not display:
-	// Render the Leap into leapDiagnosticFbo using diagnostic colors,
+	// This is for the purposes of computer vision -- not display:
+	// Render the Leap into leapDiagnosticFbo using diagnostic colors:
 	// Colors which encode the orientation and identity of the fingers, etc.
 	{
 		leapDiagnosticFbo.begin();
@@ -489,6 +536,10 @@ void testApp::renderDiagnosticLeapFboAndExtractItsPixelData(){
 					
 					// Render the actual CGI hand, on top of the voronoi diagram (using diagnostic colors)
 					leapVisualizer.drawFrameFromXML(whichFrame);
+					
+					// Update the calculated amount of hand movement (derived from leap)
+					float movement = leapVisualizer.getMotionAmountFromHandPointVectors();
+					amountOfLeapMotion01 = (motionAlpha*amountOfLeapMotion01) + (1.0-motionAlpha)*movement;
 				}
 				
 			} else { // LIVE LEAP
@@ -522,6 +573,10 @@ void testApp::renderDiagnosticLeapFboAndExtractItsPixelData(){
 				} else {
 					leapVisualizer.drawFrame(leap); // no frame delay
 				}
+				
+				// Update the calculated amount of hand movement (derived from leap)
+				float movement = leapVisualizer.getMotionAmountFromHandPointVectors();
+				amountOfLeapMotion01 = (motionAlpha*amountOfLeapMotion01) + (1.0-motionAlpha)*movement;
 				
 			}
 			leapToCameraCalibrator.projector.endAsCamera();

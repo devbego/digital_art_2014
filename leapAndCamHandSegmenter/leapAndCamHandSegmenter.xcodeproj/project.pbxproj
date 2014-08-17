@@ -2046,8 +2046,8 @@
 			isa = PBXGroup;
 			children = (
 				E4B69E1D0A3A1BDC003C02F2 /* main.cpp */,
-				8493AF3A1985A26500226D61 /* testApp.h */,
 				8493AF391985A26500226D61 /* testApp.cpp */,
+				8493AF3A1985A26500226D61 /* testApp.h */,
 				8493AF3C1985B7C800226D61 /* BufferedVideo.h */,
 				8493AF521986AF0500226D61 /* FingerTipCalibRecorder.h */,
 				8493AF561986EFE900226D61 /* LeapToCameraCalibrator.cpp */,
