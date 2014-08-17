@@ -15,6 +15,7 @@
 #include "FingerTipCalibRecorder.h"
 #include "LeapToCameraCalibrator.h"
 
+
 /* 
  Made some sanity changes in ofxXmlSettings:
 	const float floatPrecision = 4; // changed by GL
@@ -82,37 +83,41 @@ class testApp : public ofBaseApp{
 
 	
 	// Computer Vision
-	Mat		leapDiagnosticFboMat;
-	ofPixels leapFboPixels;
-	void	renderDiagnosticLeapFboAndExtractItsPixelData();
+	Mat						leapDiagnosticFboMat;
+	ofPixels				leapFboPixels;
+	void					renderDiagnosticLeapFboAndExtractItsPixelData();
     
     //------------------------------
     // Leap
-	ofxLeapMotion leap;
-    LeapVisualizer leapVisualizer;
-    LeapRecorder   leapRecorder;
-    LeapToCameraCalibrator leapToCameraCalibrator;
+	ofxLeapMotion			leap;
+    LeapVisualizer			leapVisualizer;
+    LeapRecorder			leapRecorder;
+	LeapRecorder			prevLeapFrameRecorder;
+    LeapToCameraCalibrator	leapToCameraCalibrator;
+	void updateLeapHistoryRecorder();
 	
-	ofEasyCam	cam;
-    ofFbo		leapDiagnosticFbo;
-	ofFbo		leapColorFbo;
+	ofEasyCam				cam;
+    ofFbo					leapDiagnosticFbo;
+	ofFbo					leapColorFbo;
 	
-    bool bInPlaybackMode;
-    bool bRecording;
-    bool bRecordingForCalibration;
-    bool bUseVirtualProjector;
-    bool bUseFbo;
-    bool bInputMousePoints;
-    bool bShowCalibPoints;
-    bool bRecordThisCalibFrame;
-    bool bUseCorrectedCamera;
-    bool bShowLargeCamImageOnTop;
-	bool bUseRGBLeapFbo;
-    bool bShowText;
-	bool bUseVoronoiExpansion;
-    
-	int  playingFrame;
-    string folderName;
+    bool	bInPlaybackMode;
+    bool	bRecording;
+    bool	bRecordingForCalibration;
+    bool	bUseVirtualProjector;
+    bool	bUseFbo;
+    bool	bInputMousePoints;
+    bool	bShowCalibPoints;
+    bool	bRecordThisCalibFrame;
+    bool	bUseCorrectedCamera;
+    bool	bShowLargeCamImageOnTop;
+	bool	bUseRGBLeapFbo;
+    bool	bShowText;
+	bool	bUseVoronoiExpansion;
+	bool	bShowOffBy1Frame;
+	
+    int		framesBackToPlay;
+	int		playingFrame;
+    string	folderName;
 	
 
     
@@ -204,6 +209,7 @@ class testApp : public ofBaseApp{
 	float thresholdValue;
 	float prevThresholdValue;
 	float blurredStrengthWeight;
+	
 	
     
 };

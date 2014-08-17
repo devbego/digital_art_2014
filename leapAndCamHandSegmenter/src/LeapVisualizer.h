@@ -17,6 +17,7 @@
 
 // For Voronoi rendering
 #include "nbody.h"
+#include "ofxBlur.h"
 
 enum {
 	ID_NONE  = 0,
@@ -44,33 +45,50 @@ class LeapVisualizer{
 	void drawGrid();
     
     // xml drawing
-    void drawFrameFromXML(int whichFrame);
-    void drawHandFromXML(int whichHand);
-    void drawFingersFromXML();
-    void drawFingerFromXML();
-    void drawPalmFromXML();
-    void drawArmFromXML();
+    void drawFrameFromXML	(int whichFrame);
+	void drawFrameFromXML	(int whichFrame, ofxXmlSettings & myXML);
+	
+	void drawHandFromXML	(int whichHand, ofxXmlSettings & XML);
+    void drawFingersFromXML	(ofxXmlSettings & XML);
+    void drawFingerFromXML	(ofxXmlSettings & XML);
+    void drawPalmFromXML	(ofxXmlSettings & XML);
+    void drawArmFromXML		(ofxXmlSettings & XML);
   
     // live drawing
-    void drawFrame(ofxLeapMotion & leap);
-    void drawHand(Hand & hand,ofxLeapMotion & leap);
-    void drawFingers(Hand & hand,ofxLeapMotion & leap);
-    void drawFinger(const Finger & finger,ofxLeapMotion & leap);
-    void drawBone(const Finger & finger, Bone & bone,ofxLeapMotion & leap);
-    void drawPalm(Hand & hand,ofxLeapMotion & leap);
-    void drawArm(Hand & hand,ofxLeapMotion & leap);
+    void drawFrame			(ofxLeapMotion & leap);
+    void drawHand			(Hand & hand, ofxLeapMotion & leap);
+    void drawFingers		(Hand & hand, ofxLeapMotion & leap);
+    void drawFinger			(const Finger & finger, ofxLeapMotion & leap);
+    void drawBone			(const Finger & finger, Bone & bone, ofxLeapMotion & leap);
+    void drawPalm			(Hand & hand, ofxLeapMotion & leap);
+    void drawArm			(Hand & hand, ofxLeapMotion & leap);
     
-    ofxXmlSettings XML;
+    ofxXmlSettings myXML;
 	bool bDrawSimple;
     bool bDrawGrid;
 	
-	bool bDrawDiagnosticColors;
+	bool	bDrawDiagnosticColors;
 	ofVec3f getColorDiagnostically (Finger::Type fingerType, Bone::Type boneType, ofPoint bonePt0, ofPoint bonePt1);
+	float	getDiagnosticOrientationFromColor (float r255, float g255, float b255);
+	int		getDiagnosticIdentityFromColor (float r255, float g255, float b255);
+	
 	void setProjector(ofxRay::Projector P);
 	ofxRay::Projector screenProjector;
 	bool bProjectorSet;
 	float diagnosticFingerScaling;
 	
+	//-------------------------
+	// Centroid and orientation of the current hand, stashed temporarily in global variables.
+	void captureHandPropertiesFromLeap ( ofxLeapMotion &leap, int whichHandId);
+	void captureHandPropertiesFromXML  ( ofxXmlSettings &XML, int whichFrame, int whichHandId);
+	void drawCapturedHandProperties(); 
+	ofPoint handCentroid;
+	ofPoint handNormal;
+	ofVec3f handCentroidVec3f;
+	ofVec3f handNormalVec3f;
+	ofPoint handOrientationX;
+	ofPoint handOrientationY;
+	ofPoint handOrientationZ;
 	
 	
 	//-------------------------
@@ -78,10 +96,10 @@ class LeapVisualizer{
 	void				enableVoronoiRendering (int imgW, int imgH, bool bHalved);
 	void				initPointsToVoronoi();
 	void				feedBogusPointsToVoronoi();
-	void				feedXMLFingerPointsToVoronoi (int whichFinger);
+	void				feedXMLFingerPointsToVoronoi (int whichFinger, ofxXmlSettings & XML);
 	void				updateVoronoi();
 	void				drawVoronoi();
-	void				drawVoronoiFrameFromXML (int whichFrame);
+	void				drawVoronoiFrameFromXML (int whichFrame, ofxXmlSettings & XML);
 	void				drawVoronoiFrame (ofxLeapMotion & leap);
 	ofFbo				voronoiFbo;
 	
@@ -93,7 +111,10 @@ class LeapVisualizer{
 
 	int 				nbody_w;
 	int 				nbody_h;
-    
+	
+
+	bool				bDoVoronoiShaderBlur;
+    ofxBlur				blurShader;
 
 };
 

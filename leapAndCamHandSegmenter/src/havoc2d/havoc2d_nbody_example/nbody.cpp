@@ -412,7 +412,7 @@ nbody::nbody (int inw, int inh){
 	
 	FillGeomRatio = 0.65f;  // slower if smaller -- IN (0,1)
 	vSites=NULL;
-	MaxDist = 0.18; //faster if smaller 2.83f; // sqrt(8.0f);
+	MaxDist = 0.19; //faster if smaller 2.83f; // sqrt(8.0f);
 	//float MaxDist=0.1f;
 
 	FullScreenModeOn=1;

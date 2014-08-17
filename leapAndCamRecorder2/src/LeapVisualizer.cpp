@@ -499,7 +499,6 @@ void LeapVisualizer::drawFrameFromXML(int whichFrame, ofxXmlSettings & myXML){
 		//this pops us out of the FRAME tag, sets the root back to the xml document
 		myXML.popTag();
 	}
-
 }
 
 //--------------------------------------------------------------
@@ -524,7 +523,7 @@ void LeapVisualizer::drawFrameFromXML(int whichFrame){
 }
 
 //--------------------------------------------------------------
-void LeapVisualizer::drawHandFromXML(int whichHand,ofxXmlSettings & XML){
+void LeapVisualizer::drawHandFromXML (int whichHand,ofxXmlSettings & XML){
 	XML.pushTag("H", whichHand);
 	
 	drawFingersFromXML(XML);

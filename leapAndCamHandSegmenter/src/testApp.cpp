@@ -21,8 +21,16 @@ cp -f ../../../addons/ofxLeapMotion/libs/lib/osx/libLeap.dylib "$TARGET_BUILD_DI
 /*
  
  TODO
- Angle testing
- LEAP frame delay
+ 
+ use average orientation of the hand instead of bringing orientation towards zero
+ detect folded hands
+ detect hands moving too much
+ detect hands oriented the wrong way. 
+ 
+ composite laplacian edges.
+ trace contour
+ 
+ redesign (simplified) mesh for hands.
  
  */
 
@@ -88,6 +96,8 @@ void testApp::setup(){
     bShowLargeCamImageOnTop		= false;    // temp for quickly showing on hand video only
 	bUseVoronoiExpansion		= true;
 	
+	bShowOffBy1Frame			= false;
+    framesBackToPlay			= 0;
 	
 	//--------------- Setup leap
 	leap.open();
@@ -96,6 +106,7 @@ void testApp::setup(){
 	leapVisualizer.bDrawGrid = false;
 	
     leapRecorder.setup();
+	prevLeapFrameRecorder.setup();
 	cam.setOrientation(ofPoint(-55, 0, 0));
 	
 	leapColorFbo.allocate		(imgW,imgH, GL_RGBA);
@@ -105,7 +116,6 @@ void testApp::setup(){
     folderName = ofGetTimestampString();
     lastIndexVideoPos.set(0,0,0);
     lastIndexLeapPos.set(0,0,0);
-    
     
     ofEnableAlphaBlending();
 	
@@ -190,8 +200,7 @@ void testApp::setup(){
 	folderName = filePathPlay;
 	loadAndPlayRecording(filePathPlay);
 	bUseVirtualProjector = true;
-	
-	
+
 	
 	int morph_size = 1;
 	int morph_type = cv::MORPH_ELLIPSE;
@@ -311,8 +320,17 @@ void testApp::update(){
 	// when playing, use color img from buffered video
 	
 	updateComputerVision();
+	updateLeapHistoryRecorder();
 	
+}
 
+//--------------------------------------------------------------
+void testApp::updateLeapHistoryRecorder(){
+	//------------- Store last frame
+    if (prevLeapFrameRecorder.XML.getNumTags("FRAME") > 6){
+        prevLeapFrameRecorder.XML.removeTag("FRAME",0);
+    }
+    prevLeapFrameRecorder.recordFrameXML(leap);
 }
 
 //--------------------------------------------------------------
@@ -438,15 +456,22 @@ void testApp::renderDiagnosticLeapFboAndExtractItsPixelData(){
 			ofFill();
 									
 			if (bInPlaybackMode && !bRecording){ // CANNED LEAP
-				// draw leap from xml
-				int nFrameTags = leapVisualizer.XML.getNumTags("FRAME");
+				// draw leap from pre-loaded xml recording
+				int nFrameTags = leapVisualizer.myXML.getNumTags("FRAME");
 				if (nFrameTags > 0){
+					
+					// Compute the index of which frame to draw.
 					playingFrame = video.getCurrentFrameID();
+					int whichFrame = playingFrame;
+					if (playingFrame > 0 && bShowOffBy1Frame){
+						whichFrame = (playingFrame - framesBackToPlay + nFrameTags)%nFrameTags;
+					}
+					
 					
 					// "Fluff out" the hand rendering with a voronoi-based halo
 					// computed through OpenGL tricks on the graphics card. 
 					if (bUseVoronoiExpansion){
-						leapVisualizer.drawVoronoiFrameFromXML(playingFrame);
+						leapVisualizer.drawVoronoiFrameFromXML (whichFrame, leapVisualizer.myXML);
 						leapToCameraCalibrator.projector.endAsCamera();
 						glDisable(GL_DEPTH_TEST);
 						leapVisualizer.drawVoronoi();
@@ -454,14 +479,25 @@ void testApp::renderDiagnosticLeapFboAndExtractItsPixelData(){
 						leapToCameraCalibrator.projector.beginAsCamera();
 					}
 					
-					leapVisualizer.drawFrameFromXML(playingFrame);
+					// Render the actual CGI hand, on top of the voronoi diagram (using diagnostic colors)
+					leapVisualizer.drawFrameFromXML(whichFrame);
 				}
 				
 			} else { // LIVE LEAP
+				
 				// "Fluff out" the hand rendering with a voronoi-based halo
 				// computed through OpenGL tricks on the graphics card.
 				if (bUseVoronoiExpansion){
-					leapVisualizer.drawVoronoiFrame (leap);
+					if (bShowOffBy1Frame && (framesBackToPlay > 0)){
+						int totalFramesSaved = prevLeapFrameRecorder.XML.getNumTags("FRAME");
+						int whichFrame = totalFramesSaved - framesBackToPlay;
+						if (whichFrame < 0) whichFrame = 0;
+						leapVisualizer.drawVoronoiFrameFromXML (whichFrame, prevLeapFrameRecorder.XML);
+					} else {
+						// the usual case: no frame delay
+						leapVisualizer.drawVoronoiFrame(leap);
+					}
+					
 					leapToCameraCalibrator.projector.endAsCamera();
 					glDisable(GL_DEPTH_TEST);
 					leapVisualizer.drawVoronoi();
@@ -470,7 +506,14 @@ void testApp::renderDiagnosticLeapFboAndExtractItsPixelData(){
 				}
 				
 				// draw live leap
-				leapVisualizer.drawFrame(leap);
+				if (bShowOffBy1Frame && (framesBackToPlay > 0)){
+					int totalFramesSaved = prevLeapFrameRecorder.XML.getNumTags("FRAME");
+					int whichFrame = totalFramesSaved - framesBackToPlay;
+					if (whichFrame < 0) whichFrame = 0;
+					leapVisualizer.drawFrameFromXML (whichFrame, prevLeapFrameRecorder.XML);
+				} else {
+					leapVisualizer.drawFrame(leap); // no frame delay
+				}
 				
 			}
 			leapToCameraCalibrator.projector.endAsCamera();
@@ -650,27 +693,49 @@ void testApp::draw(){
 	
 	
 	
-	float insetX = ofGetWidth()-drawW;
-	float insetY = ofGetHeight()-drawH;
+	float insetX = ofGetWidth()-imgW;
+	float insetY = ofGetHeight()-imgH;
 	ofPushMatrix();
 	ofTranslate (insetX, insetY);
 	ofSetColor(ofColor::white);
 	switch(whichImageToDraw){
 		default:
-		case 1:		drawMat(grayMat,				0,0, drawW,drawH);	break;
-		case 2:		drawMat(thresholded,			0,0, drawW,drawH);	break;
-		case 3:		drawMat(adaptiveThreshImg,		0,0, drawW,drawH);	break;
-		case 4:		drawMat(thresholdedFinal,		0,0, drawW,drawH);	break;
-		case 5:		drawMat(leapDiagnosticFboMat,	0,0, drawW,drawH);	break;
-		case 6:		drawMat(coloredBinarizedImg,	0,0, drawW,drawH);	break;
+		case 1:		drawMat(grayMat,				0,0, imgW,imgH);	break;
+		case 2:		drawMat(thresholded,			0,0, imgW,imgH);	break;
+		case 3:		drawMat(adaptiveThreshImg,		0,0, imgW,imgH);	break;
+		case 4:		drawMat(thresholdedFinal,		0,0, imgW,imgH);	break;
+		case 5:		drawMat(leapDiagnosticFboMat,	0,0, imgW,imgH);	break;
+		case 6:		drawMat(coloredBinarizedImg,	0,0, imgW,imgH);	break;
 		
 	}
 	ofPopMatrix();
 	
-	ofPushMatrix();
-	//ofTranslate(mouseX, mouseY);
-	//leapVisualizer.drawVoronoi();
-	ofPopMatrix();
+	
+	int px = mouseX - insetX;
+	int py = mouseY - insetY;
+	if ((px > 0) && (px < imgW) &&
+		(py > 0) && (py < imgH)){
+		
+		int index1 = py * imgW + px;
+		int index3 = index1 * 3;
+		
+		unsigned char *pixels = leapDiagnosticFboMat.data;
+		float pr = (float) pixels[index3+0];
+		float pg = (float) pixels[index3+1];
+		float pb = (float) pixels[index3+2];
+		
+		float orientation = leapVisualizer.getDiagnosticOrientationFromColor(pr,pg,pb);
+		
+		float angX = 60.0 * cos(orientation);
+		float angY = 60.0 * sin(orientation);
+		
+		ofSetColor(255);
+		ofLine (mouseX, mouseY, mouseX+angX, mouseY+angY);
+		ofDrawBitmapString( ofToString( RAD_TO_DEG*orientation), mouseX, mouseY-10);
+	}
+	
+
+
 
 }
 
@@ -765,12 +830,18 @@ void testApp::drawLeapWorld(){
     
     // draw leap from xml
     if (bInPlaybackMode && !bRecording){
-        int nFrameTags = leapVisualizer.XML.getNumTags("FRAME");
+        int nFrameTags = leapVisualizer.myXML.getNumTags("FRAME");
         if (nFrameTags > 0){
-            ofFill();
+			
             playingFrame = video.getCurrentFrameID();
-            leapVisualizer.drawFrameFromXML(playingFrame);
-            
+			int whichFrame = playingFrame;
+			if (playingFrame > 0 && bShowOffBy1Frame){
+				whichFrame = (playingFrame - framesBackToPlay + nFrameTags)%nFrameTags;
+			}
+			
+			ofFill();
+            leapVisualizer.drawFrameFromXML(whichFrame);
+			
             if( lastIndexVideoPos.x > 0 && lastIndexVideoPos.y > 0){
                 ofSetColor(ofColor::red);
                 ofDrawSphere(lastIndexLeapPos, 5.0f);
@@ -778,7 +849,17 @@ void testApp::drawLeapWorld(){
         }
     } else{
         // draw live leap
-        leapVisualizer.drawFrame(leap);
+		
+		if (bShowOffBy1Frame && (framesBackToPlay > 0)){
+            int totalFramesSaved = prevLeapFrameRecorder.XML.getNumTags("FRAME");
+            int whichFrame = totalFramesSaved - framesBackToPlay;
+            if (whichFrame < 0) whichFrame = 0;
+            leapVisualizer.drawFrameFromXML (whichFrame, prevLeapFrameRecorder.XML);
+        } else {
+			// Just show the live leap, without any frame delay
+            leapVisualizer.drawFrame(leap);
+        }
+
     }
     
     // end camera
@@ -849,7 +930,9 @@ void testApp::drawText(){
     ofDrawBitmapString("Press 'm' to allow mouse input points", 20, textY); textY+=15;
     ofDrawBitmapString("Press 'left/right' to advance frame by frame", 20, textY); textY+=15;
     ofDrawBitmapString("Press '' (space) to pause/play", 20, textY); textY+=15;
-
+	
+	string usePrev = bShowOffBy1Frame ? "on" : "off";
+    ofDrawBitmapString("Press 'o' toggle use prev "+usePrev+" {} frames behind: "+ofToString(framesBackToPlay), 20, textY); textY+=15;
 
 	textY+=15;
 	
@@ -867,7 +950,7 @@ void testApp::drawText(){
         ofDrawBitmapString("Press ' ' to record CALIBRATION frame", textX, textY); textY+=15;
 
 	}
-	if (leapVisualizer.XML.getNumTags("FRAME") > 0){
+	if (leapVisualizer.myXML.getNumTags("FRAME") > 0){
 		ofDrawBitmapString("Press 'p' to pause PLAYBACK",  textX, textY); textY+=15;
 	}
 	
@@ -1026,7 +1109,7 @@ void testApp::keyPressed(int key){
                 bRecording = !bRecording;
                 folderName = ofGetTimestampString();
 				leapRecorder.startRecording();
-                leapVisualizer.XML.clear();
+                leapVisualizer.myXML.clear();
                 bInPlaybackMode = false;
                 currentFrameNumber = 0;
                 if( key == 'R') bRecordingForCalibration = true;
@@ -1103,7 +1186,7 @@ void testApp::keyPressed(int key){
                 drawH = 768;
                 bShowText = false;
                 
-            }else{
+            } else {
                 drawW = 640;
                 drawH = 480;
                 bShowText = true;
@@ -1116,6 +1199,17 @@ void testApp::keyPressed(int key){
 		case '$':	whichImageToDraw = 4; break;
 		case '%':	whichImageToDraw = 5; break;
 		case '^':	whichImageToDraw = 6; break;
+		
+		
+		case 'o':
+            bShowOffBy1Frame= !bShowOffBy1Frame;
+            break;
+        case '{':
+            framesBackToPlay = (framesBackToPlay+6 -1)%6;
+			break;
+        case '}':
+			framesBackToPlay = (framesBackToPlay+6 +1)%6;
+            break;
             
     }
     

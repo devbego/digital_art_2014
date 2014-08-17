@@ -53,6 +53,15 @@ public:
 		texture.allocate(images[0]);
 		bRolledOver = false; 
 	}
+	
+	int getNFrames(){
+		if (isLoaded()){
+			return images.size();
+		} else {
+			return 0;
+		}
+	}
+	
 	void close() {
 	}
 	unsigned char* getPixels() {

@@ -22,6 +22,8 @@ void LeapVisualizer::setup(){
 	bWorkAtHalfScale			= false;
 	
     diagnosticFingerScaling = 1.2;
+	
+
 }
 
 //-----------------------------------------------------------------
@@ -39,6 +41,15 @@ void LeapVisualizer::enableVoronoiRendering (int imgW, int imgH, bool bHalved){
 	
 	nbody_w = NB->ResX;
 	nbody_h = NB->ResY;
+	
+
+	bDoVoronoiShaderBlur = true;
+	if (bDoVoronoiShaderBlur){
+		ofSetLogLevel(OF_LOG_VERBOSE);
+		blurShader.setup(imgW, imgH, 4, .2, 1);
+		ofSetLogLevel(OF_LOG_WARNING);
+	}
+	
 }
 
 //--------------------------------------------------------------
@@ -84,15 +95,23 @@ void LeapVisualizer::updateVoronoi(){
 void LeapVisualizer::drawVoronoi(){
 	if (bEnableVoronoiRendering){
 		
-		if (bUseVoronoiFbo){
-			voronoiFbo.begin();
-			ofClear(0,0,0,0);
+		if (bDoVoronoiShaderBlur){
+			blurShader.begin();
+			blurShader.setScale(1.0);
+			blurShader.setRotation(0.0);
+			ofSetColor(255);
 		}
 		
-		// Render the actual voronoi shapes
+		if (bUseVoronoiFbo){
+			voronoiFbo.begin();
+			ofClear(0,0,0);
+		}
+		
+		// Draw the actual voronoi diagram
 		NB->myDisplay();
-
-		// For diagnostic purposes, draw the skeletons
+		
+	
+		// If needed for diagnostic purposes, draw the skeletons
 		bool bDrawVoronoiSkeletons = false;
 		if (bDrawVoronoiSkeletons){
 			ofPushStyle();
@@ -116,16 +135,22 @@ void LeapVisualizer::drawVoronoi(){
 			ofFill();
 			ofPopStyle();
 		}
-
+		
+		
 		if (bUseVoronoiFbo){
 			voronoiFbo.end();
 			
-			// Actually draw the FBO.
-			// Note, it is correctively flipped upside-down.
+			// Draw the FBO. Note, it is correctively flipped upside-down.
 			if (bActuallyDisplayVoronoiFbo){
 				ofSetColor(255);
 				voronoiFbo.draw(0,nbody_h, nbody_w,0-nbody_h);
 			}
+			
+		}
+		
+		if (bDoVoronoiShaderBlur){
+			blurShader.end();
+			blurShader.draw();
 		}
 		
 	}
@@ -158,9 +183,9 @@ void LeapVisualizer::feedBogusPointsToVoronoi(){
 
 
 //-----------------------------------------------------------------
-void LeapVisualizer::loadXmlFile(string fileName){
-    XML.clear();
-    XML.loadFile(fileName);
+void LeapVisualizer::loadXmlFile (string fileName){
+    myXML.clear();
+    myXML.loadFile (fileName);
 }
 
 
@@ -170,31 +195,31 @@ ofPoint LeapVisualizer::getIndexFingertipFromXML(int whichFrame){
     
     ofPoint fingerTip = ofPoint(-1,-1,-1);
     
-    int nFrameTags = XML.getNumTags("FRAME");
+    int nFrameTags = myXML.getNumTags("FRAME");
 	if ((whichFrame >= 0) && (whichFrame < nFrameTags)){
 		
 		//we push into the which'h FRAME tag; this temporarily treats the tag as the document root.
-		XML.pushTag("FRAME", whichFrame);
+		myXML.pushTag("FRAME", whichFrame);
 		
-		int nHandTags = XML.getNumTags("H");
+		int nHandTags = myXML.getNumTags("H");
 		if (nHandTags > 0){
-			XML.pushTag("H",0);
-            int nFingers = XML.getNumTags("F");
+			myXML.pushTag("H",0);
+            int nFingers = myXML.getNumTags("F");
             for( int i = 0; i < nFingers; i++){
-                XML.pushTag("F",i);
-                int fingerType = XML.getValue("TYPE",0);
+                myXML.pushTag("F",i);
+                int fingerType = myXML.getValue("TYPE",0);
                 if(fingerType ==  Finger::TYPE_INDEX){
-                    fingerTip.x = XML.getValue("T:X", 0);
-                    fingerTip.y = XML.getValue("T:Y", 0);
-                    fingerTip.z = XML.getValue("T:Z", 0);
-                    XML.popTag();
+                    fingerTip.x = myXML.getValue("T:X", 0);
+                    fingerTip.y = myXML.getValue("T:Y", 0);
+                    fingerTip.z = myXML.getValue("T:Z", 0);
+                    myXML.popTag();
                     break;
                 }
-                XML.popTag();
+                myXML.popTag();
             }
-            XML.popTag();
+            myXML.popTag();
 		}
-        XML.popTag();
+        myXML.popTag();
 
 	}
     
@@ -235,6 +260,47 @@ void LeapVisualizer::setProjector(ofxRay::Projector P){
 	screenProjector = P;
 	bProjectorSet = true;
 }
+
+
+
+//--------------------------------------------------------------
+float LeapVisualizer::getDiagnosticOrientationFromColor (float r255, float g255, float b255){
+	
+	// Computation from getColorDiagnostically():
+	// float boneRed   = ofMap( cos(angle + dangle), -1,1, 0,255);
+	// float boneGreen = ofMap( sin(angle + dangle), -1,1, 0,255);
+	
+	float angleCos = ofMap(r255, 0,255, -1,1);
+	float angleSin = ofMap(g255, 0,255, -1,1);
+	float angle = atan2f(angleSin, angleCos);
+	float dangle = 0;
+	angle += DEG_TO_RAD * dangle;
+	
+	return angle;
+}
+
+//--------------------------------------------------------------
+int LeapVisualizer::getDiagnosticIdentityFromColor (float r255, float g255, float b255){
+	
+	int out = (int)ID_NONE;
+	int blue32 = (int)b255 / (int)32;
+	
+	switch (blue32){
+		default:
+		case 0: out = ID_NONE;		break;
+		case 1: out = ID_WRIST;		break;
+		case 2:	out = ID_PALM;		break;
+			
+		case 3:	out = ID_THUMB;		break;
+		case 4:	out = ID_INDEX;		break;
+		case 5:	out = ID_MIDDLE;	break;
+		case 6:	out = ID_RING;		break;
+		case 7:	out = ID_PINKY;		break;
+	}
+	
+	return out;
+}
+
 //--------------------------------------------------------------
 ofVec3f LeapVisualizer::getColorDiagnostically (Finger::Type fingerType, Bone::Type boneType,
 												ofPoint bonePt0, ofPoint bonePt1){
@@ -252,17 +318,70 @@ ofVec3f LeapVisualizer::getColorDiagnostically (Finger::Type fingerType, Bone::T
 		
 		float dx = screen1Vec3f.x - screen0Vec3f.x;
 		float dy = screen1Vec3f.y - screen0Vec3f.y;
+		float dz = screen1Vec3f.z - screen0Vec3f.z;
+		
 		float dh = sqrtf(dx*dx + dy*dy);
 		if (dh > 0){
 			
 			// Red and green encode orientation; blue encodes ID
-			float angle		= atan2f(dy, dx);
-			float dangle	= DEG_TO_RAD * (-45.0);
-			float boneRed   = 255.0 * abs(cos(angle + dangle));
-			float boneGreen = 255.0 * abs(sin(angle + dangle));
+			float angle		= atan2f (dy, dx);
+			float dangle	= DEG_TO_RAD * 180.0;
+			if (abs(angle) < HALF_PI) { // magic switcheroo
+				dangle = 0;
+			}
 			
-			//float boneRed   = ofMap( cos(angle + dangle), -1,1, 0,255);
-			//float boneGreen = ofMap( sin(angle + dangle), -1,1, 0,255);
+			bool bSuppressVerticalSegments = true;
+			if (bSuppressVerticalSegments){
+				// Vertical finger segments (those pointing into the camera)
+				// have badly-behaved values for their "orientation" (in the XY camera plane),
+				// subject to extreme values and rapid rotation around singularities.
+				// Compute the vertical angle of segments and use it to bring their values
+				// into better alignment with the hand overall.
+				
+				// Note that dz values from getScreenCoordinateOfWorldPosition are oddly small,
+				// so we scale these up by an empirically determined value.
+				dz *= 30000;// * (0.5 + 0.5*sin(ofGetElapsedTimeMillis()/1500.0)); // dz = ~0.004 when vertical
+				float verticalAngle = atan2f(dz, dh);
+				
+				float cosA = cos(angle+dangle);
+				float sinA = sin(angle+dangle);
+				float angA = atan2f(sinA, cosA); // this gets all of the angles centered on 0.
+				
+				bool bJustMultiplyByCosineOfVerticalAngle = false;
+				if (bJustMultiplyByCosineOfVerticalAngle){
+					// One possibility is simply to mult the orientation by the cos(verticalAngle),
+					// which brings the angle closer to zero (pure leftward horizontal).
+					angA *= cos(verticalAngle); // brings it towards zero orientation
+					angle = angA + dangle;
+					 
+				} else {
+					// A better solution for such segments would be
+					// to bring the orientation closer to the average orientation of the hand,
+					// using the screenprojection of the handCentroid-handOrientationZ axis.
+					ofVec3f CNVec3f = ofVec3f(handCentroidVec3f.x + handOrientationZ.x,
+											  handCentroidVec3f.y + handOrientationZ.y,
+											  handCentroidVec3f.z + handOrientationZ.z);
+					ofVec3f screenHandC = screenProjector.getScreenCoordinateOfWorldPosition (handCentroidVec3f);
+					ofVec3f screenHandN = screenProjector.getScreenCoordinateOfWorldPosition (CNVec3f);
+					float dox = screenHandN.x - screenHandC.x;
+					float doy = screenHandN.y - screenHandC.y;
+					float doz = screenHandN.z - screenHandC.z;
+					float handOrientationAngle = atan2f (doy, dox);
+					
+					// angle is a weighted average of its original value,
+					// with the hand overall orientation, weighted by the verticality of the segment.
+					float alpha = powf(cos(verticalAngle), 1.5);
+					angA = angA*alpha + handOrientationAngle*(1.0-alpha);
+					dangle	= DEG_TO_RAD * 180.0;
+					if (abs(angA) < HALF_PI) { // magic switcheroo
+						dangle = 0;
+					}
+					angle = angA + dangle;
+				}
+			}
+			
+			float boneRed   = ofMap( cos(angle+dangle), -1,1, 0,255);
+			float boneGreen = ofMap( sin(angle+dangle), -1,1, 0,255);
 			
 			float boneBlue  = 0;
 			switch (fingerType){
@@ -272,13 +391,24 @@ ofVec3f LeapVisualizer::getColorDiagnostically (Finger::Type fingerType, Bone::T
 				case Finger::TYPE_RING:		boneBlue = (32.0 * ID_RING);	break;
 				case Finger::TYPE_PINKY:	boneBlue = (32.0 * ID_PINKY);	break;
 			}
+			
+			// Bone-specific coloring, thus indicating the ID of joints.
+			boneBlue += ((int)boneType) * 4.0;
+			
+			// For grayscale identity coloring (temporary!):
+			bool doGrayscaleIdentityColoring = false;
+			if (doGrayscaleIdentityColoring){
+				boneRed   = boneBlue;
+				boneGreen = boneBlue;
+			}
+			
 			outputColor.set(boneRed, boneGreen, boneBlue);
 			
 			// For the bones inside the palm, set the color to gray.
 			bool bSetInternalBonesToGray = false;
 			if (bSetInternalBonesToGray){
 				if ( (boneType == Bone::TYPE_METACARPAL) ||
-					((boneType == Bone::TYPE_PROXIMAL)   && (fingerType == Finger::TYPE_THUMB))) {
+					((boneType == Bone::TYPE_PROXIMAL) && (fingerType == Finger::TYPE_THUMB))) {
 					outputColor.set(ID_PALM*32, ID_PALM*32, ID_PALM*32);
 				}
 			}
@@ -415,6 +545,7 @@ void LeapVisualizer::drawVoronoiFrame (ofxLeapMotion & leap){
 			for (int h=0; h<hands.size(); h++){ // For each hand
 				Hand & hand = hands[h];
 				if (hand.isValid()){
+					captureHandPropertiesFromLeap (leap, h);
 					
 					FingerList fingers = hand.fingers();
 					for (int f=0; f<fingers.count(); f++){ // For each finger
@@ -499,6 +630,7 @@ void LeapVisualizer::drawFrame (ofxLeapMotion & leap){
 		
 		// For each hand,
 		for (int h=0; h<hands.size(); h++){
+			captureHandPropertiesFromLeap( leap, h);
 			
 			// Get the current hand
 			Hand & hand = hands[h];
@@ -706,6 +838,66 @@ void LeapVisualizer::drawPalm (Hand &hand, ofxLeapMotion &leap){
 }
 
 
+
+//--------------------------------------------------------------
+void LeapVisualizer::captureHandPropertiesFromLeap (ofxLeapMotion &leap, int whichHandId){
+	// stash a copy of the current hand's centroid and orientation bases
+	vector <Hand> hands = leap.getLeapHands();
+	if (whichHandId < hands.size()) {
+		Hand &hand = hands[whichHandId];
+		if (hand.isValid()){
+			
+			handCentroid     = leap.getofPoint ( hand.palmPosition());
+			handNormal       = leap.getofPoint ( hand.palmNormal());
+		
+			Leap::Matrix handMatrix = hand.basis();
+			handOrientationX = leap.getofPoint( handMatrix.xBasis);
+			handOrientationY = leap.getofPoint( handMatrix.yBasis);
+			handOrientationZ = leap.getofPoint( handMatrix.zBasis);
+			
+			handCentroidVec3f = ofVec3f(handCentroid.x, handCentroid.y, handCentroid.z);
+			handNormalVec3f   = ofVec3f(handNormal.x, handNormal.y, handNormal.z);
+		}
+	}
+}
+
+//--------------------------------------------------------------
+void LeapVisualizer::captureHandPropertiesFromXML ( ofxXmlSettings & XML, int whichFrame, int whichHandId){
+	// stash a copy of the current frame's hand's centroid and orientation bases
+	XML.pushTag("H", whichHandId); {
+		handCentroid    = ofPoint(XML.getValue("PM:X",0.0), XML.getValue("PM:Y",0.0), XML.getValue("PM:Z",0.0));
+		handNormal		= ofPoint(XML.getValue("PN:X",0.0), XML.getValue("PN:Y",0.0), XML.getValue("PN:Z",0.0));
+		XML.pushTag("HM", 0); {
+			handOrientationX = ofPoint(XML.getValue("XX",0.0), XML.getValue("XY",0.0), XML.getValue("XZ",0.0));
+			handOrientationY = ofPoint(XML.getValue("YX",0.0), XML.getValue("YY",0.0), XML.getValue("YZ",0.0));
+			handOrientationZ = ofPoint(XML.getValue("ZX",0.0), XML.getValue("ZY",0.0), XML.getValue("ZZ",0.0));
+		}
+		XML.popTag();
+	}
+	XML.popTag();
+	
+	handCentroidVec3f = ofVec3f(handCentroid.x, handCentroid.y, handCentroid.z);
+	handNormalVec3f   = ofVec3f(handNormal.x, handNormal.y, handNormal.z);
+}
+
+
+//--------------------------------------------------------------
+void LeapVisualizer::drawCapturedHandProperties(){
+	ofPushStyle(); {
+		ofSetColor(ofColor::white);
+		ofSetLineWidth(2.0);
+		
+		float basisLen = 50.0;
+		ofDrawSphere(handCentroid,  8.0);
+		ofLine(handCentroid, handCentroid + basisLen*handNormal);
+		
+		ofSetColor(ofColor::red  );	ofLine(handCentroid, handCentroid + basisLen*handOrientationX);
+		ofSetColor(ofColor::green);	ofLine(handCentroid, handCentroid + basisLen*handOrientationY);
+		ofSetColor(ofColor::blue );	ofLine(handCentroid, handCentroid + basisLen*handOrientationZ);
+	} ofPopStyle();
+}
+
+
 //--------------------------------------------------------------
 void LeapVisualizer::drawArm (Hand & hand,ofxLeapMotion & leap){
 	
@@ -845,9 +1037,9 @@ void LeapVisualizer::drawArm (Hand & hand,ofxLeapMotion & leap){
 
 
 //--------------------------------------------------------------
-void LeapVisualizer::drawFrameFromXML(int whichFrame){
+void LeapVisualizer::drawFrameFromXML(int whichFrame, ofxXmlSettings & XML){ // should be XML, not myXML
 	
-	int nFrameTags = XML.getNumTags("FRAME");
+    int nFrameTags = myXML.getNumTags("FRAME");
 	if ((whichFrame >= 0) && (whichFrame < nFrameTags)){
 		
 		//we push into the which'h FRAME tag; this temporarily treats the tag as the document root.
@@ -856,33 +1048,55 @@ void LeapVisualizer::drawFrameFromXML(int whichFrame){
 		int nHandTags = XML.getNumTags("H");
 		if (nHandTags > 0){
 			for (int h=0; h<nHandTags; h++){
-				drawHandFromXML(h);
+				captureHandPropertiesFromXML (XML, whichFrame, h);
+				drawHandFromXML (h, XML);
 			}
 		}
-		
+        
 		//this pops us out of the FRAME tag, sets the root back to the xml document
 		XML.popTag();
 	}
 }
 
 //--------------------------------------------------------------
-void LeapVisualizer::drawHandFromXML (int whichHand){
-	XML.pushTag("H", whichHand);
-	//glEnable(GL_DEPTH);
-	//glEnable(GL_DEPTH_TEST);
+void LeapVisualizer::drawFrameFromXML (int whichFrame){
 	
-	drawFingersFromXML();
-	if (!bDrawDiagnosticColors){
-		drawPalmFromXML();
+	int nFrameTags = this->myXML.getNumTags("FRAME");
+	if ((whichFrame >= 0) && (whichFrame < nFrameTags)){
+		
+		//we push into the which'h FRAME tag; this temporarily treats the tag as the document root.
+		this->myXML.pushTag("FRAME", whichFrame);
+		
+		int nHandTags = this->myXML.getNumTags("H");
+		if (nHandTags > 0){
+			for (int h=0; h<nHandTags; h++){
+				captureHandPropertiesFromXML (this->myXML, whichFrame, h);
+				drawHandFromXML(h, this->myXML);
+			}
+		}
+		
+		//this pops us out of the FRAME tag, sets the root back to the xml document
+		this->myXML.popTag();
 	}
-	drawArmFromXML();
+}
+
+//--------------------------------------------------------------
+void LeapVisualizer::drawHandFromXML (int whichHand, ofxXmlSettings & XML){
+	XML.pushTag("H", whichHand);
+	
+	drawFingersFromXML(XML);
+	if (!bDrawDiagnosticColors){
+		drawPalmFromXML(XML);
+	}
+	drawArmFromXML(XML);
 	
 	XML.popTag();
 }
 
 
+
 //--------------------------------------------------------------
-void LeapVisualizer::drawVoronoiFrameFromXML(int whichFrame){
+void LeapVisualizer::drawVoronoiFrameFromXML (int whichFrame, ofxXmlSettings & XML){
 	if (bEnableVoronoiRendering){
 		int nFrameTags = XML.getNumTags("FRAME");
 		if ((whichFrame >= 0) && (whichFrame < nFrameTags)){
@@ -895,7 +1109,7 @@ void LeapVisualizer::drawVoronoiFrameFromXML(int whichFrame){
 					if (nFingerTags > 0){
 						for (int f=0; f<nFingerTags; f++){
 							XML.pushTag("F", f);
-							feedXMLFingerPointsToVoronoi(f);
+							feedXMLFingerPointsToVoronoi(f, XML);
 							XML.popTag();
 						}
 					}
@@ -910,7 +1124,12 @@ void LeapVisualizer::drawVoronoiFrameFromXML(int whichFrame){
 
 
 //--------------------------------------------------------------
-void LeapVisualizer::feedXMLFingerPointsToVoronoi (int whichFinger){
+void LeapVisualizer::feedXMLFingerPointsToVoronoi (int whichFinger, ofxXmlSettings & XML){
+	// Take the finger joint xyz positions from the XML playback
+	// project them to the screen coordinates, using the Projector
+	// scale them to the range (-1,1) and provide them to the voronoi renderer
+	// The voronoi is then rendered (outside this function) into an fbo.
+	
 	if (bEnableVoronoiRendering && bProjectorSet){
 		
 		if (whichFinger < NUM_NBODIES){
@@ -962,12 +1181,15 @@ void LeapVisualizer::feedXMLFingerPointsToVoronoi (int whichFinger){
 					Poly->oPts[polyPointCount*2+1]  = boneScreenY;
 					polyPointCount++;
 
-					// Deal with color; use color from second (palm interior) joint.
+					// Deal with color:
+					// Use the orientation (red and green channels) from second (palm interior) joint.
+					// Use thr base blue (rounded-down multiple of 32) for the overall finger identity.
 					if (b == 1){
 						ofVec3f col = getColorDiagnostically (fingerType, boneType, bonePt0, bonePt1);
+						int blue = (((int)(col.z)/(int)32) * 32);
 						NB->siteColors[whichFinger]->r = col.x / 255.0; // NB->siteColors are in range 0..1.
 						NB->siteColors[whichFinger]->g = col.y / 255.0;
-						NB->siteColors[whichFinger]->b = col.z / 255.0;
+						NB->siteColors[whichFinger]->b = blue  / 255.0;
 					}
 					
 					bonePt0 = bonePt1;
@@ -991,20 +1213,21 @@ void LeapVisualizer::feedXMLFingerPointsToVoronoi (int whichFinger){
 
 
 //--------------------------------------------------------------
-void LeapVisualizer::drawFingersFromXML(){
+void LeapVisualizer::drawFingersFromXML (ofxXmlSettings & XML){
 	
 	int nFingerTags = XML.getNumTags("F");
 	if (nFingerTags > 0){
 		for (int f=0; f<nFingerTags; f++){
 			XML.pushTag("F", f);
-			drawFingerFromXML();
+			drawFingerFromXML(XML);
 			XML.popTag();
 		}
 	}
 }
 
+
 //--------------------------------------------------------------
-void LeapVisualizer::drawFingerFromXML(){
+void LeapVisualizer::drawFingerFromXML (ofxXmlSettings & XML){
 	
 	Finger::Type	fingerType =  (Finger::Type) XML.getValue("TYPE", 0);
 	float			fingerWidth = XML.getValue("WIDTH", 0.0);
@@ -1057,7 +1280,7 @@ void LeapVisualizer::drawFingerFromXML(){
 
 
 //--------------------------------------------------------------
-void LeapVisualizer::drawPalmFromXML(){
+void LeapVisualizer::drawPalmFromXML (ofxXmlSettings & XML){
 	
 	int nFingerTags = XML.getNumTags("F");
 	if (nFingerTags > 0){
@@ -1124,7 +1347,7 @@ void LeapVisualizer::drawPalmFromXML(){
 
 
 //--------------------------------------------------------------
-void LeapVisualizer::drawArmFromXML(){
+void LeapVisualizer::drawArmFromXML (ofxXmlSettings & XML){
 	
 	float armWidth = XML.getValue("AW", 0.0);
 	float basisLen = 50.0;
@@ -1247,6 +1470,39 @@ void LeapVisualizer::drawArmFromXML(){
     
 }
 
+
+/*
+// THIS IS PROCESSING-2.0 CODE TO DEMONSTRATE THE COLOR GENERATING PRINCIPLE
+size(400, 400);
+background(0);
+
+float cx = width/2;
+float cy = height/2;
+float radius = width * 0.4;
+smooth();
+strokeWeight(4);
+
+for (int i=0; i<360; i++) {
+	float secretAngle = DEG_TO_RAD * (float)(i);
+	float dx = cos(secretAngle);
+	float dy = sin(secretAngle);
+	
+	float angle = atan2(dy, dx);
+	float cosAngle = cos(angle);
+	float sinAngle = sin(angle);
+	// angle goes from 0 to PI, then -PI to 0
+	
+	float dangle = DEG_TO_RAD * 180.0;
+	if (abs(angle) < HALF_PI) {
+		dangle = 0;
+	}
+	
+	float R = map( cos(angle+dangle), -1, 1, 0, 255);
+	float G = map( sin(angle+dangle), -1, 1, 0, 255);
+	stroke (R, G, 0);
+	line(cx, cy, cx+radius*cosAngle, cy+radius*sinAngle);
+}
+*/
 
 
 

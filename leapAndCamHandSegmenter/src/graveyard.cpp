@@ -6,6 +6,27 @@
 
 
 //--------------------------------------------------------------
+bool bDoBlurOrientationChannels = false;
+if (bDoBlurOrientationChannels) {
+	// This may be leaky....
+	// Could this be accomplished in a shader? YES.
+	
+	// Acquire diagnostic (orientation) data channels
+	split (leapDiagnosticFboMat, leapDiagnosticFboChannelMats);
+	cv::Mat leapDiagnosticFboMatR = leapDiagnosticFboChannelMats[0];
+	cv::Mat leapDiagnosticFboMatG = leapDiagnosticFboChannelMats[1];
+	cv::Mat leapDiagnosticFboMatB = leapDiagnosticFboChannelMats[2];
+	
+	int kernelSize = 5;
+	cv::Size blurSize = cv::Size(kernelSize, kernelSize);
+	blur (leapDiagnosticFboMatR, leapDiagnosticFboMatR, kernelSize);
+	blur (leapDiagnosticFboMatG, leapDiagnosticFboMatG, kernelSize);
+	
+	cv::Mat newChans[] = {leapDiagnosticFboMatR, leapDiagnosticFboMatG, leapDiagnosticFboMatB};
+	cv::merge(newChans, 3, leapDiagnosticFboMat);
+}
+
+//--------------------------------------------------------------
 void testApp::spreadDiagnosticInformationByDilation(){
 	
 	// It turns out that erosion/dilation is not really the right way to spread the data,

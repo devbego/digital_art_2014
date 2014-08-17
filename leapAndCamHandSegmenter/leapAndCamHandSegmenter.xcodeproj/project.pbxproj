@@ -73,6 +73,7 @@
 		3B667356199B0C02005EA028 /* polygon_object.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3B667346199B0C02005EA028 /* polygon_object.cpp */; };
 		3B6D7C05198BE3BE00396CF6 /* libLeap.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 3B6D7BED198BE3BE00396CF6 /* libLeap.dylib */; };
 		3B6D7C08198BE3BE00396CF6 /* ofxLeapMotion.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3B6D7BFC198BE3BE00396CF6 /* ofxLeapMotion.cpp */; };
+		3BBEFBE419A02A40002CB8AE /* ofxBlur.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3BBEFBE219A02A40002CB8AE /* ofxBlur.cpp */; };
 		4819DE4CF1E0CBFA204D3638 /* Helpers.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F18ECD985319507514ABDD9B /* Helpers.cpp */; };
 		483908258D00B98B4BE69F07 /* ofxLabel.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 78D67A00EB899FAC09430597 /* ofxLabel.cpp */; };
 		599656BC0881AA3833034457 /* Grabber.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2C29AB2A7D4E642ADEEB9FD7 /* Grabber.cpp */; };
@@ -378,6 +379,8 @@
 		3B6D7BFC198BE3BE00396CF6 /* ofxLeapMotion.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ofxLeapMotion.cpp; sourceTree = "<group>"; };
 		3B6D7BFD198BE3BE00396CF6 /* ofxLeapMotion.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ofxLeapMotion.h; sourceTree = "<group>"; };
 		3BB5E3A12BFEB583A265CC90 /* vec_math.hpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 30; name = vec_math.hpp; path = ../../../addons/ofxCvMin/libs/opencv/include/opencv2/gpu/device/vec_math.hpp; sourceTree = SOURCE_ROOT; };
+		3BBEFBE219A02A40002CB8AE /* ofxBlur.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ofxBlur.cpp; path = src/ofxBlur/ofxBlur.cpp; sourceTree = SOURCE_ROOT; };
+		3BBEFBE319A02A40002CB8AE /* ofxBlur.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ofxBlur.h; path = src/ofxBlur/ofxBlur.h; sourceTree = SOURCE_ROOT; };
 		3BDCF9112612C1C34CD41B23 /* timer.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 30; name = timer.h; path = ../../../addons/ofxCvMin/libs/opencv/include/opencv2/flann/timer.h; sourceTree = SOURCE_ROOT; };
 		3C47BE3A11319FD5C6E29F6E /* gpu_test.hpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 30; name = gpu_test.hpp; path = ../../../addons/ofxCvMin/libs/opencv/include/opencv2/ts/gpu_test.hpp; sourceTree = SOURCE_ROOT; };
 		3CD66E6C219D7DEC8DE6FB1D /* mat.hpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 30; name = mat.hpp; path = ../../../addons/ofxCvMin/libs/opencv/include/opencv2/core/mat.hpp; sourceTree = SOURCE_ROOT; };
@@ -1168,6 +1171,16 @@
 				3B6D7BFD198BE3BE00396CF6 /* ofxLeapMotion.h */,
 			);
 			path = src;
+			sourceTree = "<group>";
+		};
+		3BBEFBC8199FF3AB002CB8AE /* ofxBlur */ = {
+			isa = PBXGroup;
+			children = (
+				3BBEFBE219A02A40002CB8AE /* ofxBlur.cpp */,
+				3BBEFBE319A02A40002CB8AE /* ofxBlur.h */,
+			);
+			name = ofxBlur;
+			path = ../../../../addons/ofxBlur;
 			sourceTree = "<group>";
 		};
 		3E44059DCBC2444D65660B9C /* imgproc */ = {
@@ -2032,13 +2045,14 @@
 		E4B69E1C0A3A1BDC003C02F2 /* src */ = {
 			isa = PBXGroup;
 			children = (
+				E4B69E1D0A3A1BDC003C02F2 /* main.cpp */,
 				8493AF3A1985A26500226D61 /* testApp.h */,
 				8493AF391985A26500226D61 /* testApp.cpp */,
-				E4B69E1D0A3A1BDC003C02F2 /* main.cpp */,
 				8493AF3C1985B7C800226D61 /* BufferedVideo.h */,
 				8493AF521986AF0500226D61 /* FingerTipCalibRecorder.h */,
 				8493AF561986EFE900226D61 /* LeapToCameraCalibrator.cpp */,
 				8493AF571986EFE900226D61 /* LeapToCameraCalibrator.h */,
+				3BBEFBC8199FF3AB002CB8AE /* ofxBlur */,
 				3B667326199B0C02005EA028 /* havoc2d */,
 				8493AF4719867BFE00226D61 /* LeapUtils */,
 			);
@@ -2297,6 +2311,7 @@
 				8493AF4A19867C4400226D61 /* LeapRecorder.cpp in Sources */,
 				3B66734A199B0C02005EA028 /* voronoi_draw_gl.cpp in Sources */,
 				8493AFF8198973DD00226D61 /* Tracker.cpp in Sources */,
+				3BBEFBE419A02A40002CB8AE /* ofxBlur.cpp in Sources */,
 				3B58FDAE198DB39100F44C98 /* ofxUISlider.cpp in Sources */,
 				3B6D7C08198BE3BE00396CF6 /* ofxLeapMotion.cpp in Sources */,
 				3B58FDAD198DB39100F44C98 /* ofxUIScrollableCanvas.cpp in Sources */,
