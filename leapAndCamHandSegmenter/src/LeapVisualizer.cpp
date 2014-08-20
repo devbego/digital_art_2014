@@ -1073,6 +1073,65 @@ float LeapVisualizer::getMotionAmountFromHandPointVectors(){
 	return out;
 }
 
+//--------------------------------------------------------------
+float LeapVisualizer::getZExtentFromHandPointVectors(){
+	float out = 0;
+	if (bProjectorSet){
+		float maxZ = -99999;
+		float minZ =  99999;
+		
+		int nCurrHandPoints = currHandPoints.size();
+		if (nCurrHandPoints > 0){
+			
+			for (int i=0; i<nCurrHandPoints; i++){
+				float bx = currHandPoints[i].x;
+				float by = currHandPoints[i].y;
+				float bz = currHandPoints[i].z;
+				
+				ofVec3f bonePoint = ofVec3f(bx,by,bz);
+				ofVec3f screenPoint = screenProjector.getScreenCoordinateOfWorldPosition (bonePoint);
+				
+				if (screenPoint.z > maxZ){ maxZ = screenPoint.z; }
+				if (screenPoint.z < minZ){ minZ = screenPoint.z; }
+			}
+			out = maxZ - minZ;
+		}
+	}
+	return out;
+}
+
+//--------------------------------------------------------------
+float LeapVisualizer::getCurlFromHandPointVectors(){
+	// Sum the "curl", or angles between all the finger bones.
+	float out = 0;
+	int nCurrHandPoints = currHandPoints.size();
+	if (nCurrHandPoints > 0){
+		
+		int bIndex = 0;
+		for (int f=0; f<5; f++){ //finger
+			int nB = (f == 0) ? 1 : 2;
+			for (int b=0; b<nB; b++){
+				ofVec3f b0 = (ofVec3f) currHandPoints[bIndex  ];
+				ofVec3f b1 = (ofVec3f) currHandPoints[bIndex+1];
+				ofVec3f b2 = (ofVec3f) currHandPoints[bIndex+2];
+				
+				ofVec3f b01 = b0 - b1;
+				ofVec3f b21 = b2 - b1;
+				
+				b01.normalize();
+				b21.normalize();
+				ofVec3f b0xb1 = b01.getCrossed(b21);
+				float xlen = b0xb1.length();
+				out += xlen;
+				
+				bIndex++;
+			}
+			bIndex+=2;
+		}
+	}
+	return out;
+}
+
 
 
 //--------------------------------------------------------------

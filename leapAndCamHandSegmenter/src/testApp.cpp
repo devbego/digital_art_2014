@@ -211,7 +211,11 @@ void testApp::setup(){
 
 	amountOfPixelMotion01 = 0;
 	amountOfLeapMotion01 = 0;
+	zHandExtent = 0.00;
 	motionAlpha = 0.95;
+	zExtentAlpha = 0.3;
+	fingerCurlAlpha = 0.65;
+	amountOfFingerCurl01 = 0;
 	
 	int morph_size = 1;
 	int morph_type = cv::MORPH_ELLIPSE;
@@ -299,7 +303,8 @@ void testApp::setupGui() {
 	// gui->addValuePlotter("elapsedMicros", 256, 0, 30000, &elapsedMicros);
 	// gui->addValuePlotter("amountOfPixelMotion01", 256, 0.00, 0.25, &amountOfPixelMotion01);
 	gui->addValuePlotter("amountOfLeapMotion01", 256, 0.00, 20.0, &amountOfLeapMotion01);
-	
+	gui->addValuePlotter("zHandExtent", 256, 0.00, 1.50, &zHandExtent);
+	gui->addValuePlotter("amountOfFingerCurl01", 256, 0.00, 1.00, &amountOfFingerCurl01);
 	
 	gui->addSpacer();
 	gui->addSlider("thresholdValue", 0.0, 64.0, &thresholdValue);
@@ -339,7 +344,7 @@ void testApp::update(){
 	
 	updateProcessFrameImg();
 	renderDiagnosticLeapFboAndExtractItsPixelData();
-	
+	computeHandStatistics();
 	
 	// when live: use color img from processFrameImg
 	// when playing, use color img from buffered video
@@ -490,7 +495,23 @@ void testApp::applyMorphologicalOps(){
 	}
 }
 
-
+//--------------------------------------------------------------
+void testApp::computeHandStatistics(){
+	// determine the amount of movement, the vertical extent, and the finger curledness.
+	// can be used later to decide whether or not to run more advanced processing.
+	if (leapToCameraCalibrator.calibrated && bUseVirtualProjector){
+		
+		// Update the calculated amount of hand movement (derived from leap)
+		float movement = leapVisualizer.getMotionAmountFromHandPointVectors();
+		float zextent  = 100.0 * leapVisualizer.getZExtentFromHandPointVectors();
+		float curl     = 0.1 * leapVisualizer.getCurlFromHandPointVectors();
+		
+		amountOfLeapMotion01 = (motionAlpha*amountOfLeapMotion01)     + (1.0-motionAlpha)*movement;
+		zHandExtent          = (zExtentAlpha*zHandExtent)             + (1.0-zExtentAlpha)*zextent;
+		amountOfFingerCurl01 = (fingerCurlAlpha*amountOfFingerCurl01) + (1.0-fingerCurlAlpha)*curl;
+		
+	}
+}
 
 //--------------------------------------------------------------
 void testApp::renderDiagnosticLeapFboAndExtractItsPixelData(){
@@ -537,9 +558,6 @@ void testApp::renderDiagnosticLeapFboAndExtractItsPixelData(){
 					// Render the actual CGI hand, on top of the voronoi diagram (using diagnostic colors)
 					leapVisualizer.drawFrameFromXML(whichFrame);
 					
-					// Update the calculated amount of hand movement (derived from leap)
-					float movement = leapVisualizer.getMotionAmountFromHandPointVectors();
-					amountOfLeapMotion01 = (motionAlpha*amountOfLeapMotion01) + (1.0-motionAlpha)*movement;
 				}
 				
 			} else { // LIVE LEAP
@@ -573,10 +591,6 @@ void testApp::renderDiagnosticLeapFboAndExtractItsPixelData(){
 				} else {
 					leapVisualizer.drawFrame(leap); // no frame delay
 				}
-				
-				// Update the calculated amount of hand movement (derived from leap)
-				float movement = leapVisualizer.getMotionAmountFromHandPointVectors();
-				amountOfLeapMotion01 = (motionAlpha*amountOfLeapMotion01) + (1.0-motionAlpha)*movement;
 				
 			}
 			leapToCameraCalibrator.projector.endAsCamera();

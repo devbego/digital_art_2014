@@ -92,6 +92,8 @@ class LeapVisualizer{
 	
 	void updateHandPointVectors();
 	float getMotionAmountFromHandPointVectors();
+	float getZExtentFromHandPointVectors();
+	float getCurlFromHandPointVectors();
 	vector<ofPoint> prevHandPoints;
 	vector<ofPoint> currHandPoints;
 	

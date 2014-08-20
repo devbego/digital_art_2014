@@ -214,8 +214,14 @@ class testApp : public ofBaseApp{
 	float prevThresholdValue;
 	float blurredStrengthWeight;
 	
+	void  computeHandStatistics(); 
 	float amountOfPixelMotion01;
 	float amountOfLeapMotion01;
-	float motionAlpha; 
+	float amountOfFingerCurl01;
+	
+	float motionAlpha;
+	float zExtentAlpha;
+	float zHandExtent;
+	float fingerCurlAlpha;
     
 };
