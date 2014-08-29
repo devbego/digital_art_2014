@@ -24,12 +24,22 @@
 
 #define _USE_CORRECTED_CAMERA
 #define _USE_LIBDC_GRABBER
-
 // uncomment this to use a libdc firewire camera standard of an OF video grabber
 
 
 using namespace ofxCv;
 using namespace cv;
+
+
+
+#define INVALID_CONTOUR_INDEX	-1
+struct ContourRegion {
+	int index_start;
+	int index_end;
+	int index_len; // length (in terms of number of points)
+	int finger_id;
+};
+
 
 
 class testApp : public ofBaseApp{
@@ -114,6 +124,7 @@ class testApp : public ofBaseApp{
     bool	bShowText;
 	bool	bUseVoronoiExpansion;
 	bool	bShowOffBy1Frame;
+	bool	bDoCompositeThresholdedImageWithLeapFboPixels;
 	
     int		framesBackToPlay;
 	int		playingFrame;
@@ -152,9 +163,7 @@ class testApp : public ofBaseApp{
     
     bool useCorrectedCam();
 	
-	
-	
-	
+
 	
 	
 	
@@ -170,9 +179,12 @@ class testApp : public ofBaseApp{
 	
 	void updateComputerVision();
 	void extractLuminanceChannelFromVideoFrame();
-	void applyMorphologicalOps();
 	void computeFrameDifferencing();
 	void thresholdLuminanceImage();
+	void applyMorphologicalOps();
+	void applyEdgeAmplification();
+	void compositeThresholdedImageWithLeapFboPixels();
+	
 	
 	bool bWorkAtHalfScale;
 	bool bUseROIForFilters;
@@ -180,6 +192,7 @@ class testApp : public ofBaseApp{
 	bool bDoMorphologicalOps;
 	bool bDoAdaptiveThresholding;
 	bool bComputePixelBasedFrameDifferencing;
+	bool bDoLaplacianEdgeDetect; 
 	
 	ofxCvColorImage colorVideo;
 	ofxCvColorImage colorVideoHalfScale;
@@ -196,8 +209,11 @@ class testApp : public ofBaseApp{
 	Mat tempGrayscaleMat1;
 	Mat tempGrayscaleMat2;
 	Mat coloredBinarizedImg;
+	Mat handPartIDImg;		// grayscale image in which each pixel represents what part of the hand it represents
+	Mat handPartIDTmpImg;	// just used to store the information for a single finger at a time.
 	
 	Mat thresholded;		// binarized hand, black-white only
+	Mat edgesMat1;
 	Mat	thresholdedFinal;	//
 	Mat	thresholdedFinal8UC3;
 	Mat thresholdedFinalThrice[3];
@@ -214,6 +230,10 @@ class testApp : public ofBaseApp{
 	float prevThresholdValue;
 	float blurredStrengthWeight;
 	
+	int	  laplaceKSize;
+	float laplaceDelta;
+	float laplaceSensitivity;
+	
 	void  computeHandStatistics(); 
 	float amountOfPixelMotion01;
 	float amountOfLeapMotion01;
@@ -223,5 +243,22 @@ class testApp : public ofBaseApp{
 	float zExtentAlpha;
 	float zHandExtent;
 	float fingerCurlAlpha;
+	
+	float elapsedMicros;
+	long long  lastFrameTimeMicros;
+	
+	
+	//-------------------------------
+	bool bContourExists;
+	void computeLabeledContour (Mat thresholdedImageOfHandMat);
+	ofxCv::ContourFinder contourFinder;
+	
+	ofPolyline theHandContourRaw;
+	ofPolyline theHandContourResampled;
+	vector<ContourRegion> allContourRegionsTEMP;
+	vector<ContourRegion> contourRegionsConsolidated;
+	vector<ContourRegion> fingerContourRegions;
+	void labelHandContourWithHandPartIDs();
+	void drawLabeledHandContour(); 
     
 };

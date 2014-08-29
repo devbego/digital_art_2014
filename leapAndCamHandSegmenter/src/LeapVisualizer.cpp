@@ -11,18 +11,18 @@
 //-----------------------------------------------------------------
 void LeapVisualizer::setup(){
     
-    bDrawSimple				= false;
-    bDrawGrid				= true;
-	bDrawDiagnosticColors	= true;
-	bProjectorSet			= false;
+    bDrawSimple					= false;
+    bDrawGrid					= true;
+	bDrawDiagnosticColors		= true;
+	bProjectorSet				= false;
 	
 	bEnableVoronoiRendering		= false;
 	bUseVoronoiFbo				= false;
 	bActuallyDisplayVoronoiFbo	= false;
 	bWorkAtHalfScale			= false;
 	
-    diagnosticFingerScaling = 1.2;
-	
+    diagnosticFingerScaling		= 1.2;
+	armWidthScaling				= 1.0;
 
 }
 
@@ -968,7 +968,7 @@ void LeapVisualizer::drawArm (Hand & hand,ofxLeapMotion & leap){
 		} else {
 			
 			// Draw a cylinder between two points, properly oriented in space.
-			float armWidth = arm.width();
+			float armWidth = arm.width() * armWidthScaling;
 			float dx = wristPt.x - elbowPt.x;
 			float dy = wristPt.y - elbowPt.y;
 			float dz = wristPt.z - elbowPt.z;
@@ -1450,7 +1450,7 @@ void LeapVisualizer::drawPalmFromXML (ofxXmlSettings & XML){
 //--------------------------------------------------------------
 void LeapVisualizer::drawArmFromXML (ofxXmlSettings & XML){
 	
-	float armWidth = XML.getValue("AW", 0.0);
+	float armWidth = XML.getValue("AW", 0.0) * armWidthScaling;
 	float basisLen = 50.0;
 	
 	ofPoint	handPt    = ofPoint(XML.getValue("PM:X",0.0), XML.getValue("PM:Y",0.0), XML.getValue("PM:Z",0.0));	// palm

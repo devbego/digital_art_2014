@@ -76,6 +76,7 @@ class LeapVisualizer{
 	ofxRay::Projector screenProjector;
 	bool bProjectorSet;
 	float diagnosticFingerScaling;
+	float armWidthScaling;
 	
 	//-------------------------
 	// Centroid and orientation of the current hand, stashed temporarily in global variables.

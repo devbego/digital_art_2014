@@ -22,9 +22,6 @@ cp -f ../../../addons/ofxLeapMotion/libs/lib/osx/libLeap.dylib "$TARGET_BUILD_DI
  
  TODO
  
- use average orientation of the hand instead of bringing orientation towards zero
- detect folded hands
- detect hands moving too much
  detect hands oriented the wrong way. 
  
  composite laplacian edges.
@@ -35,7 +32,10 @@ cp -f ../../../addons/ofxLeapMotion/libs/lib/osx/libLeap.dylib "$TARGET_BUILD_DI
  
  use ROI
  use IPP
- use Accelerate
+
+ Use latest Leap SDK.
+ 
+ 
  */
 
 
@@ -100,6 +100,7 @@ void testApp::setup(){
     bShowLargeCamImageOnTop		= false;    // temp for quickly showing on hand video only
 	bUseVoronoiExpansion		= true;
 	bComputePixelBasedFrameDifferencing = false;
+	bDoCompositeThresholdedImageWithLeapFboPixels = true;
 	
 	bShowOffBy1Frame			= false;
     framesBackToPlay			= 0;
@@ -138,16 +139,19 @@ void testApp::setup(){
 	bUseRedChannelForLuminance	= true;
 	bDoMorphologicalOps			= true;
 	bDoAdaptiveThresholding		= false;
+	bDoLaplacianEdgeDetect		= true;
 
 	blurKernelSize				= 4.0;
+	laplaceKSize				= 7;
 	blurredStrengthWeight		= 0.07;
 	thresholdValue				= 26;
 	prevThresholdValue			= 0;
-
+	laplaceDelta				= 125.0;
+	laplaceSensitivity			= 0.59;
+	
 	colorVideo.allocate			(cameraWidth, cameraHeight);
 	colorVideoHalfScale.allocate(imgW, imgH);
 	leapFboPixels.allocate		(imgW, imgH, OF_IMAGE_COLOR);
-	
 	
 	
 	grayMat.create				(imgH, imgW, CV_8UC1);
@@ -157,10 +161,13 @@ void testApp::setup(){
 	blurred.create				(imgH, imgW, CV_8UC1);
 	thresholded.create			(imgH, imgW, CV_8UC1);
 	thresholdedFinal.create		(imgH, imgW, CV_8UC1);
+	edgesMat1.create			(imgH, imgW, CV_8UC1);
 	adaptiveThreshImg.create	(imgH, imgW, CV_8UC1);
 	thresholdConstMat.create	(imgH, imgW, CV_8UC1);
 	tempGrayscaleMat1.create	(imgH, imgW, CV_8UC1);
 	tempGrayscaleMat2.create	(imgH, imgW, CV_8UC1);
+	handPartIDImg.create		(imgH, imgW, CV_8UC1);
+	handPartIDTmpImg.create		(imgH, imgW, CV_8UC1);
 	
 	videoMat.create				(imgH, imgW, CV_8UC3);
 	leapDiagnosticFboMat.create	(imgH, imgW, CV_8UC3); // 3-channel
@@ -194,7 +201,7 @@ void testApp::setup(){
 	coloredBinarizedImg.setTo(0);
 	graySmall.setTo(0);
 	blurredSmall.setTo(0);
-	//-------------------------------------
+	//------------------------
 	
 	
 	whichImageToDraw = 5;
@@ -217,12 +224,21 @@ void testApp::setup(){
 	fingerCurlAlpha = 0.65;
 	amountOfFingerCurl01 = 0;
 	
+	elapsedMicros = 0;
+	lastFrameTimeMicros = 0; 
+	
 	int morph_size = 1;
 	int morph_type = cv::MORPH_ELLIPSE;
 	morphStructuringElt = getStructuringElement(morph_type,
 												cv::Size( 2*morph_size + 1, 2*morph_size+1 ),
 												cv::Point(  morph_size,       morph_size ) );
 	
+	
+	//------------------------
+	contourFinder.setMinArea(imgH*imgW * 0.01);
+	contourFinder.setMaxArea(imgH*imgW * 0.33);
+	contourFinder.setFindHoles(false);
+	contourFinder.setSortBySize(true);
 }
 
 
@@ -305,17 +321,21 @@ void testApp::setupGui() {
 	gui->addValuePlotter("amountOfLeapMotion01", 256, 0.00, 20.0, &amountOfLeapMotion01);
 	gui->addValuePlotter("zHandExtent", 256, 0.00, 1.50, &zHandExtent);
 	gui->addValuePlotter("amountOfFingerCurl01", 256, 0.00, 1.00, &amountOfFingerCurl01);
+	gui->addValuePlotter("elapsedMicros", 256, 0, 30000, &elapsedMicros);
 	
 	gui->addSpacer();
 	gui->addSlider("thresholdValue", 0.0, 64.0, &thresholdValue);
 	gui->addSlider("blurKernelSize", 1, 63, &blurKernelSize);
 	gui->addSlider("blurredStrengthWeight", 0.0, 1.0, &blurredStrengthWeight);
+	gui->addSlider("laplaceDelta",		0,	255, &laplaceDelta);
+	gui->addSlider("laplaceSensitivity",0.0, 4.0, &laplaceSensitivity);
 	
 	gui->addSpacer();
 	gui->addLabelToggle("bUseROIForFilters",			&bUseROIForFilters);
 	gui->addLabelToggle("bUseRedChannelForLuminance",	&bUseRedChannelForLuminance);
 	gui->addLabelToggle("bDoAdaptiveThresholding",		&bDoAdaptiveThresholding);
 	gui->addLabelToggle("bDoMorphologicalOps",			&bDoMorphologicalOps);
+	gui->addLabelToggle("bDoLaplacianEdgeDetect",		&bDoLaplacianEdgeDetect);
 
 	gui->autoSizeToFitWidgets();
 	gui->loadSettings(originalAppDataPath + "HandSegmenterSettings.xml");
@@ -331,6 +351,7 @@ void testApp::update(){
 	// which fetches image sequences from disk.
 	updateBufferedVideoPlayback();
 	
+	long long then = ofGetElapsedTimeMicros();
 	
 	// The leapVisualizer's "voronoi expansion" is a colored halo
 	// that fills in unlabeled regions of the camera-based silhouette
@@ -352,6 +373,10 @@ void testApp::update(){
 	updateComputerVision();
 	updateLeapHistoryRecorder();
 	
+	long long now = ofGetElapsedTimeMicros();
+	elapsedMicros = 0.9*elapsedMicros + 0.1*(float)(now - then);
+	lastFrameTimeMicros = now;
+	
 }
 
 //--------------------------------------------------------------
@@ -371,10 +396,13 @@ void testApp::updateComputerVision(){
 	// video is the playback buffered video
 
 	if (bInPlaybackMode){
-		extractLuminanceChannelFromVideoFrame();
-		computeFrameDifferencing();
+		extractLuminanceChannelFromVideoFrame();		// scale down and extract grayscale.
+		computeFrameDifferencing();						// not done presently
 		thresholdLuminanceImage();
 		applyMorphologicalOps();
+		applyEdgeAmplification();
+		compositeThresholdedImageWithLeapFboPixels();
+		computeLabeledContour (thresholdedFinal);
 	}
 	
 
@@ -492,8 +520,80 @@ void testApp::applyMorphologicalOps(){
 		cv::erode ( thresholded, thresholded,		morphStructuringElt );
 		cv::erode ( thresholded, thresholded,		morphStructuringElt );
 		cv::dilate( thresholded, thresholdedFinal,	morphStructuringElt );
+		
+	} else {
+		
+		thresholded.copyTo (thresholdedFinal);
 	}
 }
+
+
+//--------------------------------------------------------------
+void testApp::applyEdgeAmplification(){
+	
+	if (bDoLaplacianEdgeDetect){
+		
+		/*
+		// Canny edge detection
+		int edgeThresh = 1;
+		int lowThreshold = (int) laplaceDelta;
+		int const max_lowThreshold = 100;
+		int ratio = 3;
+		blur ( grayMat, edgesMat1, cv::Size(3,3) );
+		int kernel_size = 3;
+		cv::Canny( edgesMat1, edgesMat1, lowThreshold, lowThreshold*ratio, kernel_size );
+		*/
+		
+
+		/*
+		// Laplacian edge detection
+		blur ( grayMat, grayMat, cv::Size(5,5) );
+		int		kSize = 7; //laplaceKSize; //7;
+		double	sensitivity = (double)laplaceSensitivity / 100.0;
+		cv::Laplacian (grayMat, edgesMat1, -1, kSize, (double)sensitivity, (double)laplaceDelta, cv::BORDER_DEFAULT );
+		*/
+		
+		
+		/* 
+		// Sobel edge detection
+		int scale = 1;
+		int delta = 0;
+		int ddepth = CV_16S;
+		
+		Mat grad_x, grad_y;
+		Mat abs_grad_x, abs_grad_y;
+		Mat src = grayMat;
+		blur ( src, src, cv::Size(7,7) );
+
+		// Gradient X
+		Sobel( src, grad_x, ddepth, 1, 0, 3, scale, delta, BORDER_DEFAULT );
+		convertScaleAbs( grad_x, abs_grad_x );
+		
+		// Gradient Y
+		Sobel( src, grad_y, ddepth, 0, 1, 3, scale, delta, BORDER_DEFAULT );
+		convertScaleAbs( grad_y, abs_grad_y );
+		
+		// Total Gradient (approximate)
+		addWeighted( abs_grad_x, 0.5, abs_grad_y, 0.5, 0, edgesMat1 );
+		*/
+		
+
+		// Some combination techniques
+		// cv::addWeighted( abs_grad_x, 0.5, abs_grad_y, 0.5, 0, edgesMat1 );
+		// cv::max(edgesMat1, laplaceEdgesMat, edgesMat1);
+		// cv::multiply(edgesMat1, laplaceEdgesMat, edgesMat1, 1.0/256.0);
+		
+	} else {
+		// thresholdedFinal = thresholded.clone();
+	}
+	
+}
+
+
+
+
+
+
 
 //--------------------------------------------------------------
 void testApp::computeHandStatistics(){
@@ -599,24 +699,27 @@ void testApp::renderDiagnosticLeapFboAndExtractItsPixelData(){
 		glDisable(GL_DEPTH_TEST);
 		leapDiagnosticFbo.end();
 	}
+}
+
+//--------------------------------------------------------------
+void testApp::compositeThresholdedImageWithLeapFboPixels(){
 	
 	// Extract 8UC3 pixel data from leapDiagnosticFbo into leapFboPixels
 	leapDiagnosticFbo.readToPixels(leapFboPixels);
 	unsigned char *leapDiagnosticFboPixelData = leapFboPixels.getPixels();
 	leapDiagnosticFboMat.data = leapDiagnosticFboPixelData;
 	cv::flip(leapDiagnosticFboMat, leapDiagnosticFboMat, 0);
-	
-	
-	// Composite the colored orientation image (in leapFboMat) against
-	// the thresholdedFinal (in an RGBfied version), to produce the coloredBinarizedImg
-	thresholdedFinalThrice[0] = thresholdedFinal;
-	thresholdedFinalThrice[1] = thresholdedFinal;
-	thresholdedFinalThrice[2] = thresholdedFinal;
-	cv::merge(thresholdedFinalThrice, 3, thresholdedFinal8UC3);
-	cv::bitwise_and(leapDiagnosticFboMat, thresholdedFinal8UC3, coloredBinarizedImg);
+		
+	if (bDoCompositeThresholdedImageWithLeapFboPixels){
+		// Composite the colored orientation image (in leapFboMat) against
+		// the thresholdedFinal (in an RGBfied version), to produce the coloredBinarizedImg
+		thresholdedFinalThrice[0] = thresholdedFinal;
+		thresholdedFinalThrice[1] = thresholdedFinal;
+		thresholdedFinalThrice[2] = thresholdedFinal;
+		cv::merge(thresholdedFinalThrice, 3, thresholdedFinal8UC3);
+		cv::bitwise_and(leapDiagnosticFboMat, thresholdedFinal8UC3, coloredBinarizedImg);
+	}
 }
-
-
 
 
 
@@ -756,6 +859,7 @@ void testApp::draw(){
 		drawMat(thresholded,			imgW * xItem, 0); xItem++;
 		drawMat(adaptiveThreshImg,		imgW * xItem, 0); xItem++;
 		drawMat(thresholdedFinal,		imgW * xItem, 0); xItem++;
+		drawMat(edgesMat1,				imgW * xItem, 0); xItem++;
 		drawMat(leapDiagnosticFboMat,	imgW * xItem, 0); xItem++;
 		drawMat(coloredBinarizedImg,	imgW * xItem, 0); xItem++;
 		
@@ -768,12 +872,15 @@ void testApp::draw(){
 	}
 	
 	
+
 	
-	
-	float insetX = ofGetWidth()-imgW;
-	float insetY = ofGetHeight()-imgH;
+	float sca = 1.0;
+	float insetX = (ofGetWidth() - sca*imgW);
+	float insetY = (ofGetHeight()- sca*imgH);
 	ofPushMatrix();
+	ofPushStyle();
 	ofTranslate (insetX, insetY);
+	ofScale(sca, sca);
 	ofSetColor(ofColor::white);
 	switch(whichImageToDraw){
 		default:
@@ -781,12 +888,18 @@ void testApp::draw(){
 		case 2:		drawMat(thresholded,			0,0, imgW,imgH);	break;
 		case 3:		drawMat(adaptiveThreshImg,		0,0, imgW,imgH);	break;
 		case 4:		drawMat(thresholdedFinal,		0,0, imgW,imgH);	break;
-		case 5:		drawMat(leapDiagnosticFboMat,	0,0, imgW,imgH);	break;
-		case 6:		drawMat(coloredBinarizedImg,	0,0, imgW,imgH);	break;
-		
+		case 5:		drawMat(edgesMat1,				0,0, imgW,imgH);	break;
+		case 6:		drawMat(leapDiagnosticFboMat,	0,0, imgW,imgH);	break;
+		case 7:		drawMat(coloredBinarizedImg,	0,0, imgW,imgH);	break;
 	}
+	
+	drawLabeledHandContour();
+
+	ofPopStyle();
 	ofPopMatrix();
 	
+	
+
 	
 	int px = mouseX - insetX;
 	int py = mouseY - insetY;
@@ -815,6 +928,380 @@ void testApp::draw(){
 
 
 }
+
+
+//--------------------------------------------------------------
+void testApp::drawLabeledHandContour(){
+	if (bContourExists){
+		
+		int nContourPts = theHandContourResampled.size();
+		if (nContourPts > 0){
+
+			float px,py;
+			float qx,qy;
+			qx = theHandContourResampled[0].x;
+			qy = theHandContourResampled[0].y;
+			
+			// draw colored perimeters
+			for (int i=0; i<nContourPts; i++){
+				px = theHandContourResampled[i].x;
+				py = theHandContourResampled[i].y;
+				int whichHandPart = theHandContourResampled[i].z;
+				
+				float g = whichHandPart*32;
+				ofSetColor(127,g,g);
+				ofLine (px,py, qx,qy);
+
+				qx = px;
+				qy = py;
+			}
+			
+			// draw numeric labels
+			for (int c=0; c<contourRegionsConsolidated.size(); c++){
+				ContourRegion aContourRegion = contourRegionsConsolidated[c];
+				int whichHandPart = aContourRegion.finger_id;
+				int index0 = aContourRegion.index_start;
+				int index1 = aContourRegion.index_end  ;
+				int labelIndex = (index0 + index1)/2;
+				
+				float g = whichHandPart*32;
+				ofSetColor(127,g,g);
+				px = theHandContourResampled[index0%nContourPts].x;
+				py = theHandContourResampled[index0%nContourPts].y;
+				ofEllipse (px,py, 5,5);
+				
+				ofSetColor(255);
+				float lx = theHandContourResampled[labelIndex%nContourPts].x;
+				float ly = theHandContourResampled[labelIndex%nContourPts].y;
+				ofLine (lx,ly, lx-30,ly-30);
+				ofDrawBitmapString( ofToString(whichHandPart), lx-40, ly-30);
+				
+				
+			}
+		}
+	}
+}
+
+
+//--------------------------------------------------------------
+void testApp::computeLabeledContour (Mat thresholdedImageOfHandMat){
+	
+	// Given the thresholdedFinal image, detect blobs
+	bContourExists = false;
+	contourFinder.setThreshold(128);
+	contourFinder.findContours(thresholdedFinal);
+	
+	// If there are blobs, select the largest
+	theHandContourResampled.clear();
+	allContourRegionsTEMP.clear();
+	contourRegionsConsolidated.clear();
+	
+	if (contourFinder.size() > 0){
+		bContourExists = true;
+		theHandContourRaw = contourFinder.getPolyline(0); // 0'th is the largest.
+		
+		// Resample the ofPolyline of the largest blob
+		float handContourSampling = 2.0;
+		theHandContourResampled.clear();
+		theHandContourResampled = theHandContourRaw.getResampledBySpacing (handContourSampling);
+		theHandContourResampled = theHandContourResampled.getSmoothed(4.0);
+		theHandContourResampled.setClosed (true);
+		
+		
+		// For each point on the ofPolyline contour,
+		unsigned char *colorPixels = leapDiagnosticFboMat.data;
+		int nPointsOnContour = theHandContourResampled.size();
+		for (int p=0; p<nPointsOnContour; p++){
+			ofPoint aPoint = theHandContourResampled[p];
+			
+			// Fetch the location of the underlying pixel
+			int pxi = (int) ofClamp(roundf(aPoint.x), 0, imgW-1);
+			int pyi = (int) ofClamp(roundf(aPoint.y), 0, imgH-1);
+			int pindex1 = (pyi * imgW) + pxi;
+			int pindex3 = pindex1 * 3;
+			
+			// Fetch the color of the underlying pixel.
+			// Note: since we are able to obtain the colors from leapDiagnosticFboMat, this suggests that we
+			// no longer need to compositeThresholdedImageWithLeapFboPixels() to compute coloredBinarizedImg
+			int pr = colorPixels[pindex3  ];
+			int pg = colorPixels[pindex3+1];
+			int pb = colorPixels[pindex3+2];
+			
+			// Store the color's BLUE value (which encodes the finger identity)
+			// into the Z value of the corresponding ofPoint in the ofPolyline.
+			int whichFinger = pb / 32;
+			theHandContourResampled[p].z = whichFinger;
+		}
+		
+		// Go through the contour and extract all the contourRegions (into a temp vector).
+		// Then search through that vector for the longest ones belonging to each finger.
+		// (Stitch segments across the 0th point if they have the same id).
+		if (nPointsOnContour > 0){
+			allContourRegionsTEMP.clear();
+			
+			//-----------------
+			// Identify all the contour regions.
+			int fingerToWhichPrevPointBelongs = -1;
+			int fingerToWhichCurrPointBelongs = theHandContourResampled[0].z;
+			int startIndexOfCurrentContourRegion = 0;
+			int endIndexOfCurrentContourRegion   = 0;
+			
+			int pt=0;
+			for (pt=0; pt<nPointsOnContour; pt++){
+				fingerToWhichPrevPointBelongs = fingerToWhichCurrPointBelongs;
+				fingerToWhichCurrPointBelongs = theHandContourResampled[pt].z;
+				if (fingerToWhichPrevPointBelongs != fingerToWhichCurrPointBelongs){
+					endIndexOfCurrentContourRegion = pt;
+					
+					// Change detected. Save the previous ContourRegion.
+					ContourRegion aContourRegion;
+					aContourRegion.finger_id   = fingerToWhichPrevPointBelongs;
+					aContourRegion.index_start = startIndexOfCurrentContourRegion;
+					aContourRegion.index_end   = endIndexOfCurrentContourRegion;
+					aContourRegion.index_len   = abs(endIndexOfCurrentContourRegion - startIndexOfCurrentContourRegion);
+					allContourRegionsTEMP.push_back (aContourRegion);
+					
+					startIndexOfCurrentContourRegion = pt;
+				}
+			}
+			// Save the last ContourRegion.
+			endIndexOfCurrentContourRegion = pt;
+			ContourRegion lastContourRegion;
+			lastContourRegion.finger_id   = fingerToWhichPrevPointBelongs;
+			lastContourRegion.index_start = startIndexOfCurrentContourRegion;
+			lastContourRegion.index_end   = endIndexOfCurrentContourRegion;
+			lastContourRegion.index_len   = abs(endIndexOfCurrentContourRegion - startIndexOfCurrentContourRegion);
+			allContourRegionsTEMP.push_back (lastContourRegion);
+			
+			
+			//-----------------
+			// Repair the contour regions.
+			contourRegionsConsolidated.clear();
+			for (int repeat = 1; repeat <= 2; repeat++){
+				// Repeat for good measure.
+				int minFingerContourLength = 30 / repeat;
+				
+				int contourRegionsPerHandPartID[8] = {0,0,0,0,0,0,0,0};
+				
+				// Count ContourRegions for/per each finger.
+				// See LeapVisualizer.h for HAND_PART_ID enumeration (thumb starts at 3)
+				// ID_NONE  = 0, ID_WRIST = 1, ID_PALM  = 2,
+				// ID_THUMB = 3, ID_INDEX = 4, ID_MIDDLE = 5, ID_RING  = 6, ID_PINKY = 7
+				bool bAllFingersHaveAContourRegion = false;
+				int nContourRegionsTEMP = allContourRegionsTEMP.size();
+				for (int c=0; c<nContourRegionsTEMP; c++){
+					ContourRegion aContourRegion = allContourRegionsTEMP[c];
+					int fingerHandPartID = aContourRegion.finger_id;
+					if ((fingerHandPartID >= 0) && (fingerHandPartID <= 7)){
+						contourRegionsPerHandPartID[fingerHandPartID]++;
+					}
+				}
+				
+				// Pre-calculation for consolidated contourRegions:
+				// Set teeny segments to have the same ID as the segments flanking them.
+				for (int c=0; c<nContourRegionsTEMP; c++){
+					// For each contour region in allContourRegionsTEMP
+					ContourRegion aContourRegion = allContourRegionsTEMP[c];
+					int fingerHandPartID = aContourRegion.finger_id;
+					
+					int neighborIndexL = (c-1+nContourRegionsTEMP) % nContourRegionsTEMP;
+					int neighborIndexR = (c+1+nContourRegionsTEMP) % nContourRegionsTEMP;
+					int handPartIdOfNeighborL = allContourRegionsTEMP[neighborIndexL].finger_id;
+					int handPartIdOfNeighborR = allContourRegionsTEMP[neighborIndexR].finger_id;
+					
+					// General case for small fragments:
+					// If that contourRegion's handPartID is over-represented
+					if (contourRegionsPerHandPartID[fingerHandPartID] > 1){
+						
+						// identify the longest contourRegion with the same ID
+						int indexOfLongestContourRegionWithSameID = -1;
+						int lengthOfLongestContourRegionWithSameID = 0;
+						for (int d=0; d<nContourRegionsTEMP; d++){
+							ContourRegion anotherContourRegion = allContourRegionsTEMP[d];
+							if (anotherContourRegion.finger_id == fingerHandPartID){ // if has same id
+								if (anotherContourRegion.index_len > lengthOfLongestContourRegionWithSameID){
+									lengthOfLongestContourRegionWithSameID = anotherContourRegion.index_len;
+									indexOfLongestContourRegionWithSameID = d;
+								}
+							}
+						}
+						
+						// if our contourRegion is NOT the longest one with that same ID
+						if (c != indexOfLongestContourRegionWithSameID){
+							
+							// And if that contourRegion is shorter than minFingerContourLength
+							int index0 = aContourRegion.index_start;
+							int index1 = aContourRegion.index_end;
+							int length = index1 - index0;
+							if (length < minFingerContourLength){
+								
+								// If that contourRegion is flanked on both sides
+								// by contourRegions whose handPartID's are the same, and not 0,
+								// set it to the handPartIDs of its neighbors.
+								if ((handPartIdOfNeighborL == handPartIdOfNeighborR) && (handPartIdOfNeighborL > 0)){
+									allContourRegionsTEMP[c].finger_id = handPartIdOfNeighborL;
+								}
+								
+								// Else if the contourRegion is flanked on both sides
+								// by contourRegions with different handPartIDs,
+								// set its handPartID to the greater of its neighbors'.
+								else if (handPartIdOfNeighborL != handPartIdOfNeighborR){
+									int maxhandPartId = MAX (handPartIdOfNeighborL, handPartIdOfNeighborR);
+									allContourRegionsTEMP[c].finger_id = maxhandPartId;
+								}
+								
+							}
+						}
+					}
+				}
+				
+				// Deal with contourRegions whose handPartIDs are 0 (unknown) or 1 (wrist),
+				// regardless of their length.
+				for (int c=0; c<nContourRegionsTEMP; c++){
+					ContourRegion aContourRegion = allContourRegionsTEMP[c];
+					int aContourRegionHandPartID = aContourRegion.finger_id;
+					
+					if ((aContourRegionHandPartID == 0) ||
+						(aContourRegionHandPartID == 1)){
+						
+						int neighborIndexL2 = (c-2+nContourRegionsTEMP) % nContourRegionsTEMP;
+						int neighborIndexL1 = (c-1+nContourRegionsTEMP) % nContourRegionsTEMP;
+						int neighborIndexR1 = (c+1+nContourRegionsTEMP) % nContourRegionsTEMP;
+						int neighborIndexR2 = (c+2+nContourRegionsTEMP) % nContourRegionsTEMP;
+						
+						int handPartIdOfNeighborL2 = allContourRegionsTEMP[neighborIndexL2].finger_id;
+						int handPartIdOfNeighborL1 = allContourRegionsTEMP[neighborIndexL1].finger_id;
+						int handPartIdOfNeighborR1 = allContourRegionsTEMP[neighborIndexR1].finger_id;
+						int handPartIdOfNeighborR2 = allContourRegionsTEMP[neighborIndexR2].finger_id;
+						
+						// If its ID is 0 or 1, and both of its neighbors are the same (and > 1), set it to that.
+						aContourRegionHandPartID = allContourRegionsTEMP[c].finger_id;
+						if (aContourRegionHandPartID == 0){
+							if ((handPartIdOfNeighborL1 > 1) && (handPartIdOfNeighborR1 > 1)){
+								if (handPartIdOfNeighborL1 == handPartIdOfNeighborR1){
+									allContourRegionsTEMP[c].finger_id = handPartIdOfNeighborL1;
+								}
+							}
+						}
+						
+						// If the segment's ID (0 or 1) is duplicated across the arrayIndex=0 boundary
+						aContourRegionHandPartID = allContourRegionsTEMP[c].finger_id;
+						if (aContourRegionHandPartID <= 1){
+							if (c == 0){
+								if ((handPartIdOfNeighborR1 == handPartIdOfNeighborL2) &&
+									(aContourRegionHandPartID != handPartIdOfNeighborR1)) {
+									allContourRegionsTEMP[c].finger_id = handPartIdOfNeighborR1;
+								}
+							} else if (c == (nContourRegionsTEMP-1)){
+								if ((handPartIdOfNeighborL1 == handPartIdOfNeighborR2) &&
+									(aContourRegionHandPartID != handPartIdOfNeighborL1)) {
+									allContourRegionsTEMP[c].finger_id = handPartIdOfNeighborL1;
+								}
+							}
+						}
+						
+						// If its ID is 0, and *either* of its neigbors has handPartID 1 (wrist), set it to 1.
+						aContourRegionHandPartID = allContourRegionsTEMP[c].finger_id;
+						if (aContourRegionHandPartID == 0){
+							if ((handPartIdOfNeighborL1 == 1) || (handPartIdOfNeighborR1 == 1)) {
+								allContourRegionsTEMP[c].finger_id = 1;
+							}
+						}
+						
+						
+						// If its ID is 0, and it's between two segments whose ID's are different,
+						// then assign it to have the higher-numbered ID of the  of the two segments'.
+						// unless one of its neighbors' handPartID is 1, in which case, use that.
+						aContourRegionHandPartID = allContourRegionsTEMP[c].finger_id;
+						if (aContourRegionHandPartID == 0){
+							if (handPartIdOfNeighborL1 != handPartIdOfNeighborR1){
+								
+								if ((handPartIdOfNeighborL1 > 1) && (handPartIdOfNeighborR1 > 1)){
+									int maxhandPartID = MAX(handPartIdOfNeighborL1, handPartIdOfNeighborR1);
+									allContourRegionsTEMP[c].finger_id = maxhandPartID;
+								}
+								else {
+									allContourRegionsTEMP[c].finger_id = 1;
+								}
+							}
+						}
+						
+					}
+				}
+				
+				// Consolidate contourRegions.
+				contourRegionsConsolidated.clear();
+				
+				int lastHandPartID = -1;
+				for (int c=0; c<nContourRegionsTEMP; c++){
+					
+					ContourRegion currContourRegion = allContourRegionsTEMP[c];
+					int currHandPartID = currContourRegion.finger_id;
+					
+					int nAddedSoFar = contourRegionsConsolidated.size();
+					if (nAddedSoFar > 0){
+						ContourRegion lastContourRegion = contourRegionsConsolidated[nAddedSoFar-1];
+						lastHandPartID = lastContourRegion.finger_id;
+					}
+					
+					// If the current contourRegion has the same handPartID as the previous,
+					// then extend the end of the previous one.
+					if (currHandPartID == lastHandPartID){
+						contourRegionsConsolidated[nAddedSoFar-1].index_end = currContourRegion.index_end;
+					} else {
+						contourRegionsConsolidated.push_back (currContourRegion);
+					}
+				}
+				
+				allContourRegionsTEMP.clear();
+				allContourRegionsTEMP = contourRegionsConsolidated;
+				
+			} // close repeat
+			
+			// Handle the likely scenario in which the final contourRegion labels the same finger as the 0th.
+			// If so, take the points from the 0th region, and add them to the end of the last region
+			// (Thus exceeding the length of the polyline: we will use % for safety).
+			// Then delete the 0'th contourRegion.
+			int nCrConsolidated = contourRegionsConsolidated.size();
+			int handPartIdFirst = contourRegionsConsolidated[0].finger_id;
+			int handPartIdLast  = contourRegionsConsolidated[nCrConsolidated-1].finger_id;
+			if (handPartIdFirst == handPartIdLast){
+				int end0 = contourRegionsConsolidated[0].index_end;
+				contourRegionsConsolidated[nCrConsolidated-1].index_end += end0;
+				contourRegionsConsolidated[nCrConsolidated-1].index_len += end0;
+				contourRegionsConsolidated.erase (contourRegionsConsolidated.begin());
+			}
+			
+			// print handPartId's of contourRegionsConsolidated
+			bool bPrintContourRegions = false;
+			if (bPrintContourRegions){
+				printf("-------------\n");
+				for (int c=0; c<contourRegionsConsolidated.size(); c++){
+					int whichhandPartId = (int)(contourRegionsConsolidated[c].finger_id);
+					int contourRegionLen = contourRegionsConsolidated[c].index_len;
+					printf("%d: (%d)\n", whichhandPartId, contourRegionLen);
+				}
+			}
+			
+			// Relabel theHandContourResampled with the hard-won identity information.
+			int nContourPts = theHandContourResampled.size();
+			for (int c=0; c<contourRegionsConsolidated.size(); c++){
+				ContourRegion aContourRegion = contourRegionsConsolidated[c];
+				int whichHandPart = aContourRegion.finger_id;
+				int index0 = aContourRegion.index_start;
+				int index1 = aContourRegion.index_end  ;
+				
+				for (int p=index0; p<index1; p++){
+					int pSafe = p % nContourPts;
+					theHandContourResampled[pSafe].z = whichHandPart;
+				}
+			}
+		} // close if (nPointsOnContour > 0), if contour exists
+	} // close if (contourFinder.size() > 0), if blobs exist
+}
+
+
+
 
 //--------------------------------------------------------------
 void testApp::drawLiveForRecording(){
@@ -1276,7 +1763,7 @@ void testApp::keyPressed(int key){
 		case '$':	whichImageToDraw = 4; break;
 		case '%':	whichImageToDraw = 5; break;
 		case '^':	whichImageToDraw = 6; break;
-		
+		case '&':	whichImageToDraw = 7; break;
 		
 		case 'o':
             bShowOffBy1Frame= !bShowOffBy1Frame;
