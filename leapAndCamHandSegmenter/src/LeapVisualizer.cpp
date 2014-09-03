@@ -21,7 +21,7 @@ void LeapVisualizer::setup(){
 	bActuallyDisplayVoronoiFbo	= false;
 	bWorkAtHalfScale			= false;
 	
-    diagnosticFingerScaling		= 1.2;
+    diagnosticFingerScaling		= 1.0;
 	armWidthScaling				= 1.0;
 
 }
@@ -256,7 +256,7 @@ ofPoint LeapVisualizer::getIndexFingertip(ofxLeapMotion & leap){
 
 
 //--------------------------------------------------------------
-void LeapVisualizer::setProjector(ofxRay::Projector P){
+void LeapVisualizer::setProjector(const ofxRay::Projector &P){
 	screenProjector = P;
 	bProjectorSet = true;
 }
@@ -717,6 +717,9 @@ void LeapVisualizer::drawBone (const Finger &finger, Bone &bone, ofxLeapMotion &
 	// ofPoint bonePtC = leap.getofPoint ( bone.center()); // works, but:
 	ofPoint bonePtC = (bonePt0 + bonePt1)/2.0;
 	currHandPoints.push_back(bonePtC);
+	if (boneType == (Bone::Type)0){ // TYPE_METACARPAL
+		currKnuckles.push_back (bonePt1);
+	}
 	
 	if (bDrawSimple){
 		// Draw a simple white skeleton.
@@ -851,6 +854,7 @@ void LeapVisualizer::captureHandPropertiesFromLeap (ofxLeapMotion &leap, int whi
 			
 			handCentroid     = leap.getofPoint ( hand.palmPosition());
 			handNormal       = leap.getofPoint ( hand.palmNormal());
+			wristPosition	 = leap.getofPoint ( hand.wristPosition());
 		
 			Leap::Matrix handMatrix = hand.basis();
 			handOrientationX = leap.getofPoint( handMatrix.xBasis);
@@ -869,6 +873,8 @@ void LeapVisualizer::captureHandPropertiesFromXML ( ofxXmlSettings & XML, int wh
 	XML.pushTag("H", whichHandId); {
 		handCentroid    = ofPoint(XML.getValue("PM:X",0.0), XML.getValue("PM:Y",0.0), XML.getValue("PM:Z",0.0));
 		handNormal		= ofPoint(XML.getValue("PN:X",0.0), XML.getValue("PN:Y",0.0), XML.getValue("PN:Z",0.0));
+		wristPosition   = ofPoint(XML.getValue("W:X",0.0),  XML.getValue("W:Y",0.0),  XML.getValue("W:Z",0.0));
+		
 		XML.pushTag("HM", 0); {
 			handOrientationX = ofPoint(XML.getValue("XX",0.0), XML.getValue("XY",0.0), XML.getValue("XZ",0.0));
 			handOrientationY = ofPoint(XML.getValue("YX",0.0), XML.getValue("YY",0.0), XML.getValue("YZ",0.0));
@@ -879,7 +885,7 @@ void LeapVisualizer::captureHandPropertiesFromXML ( ofxXmlSettings & XML, int wh
 	XML.popTag();
 	
 	handCentroidVec3f = ofVec3f(handCentroid.x, handCentroid.y, handCentroid.z);
-	handNormalVec3f   = ofVec3f(handNormal.x, handNormal.y, handNormal.z);
+	handNormalVec3f   = ofVec3f(handNormal.x,	handNormal.y,	handNormal.z);
 }
 
 
@@ -1051,6 +1057,7 @@ void LeapVisualizer::updateHandPointVectors(){
 		}
 	}
 	currHandPoints.clear();
+	currKnuckles.clear();
 }
 
 
@@ -1099,6 +1106,68 @@ float LeapVisualizer::getZExtentFromHandPointVectors(){
 	}
 	return out;
 }
+
+
+//--------------------------------------------------------------
+ofVec3f LeapVisualizer::getProjectedHandPoint (int which){
+	ofVec3f out; out.set(0,0,0);
+	if (bProjectorSet){
+		
+		int nCurrHandPoints = currHandPoints.size();
+		if ((nCurrHandPoints > 0) && (which < nCurrHandPoints)){
+		
+			float bx = currHandPoints[which].x;
+			float by = currHandPoints[which].y;
+			float bz = currHandPoints[which].z;
+				
+			ofVec3f bonePoint = ofVec3f(bx,by,bz);
+			out = screenProjector.getScreenCoordinateOfWorldPosition (bonePoint);
+		}
+	}
+	return out;
+}
+
+//--------------------------------------------------------------
+ofVec3f LeapVisualizer::getProjectedKnuckle (int which){
+	ofVec3f out; out.set(0,0,0);
+	if (bProjectorSet){
+		
+		int nCurrKnuckles = currKnuckles.size();
+		if ((nCurrKnuckles > 0) && (which < nCurrKnuckles)){
+			
+			float bx = currKnuckles[which].x;
+			float by = currKnuckles[which].y;
+			float bz = currKnuckles[which].z;
+			
+			ofVec3f bonePoint = ofVec3f(bx,by,bz);
+			out = screenProjector.getScreenCoordinateOfWorldPosition (bonePoint);
+		}
+	}
+	return out;
+}
+
+
+//--------------------------------------------------------------
+ofVec3f LeapVisualizer::getProjectedHandCentroid (){
+	ofVec3f out; out.set(0,0,0);
+	if (bProjectorSet){
+		out = screenProjector.getScreenCoordinateOfWorldPosition (handCentroid);
+	} return out;
+}
+//--------------------------------------------------------------
+ofVec3f LeapVisualizer::getProjectedWristPosition (){
+	ofVec3f out; out.set(0,0,0);
+	if (bProjectorSet){
+		out = screenProjector.getScreenCoordinateOfWorldPosition (wristPosition);
+	} return out;
+}
+
+
+
+
+
+
+
 
 //--------------------------------------------------------------
 float LeapVisualizer::getCurlFromHandPointVectors(){
@@ -1348,6 +1417,10 @@ void LeapVisualizer::drawFingerFromXML (ofxXmlSettings & XML){
 			bonePt1 = ofPoint(XML.getValue("P:X",0.0), XML.getValue("P:Y",0.0), XML.getValue("P:Z",0.0));
 			bonePtC = (bonePt0 + bonePt1)/2.0;
 			currHandPoints.push_back(bonePtC);
+			
+			if (b==0){
+				currKnuckles.push_back(bonePt1);
+			}
 			
 			if (bDrawSimple){
 				// Draw a simple skeleton.

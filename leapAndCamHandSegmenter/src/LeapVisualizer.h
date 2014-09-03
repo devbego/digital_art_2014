@@ -72,7 +72,7 @@ class LeapVisualizer{
 	float	getDiagnosticOrientationFromColor (float r255, float g255, float b255);
 	int		getDiagnosticIdentityFromColor (float r255, float g255, float b255);
 	
-	void setProjector(ofxRay::Projector P);
+	void setProjector(const ofxRay::Projector &P);
 	ofxRay::Projector screenProjector;
 	bool bProjectorSet;
 	float diagnosticFingerScaling;
@@ -85,6 +85,7 @@ class LeapVisualizer{
 	void drawCapturedHandProperties(); 
 	ofPoint handCentroid;
 	ofPoint handNormal;
+	ofPoint wristPosition;
 	ofVec3f handCentroidVec3f;
 	ofVec3f handNormalVec3f;
 	ofPoint handOrientationX;
@@ -95,8 +96,15 @@ class LeapVisualizer{
 	float getMotionAmountFromHandPointVectors();
 	float getZExtentFromHandPointVectors();
 	float getCurlFromHandPointVectors();
+	
+	ofVec3f getProjectedHandPoint (int which);
+	ofVec3f getProjectedKnuckle (int which);
+	ofVec3f getProjectedHandCentroid ();
+	ofVec3f getProjectedWristPosition ();
+	
 	vector<ofPoint> prevHandPoints;
 	vector<ofPoint> currHandPoints;
+	vector<ofPoint> currKnuckles;
 	
 	
 	//-------------------------

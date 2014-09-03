@@ -14,7 +14,7 @@
 #include "LeapVisualizer.h"
 #include "FingerTipCalibRecorder.h"
 #include "LeapToCameraCalibrator.h"
-
+#include "HandContourAnalyzer.h"
 
 /* 
  Made some sanity changes in ofxXmlSettings:
@@ -31,7 +31,7 @@ using namespace ofxCv;
 using namespace cv;
 
 
-
+/*
 #define INVALID_CONTOUR_INDEX	-1
 struct ContourRegion {
 	int index_start;
@@ -39,7 +39,7 @@ struct ContourRegion {
 	int index_len; // length (in terms of number of points)
 	int finger_id;
 };
-
+*/
 
 
 class testApp : public ofBaseApp{
@@ -249,16 +249,7 @@ class testApp : public ofBaseApp{
 	
 	
 	//-------------------------------
-	bool bContourExists;
-	void computeLabeledContour (Mat thresholdedImageOfHandMat);
-	ofxCv::ContourFinder contourFinder;
+	HandContourAnalyzer myHandContourAnalyzer;
 	
-	ofPolyline theHandContourRaw;
-	ofPolyline theHandContourResampled;
-	vector<ContourRegion> allContourRegionsTEMP;
-	vector<ContourRegion> contourRegionsConsolidated;
-	vector<ContourRegion> fingerContourRegions;
-	void labelHandContourWithHandPartIDs();
-	void drawLabeledHandContour(); 
     
 };
