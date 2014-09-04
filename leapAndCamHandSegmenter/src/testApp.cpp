@@ -22,7 +22,6 @@ cp -f ../../../addons/ofxLeapMotion/libs/lib/osx/libLeap.dylib "$TARGET_BUILD_DI
  
  TODO
  
- detect hands oriented the wrong way. 
  
  composite laplacian edges.
  trace contour
@@ -829,6 +828,7 @@ void testApp::draw(){
 
     ofBackground(20);
 	gui->setPosition(20,20);
+	
     
     if (!bInPlaybackMode){
         drawLiveForRecording();
@@ -1347,6 +1347,9 @@ void testApp::keyPressed(int key){
         case 'g':
             leapVisualizer.bDrawGrid = !leapVisualizer.bDrawGrid;
             break;
+		case 'G':
+			gui->toggleVisible();
+			break;
         case 'l':
             if(bInPlaybackMode) bInPlaybackMode = false;
             break;
