@@ -36,7 +36,15 @@ cp -f ../../../addons/ofxLeapMotion/libs/lib/osx/libLeap.dylib "$TARGET_BUILD_DI
  Improve detection of HANDMARK_PINKY_SIDE in HandContourAnalyzer::computePinkySide() with local curvature search. 
  Prevent darkness from climbing up the hand by placing a white stripe at base of arm
  
+ Govern finger size on individual -- perhaps query leap about finger width
+deal with dark skin thresholding
+ == base on map from liz to miranda
  
+ White out the wrist before contour detection.
+
+ check all ofmaps' for div-0
+ 
+ dist from wrist better than dist from palm for finger calcs - check thumb in frame 87, 341, 342 in csugrue
  */
 
 
@@ -206,7 +214,7 @@ void testApp::setup(){
 	
 	
 	whichImageToDraw = 5;
-	setupGui();
+	
 	
 	// Get us ready to demo in a hurry
 	string filePathCalib = "calib_chris_corrected_4";
@@ -226,6 +234,7 @@ void testApp::setup(){
 	amountOfFingerCurl01 = 0;
 	
 	elapsedMicros = 0;
+	elapsedMicrosInt = 0;
 	lastFrameTimeMicros = 0; 
 	
 	int morph_size = 1;
@@ -236,6 +245,10 @@ void testApp::setup(){
 	
 	
 	myHandContourAnalyzer.setup(imgW, imgH);
+	
+	
+	// must be last
+	setupGui();
 	
 	/*
 	//------------------------
@@ -314,37 +327,82 @@ void testApp::initializeCameraCalibration(){
 
 //--------------------------------------------------------------
 void testApp::setupGui() {
-	gui = new ofxUICanvas();
-	gui->loadSettings(originalAppDataPath + "HandSegmenterSettings.xml");
 	
-	gui->addLabel("Hand Segmentation");
-	gui->addSpacer();
-	gui->addFPS();
+	guiTabBar = new ofxUITabBar();
+	guiTabBar->setName("GUI");
 	
-	// gui->addValuePlotter("elapsedMicros", 256, 0, 30000, &elapsedMicros);
-	// gui->addValuePlotter("amountOfPixelMotion01", 256, 0.00, 0.25, &amountOfPixelMotion01);
-	gui->addValuePlotter("amountOfLeapMotion01", 256, 0.00, 20.0, &amountOfLeapMotion01);
-	gui->addValuePlotter("zHandExtent", 256, 0.00, 1.50, &zHandExtent);
-	gui->addValuePlotter("amountOfFingerCurl01", 256, 0.00, 1.00, &amountOfFingerCurl01);
-	gui->addValuePlotter("elapsedMicros", 256, 0, 30000, &elapsedMicros);
+	//------------------------------------
+	ofxUICanvas* gui0 = new ofxUICanvas();
+	gui0->setName("GUI0");
+	gui0->addLabel("GUI0");
 	
-	gui->addSpacer();
-	gui->addSlider("thresholdValue", 0.0, 64.0, &thresholdValue);
-	gui->addSlider("blurKernelSize", 1, 63, &blurKernelSize);
-	gui->addSlider("blurredStrengthWeight", 0.0, 1.0, &blurredStrengthWeight);
-	gui->addSlider("laplaceDelta",		0,	255, &laplaceDelta);
-	gui->addSlider("laplaceSensitivity",0.0, 4.0, &laplaceSensitivity);
+	gui0->addSpacer();
+	gui0->addFPS();
+	gui0->addValuePlotter("elapsedMicros", 256, 0, 50000, &elapsedMicros);
+	gui0->addIntSlider("Micros", 0, 50000, &elapsedMicrosInt);
 	
-	gui->addSpacer();
-	gui->addLabelToggle("bUseROIForFilters",			&bUseROIForFilters);
-	gui->addLabelToggle("bUseRedChannelForLuminance",	&bUseRedChannelForLuminance);
-	gui->addLabelToggle("bDoAdaptiveThresholding",		&bDoAdaptiveThresholding);
-	gui->addLabelToggle("bDoMorphologicalOps",			&bDoMorphologicalOps);
-	gui->addLabelToggle("bDoLaplacianEdgeDetect",		&bDoLaplacianEdgeDetect);
+	gui0->autoSizeToFitWidgets();
+	ofAddListener(gui0->newGUIEvent,this,&testApp::guiEvent);
+	guiTabBar->addCanvas(gui0);
+	guis.push_back(gui0);
+	
+	//------------------------------------
+	ofxUICanvas* gui1 = new ofxUICanvas();
+	gui1->setName("GUI1");
+	gui1->addLabel("GUI1");
+	
+	gui1->loadSettings(originalAppDataPath + "HandSegmenterSettings.xml");
+	gui1->addSpacer();
+	
+	gui1->addValuePlotter("amountOfLeapMotion01", 256, 0.00, 20.0, &amountOfLeapMotion01);
+	gui1->addValuePlotter("zHandExtent", 256, 0.00, 1.50, &zHandExtent);
+	gui1->addValuePlotter("amountOfFingerCurl01", 256, 0.00, 1.00, &amountOfFingerCurl01);
+	
+	gui1->addSpacer();
+	gui1->addSlider("thresholdValue", 0.0, 128.0, &thresholdValue);
+	gui1->addSlider("blurKernelSize", 1, 63, &blurKernelSize);
+	gui1->addSlider("blurredStrengthWeight", 0.0, 1.0, &blurredStrengthWeight);
+	gui1->addSlider("laplaceDelta",		0,	255, &laplaceDelta);
+	gui1->addSlider("laplaceSensitivity",0.0, 4.0, &laplaceSensitivity);
+	
+	gui1->addSpacer();
+	gui1->addLabelToggle("bUseROIForFilters",			&bUseROIForFilters);
+	gui1->addLabelToggle("bUseRedChannelForLuminance",	&bUseRedChannelForLuminance);
+	gui1->addLabelToggle("bDoAdaptiveThresholding",		&bDoAdaptiveThresholding);
+	gui1->addLabelToggle("bDoMorphologicalOps",			&bDoMorphologicalOps);
+	gui1->addLabelToggle("bDoLaplacianEdgeDetect",		&bDoLaplacianEdgeDetect);
 
-	gui->autoSizeToFitWidgets();
-	gui->loadSettings(originalAppDataPath + "HandSegmenterSettings.xml");
+	gui1->loadSettings(originalAppDataPath + "HandSegmenterSettings.xml");
+	gui1->autoSizeToFitWidgets();
+	ofAddListener(gui1->newGUIEvent,this,&testApp::guiEvent);
+	guiTabBar->addCanvas(gui1);
+	guis.push_back(gui1);
 	
+	
+	//------------------------------------
+	ofxUICanvas* gui2 = new ofxUICanvas();
+	gui2->setName("GUI2");
+	gui2->addLabel("GUI2");
+	
+	gui2->addIntSlider("smoothingOfLowpassContour", 1, 15,	&(myHandContourAnalyzer.smoothingOfLowpassContour));
+	gui2->addSlider("crotchCurvaturePowf",  0.0, 2.0,		&(myHandContourAnalyzer.crotchCurvaturePowf));
+	gui2->addSlider("crotchDerivativePowf", 0.0, 2.0,		&(myHandContourAnalyzer.crotchDerivativePowf));
+	gui2->addIntSlider("crotchSearchRadius", 1, 32,			&(myHandContourAnalyzer.crotchSearchRadius));
+	
+	gui2->autoSizeToFitWidgets();
+	ofAddListener(gui2->newGUIEvent,this,&testApp::guiEvent);
+	guiTabBar->addCanvas(gui2);
+	guis.push_back(gui2);
+	
+
+}
+
+//--------------------------------------------------------------
+void testApp::guiEvent(ofxUIEventArgs &e) {
+	string name = e.widget->getName();
+	int kind = e.widget->getKind();
+    string canvasParent = e.widget->getCanvasParent()->getName();
+    // cout << canvasParent << endl;
 }
 
 
@@ -380,6 +438,7 @@ void testApp::update(){
 	
 	long long now = ofGetElapsedTimeMicros();
 	elapsedMicros = 0.9*elapsedMicros + 0.1*(float)(now - then);
+	elapsedMicrosInt = (int) elapsedMicros;
 	lastFrameTimeMicros = now;
 	
 }
@@ -617,12 +676,17 @@ void testApp::computeHandStatistics(){
 		
 		// Update the calculated amount of hand movement (derived from leap)
 		float movement = leapVisualizer.getMotionAmountFromHandPointVectors();
-		float zextent  = 100.0 * leapVisualizer.getZExtentFromHandPointVectors();
 		float curl     = 0.1 * leapVisualizer.getCurlFromHandPointVectors();
 		
-		amountOfLeapMotion01 = (motionAlpha*amountOfLeapMotion01)     + (1.0-motionAlpha)*movement;
-		zHandExtent          = (zExtentAlpha*zHandExtent)             + (1.0-zExtentAlpha)*zextent;
-		amountOfFingerCurl01 = (fingerCurlAlpha*amountOfFingerCurl01) + (1.0-fingerCurlAlpha)*curl;
+		ofVec2f zRange = leapVisualizer.getZExtentFromHandPointVectors();
+		float minZ = 100.0 * zRange.x;
+		float maxZ = 100.0 * zRange.y;
+		float zextent = fabs(maxZ - minZ);
+		
+		amountOfLeapMotion01 = (motionAlpha*amountOfLeapMotion01)		+ (1.0-motionAlpha)*movement;
+		zHandExtent          = (zExtentAlpha*zHandExtent)				+ (1.0-zExtentAlpha)*zextent;
+		zHandHeight          = (zExtentAlpha*zHandHeight)				+ (1.0-zExtentAlpha)*(100.0 - minZ);
+		amountOfFingerCurl01 = (fingerCurlAlpha*amountOfFingerCurl01)	+ (1.0-fingerCurlAlpha)*curl;
 		
 	}
 }
@@ -827,7 +891,8 @@ void testApp::updateProcessFrameImg(){
 void testApp::draw(){
 
     ofBackground(20);
-	gui->setPosition(20,20);
+	/*gui->setPosition(20,20);*/
+	guiTabBar->setPosition(20,20);
 	
     
     if (!bInPlaybackMode){
@@ -889,7 +954,7 @@ void testApp::draw(){
 	
 
 	
-	float sca = 1.0;
+	float sca = 2.0;
 	float insetX = (ofGetWidth() - sca*imgW);
 	float insetY = (ofGetHeight()- sca*imgH);
 	ofPushMatrix();
@@ -906,7 +971,15 @@ void testApp::draw(){
 		case 5:		drawMat(edgesMat1,				0,0, imgW,imgH);	break;
 		case 6:		drawMat(leapDiagnosticFboMat,	0,0, imgW,imgH);	break;
 		case 7:		drawMat(coloredBinarizedImg,	0,0, imgW,imgH);	break;
+		case 8:		if(bInPlaybackMode ){
+						video.draw(0, 0, imgW,imgH);
+					} else {
+						processFrameImg.draw(0,0,imgW,imgH);
+					}
+					break;
+		
 	}
+
 	
 	
 	myHandContourAnalyzer.draw();
@@ -944,6 +1017,82 @@ void testApp::draw(){
 
 
 }
+
+
+//--------------------------------------------------------------
+void testApp::applicationStateMachine(){
+	
+	bool bHandJustInserted	= false;
+	bool bHandJustDeparted	= false;
+	long currentHandStartTime = 0;
+	
+	//--------------------------------------// What the system should do when:
+	int		STATE_SHOWING_SCREENSAVER;		// Nobody has been around for a while: show a screensaver
+	int		STATE_SHOWING_AUGMENTATION;		// Ideal operating conditions: show the processed hand
+	int		STATE_SHOWING_PLAIN_VIDEO;		// Momentarily faulty conditions: pass through the video
+	int		STATE_SHOWING_ERROR;			// Sustained faulty conditions: show the video, plus a message
+	
+	/*
+	int		FAULT_NOTHING_WRONG;			// Everything appears to be working normally
+	int		FAULT_NO_USER_PRESENT_BRIEF;	// Hand may have been momentarily withdrawn, not present for ~1 second
+	int		FAULT_NO_USER_PRESENT_LONG;		// Nobody is present in the camera nor leap, for more than ~10 seconds
+	int		FAULT_LEAP_DROPPED_FRAME;		// There was a hand in the camera (as recently as a second ago), but there's a leap dropout.
+	int		FAULT_NO_LEAP_HAND_TOO_SMALL;	// There's a handlike object in the camera, but it may be too small for the leap to work
+	int		FAULT_NO_LEAP_OBJECT_PRESENT;	// Some bastard put something in the box
+	int		FAULT_TOO_MANY_HANDS;			// There's more than one hand in view
+	int		FAULT_HAND_TOO_FAST;			// The hand is moving too quickly
+	int		FAULT_HAND_TOO_HIGH;			// The hand is physically too close to the cameras
+	int		FAULT_HAND_TOO_CURLED;			// The hand is a fist or curled up, or has a curled finger
+	int		FAULT_HAND_TOO_VERTICAL;		// The hand is turned away from the camera
+	*/
+	
+	ApplicationFault theApplicationFault = FAULT_NOTHING_WRONG;
+	
+	
+	
+	
+}
+
+
+/*
+ Please insert your hand to begin.
+ Stop je hand in het apparaat om te beginnen.
+ 
+ Put your hand in this zone.
+ Hou je hand in dit gebied.
+ 
+ Touch the screen for a new scene.
+ Raak het scherm aan voor een nieuwe scène.
+ 
+ Oops! Try moving more slowly.
+ Oeps! Probeer langzamer te bewegen.
+ 
+ Oops! Try keeping your hand flat.
+ Oeps! Probeer je hand recht te houden.
+ 
+ Oops! Your hand is too high up.
+ Oeps! Je houdt je hand te hoog.
+ 
+ Hey! Just one hand at a time, please.
+ Hee! Eén hand tegelijk alsjeblieft.
+ 
+ Hey! Hold still for a moment, please.
+ Hee! Hou je hand stil alsjeblieft.
+ 
+ I'm sorry! Your hand might be too small :(
+ Het spijt me! Je hand is waarschijnlijk te klein voor mij :(
+ 
+ Try taking your hand out, and putting it in again.
+ Probeer eens om je hand eruit te halen en deze er weer in te stoppen.
+ 
+ Hey! Only hands, please.
+ Hee! Alleen je hand alsjeblieft.
+ 
+ Hey! That's not a hand.
+ Hee! Dat is geen hand.
+
+ */
+
 
 
 
@@ -1348,7 +1497,8 @@ void testApp::keyPressed(int key){
             leapVisualizer.bDrawGrid = !leapVisualizer.bDrawGrid;
             break;
 		case 'G':
-			gui->toggleVisible();
+			/* gui->toggleVisible(); */
+			guiTabBar->toggleVisible();
 			break;
         case 'l':
             if(bInPlaybackMode) bInPlaybackMode = false;
@@ -1411,6 +1561,7 @@ void testApp::keyPressed(int key){
 		case '%':	whichImageToDraw = 5; break;
 		case '^':	whichImageToDraw = 6; break;
 		case '&':	whichImageToDraw = 7; break;
+		case '*':	whichImageToDraw = 8; break;
 		
 		case 'o':
             bShowOffBy1Frame= !bShowOffBy1Frame;
@@ -1474,7 +1625,13 @@ void testApp::dragEvent(ofDragInfo dragInfo){
 void testApp::exit(){
     // let's close down Leap and kill the controller
     leap.close();
-	delete gui;
+	/* delete gui; */
+	
+	for(vector<ofxUICanvas *>::iterator it = guis.begin(); it != guis.end(); ++it){
+        ofxUICanvas *g = *it;
+        delete g;
+    }
+    delete guiTabBar;
 }
 
 

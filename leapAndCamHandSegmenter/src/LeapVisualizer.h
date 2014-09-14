@@ -85,26 +85,32 @@ class LeapVisualizer{
 	void drawCapturedHandProperties(); 
 	ofPoint handCentroid;
 	ofPoint handNormal;
+	
 	ofPoint wristPosition;
+	ofPoint wristOrientationX;
+	
 	ofVec3f handCentroidVec3f;
 	ofVec3f handNormalVec3f;
 	ofPoint handOrientationX;
 	ofPoint handOrientationY;
 	ofPoint handOrientationZ;
 	
-	void updateHandPointVectors();
-	float getMotionAmountFromHandPointVectors();
-	float getZExtentFromHandPointVectors();
-	float getCurlFromHandPointVectors();
+	void	updateHandPointVectors();
+	float	getMotionAmountFromHandPointVectors();
+	float	getCurlFromHandPointVectors();
+	ofVec2f getZExtentFromHandPointVectors();
 	
 	ofVec3f getProjectedHandPoint (int which);
 	ofVec3f getProjectedKnuckle (int which);
 	ofVec3f getProjectedHandCentroid ();
 	ofVec3f getProjectedWristPosition ();
+	ofVec3f getProjectedWristOrientation ();
+	ofVec3f	getProjectedWristOrientation2 ();
 	
 	vector<ofPoint> prevHandPoints;
 	vector<ofPoint> currHandPoints;
 	vector<ofPoint> currKnuckles;
+	float fingerThicknesses[5];
 	
 	
 	//-------------------------

@@ -26,6 +26,7 @@ void testApp::setup(){
 	ofSetCylinderResolution (16, 1, 16);
 
 	leap.open();
+	//leap.setPolicyFlagHMD();
 	cam.setOrientation(ofPoint(-55, 0, 0));
 
 	glEnable(GL_DEPTH_TEST);
