@@ -94,6 +94,7 @@ class LeapVisualizer{
 	ofPoint handOrientationX;
 	ofPoint handOrientationY;
 	ofPoint handOrientationZ;
+	int		nLeapHandsInScene;
 	
 	void	updateHandPointVectors();
 	float	getMotionAmountFromHandPointVectors();

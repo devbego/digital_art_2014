@@ -23,6 +23,7 @@ void LeapVisualizer::setup(){
 	
     diagnosticFingerScaling		= 1.0;
 	armWidthScaling				= 1.1;
+	nLeapHandsInScene			= 0;
 
 }
 
@@ -83,7 +84,6 @@ void LeapVisualizer::initPointsToVoronoi(){
 	}
 }
 
-
 //--------------------------------------------------------------
 void LeapVisualizer::updateVoronoi(){
 	if (bEnableVoronoiRendering){
@@ -110,7 +110,6 @@ void LeapVisualizer::drawVoronoi(){
 		// Draw the actual voronoi diagram
 		NB->myDisplay();
 		
-	
 		// If needed for diagnostic purposes, draw the skeletons
 		bool bDrawVoronoiSkeletons = false;
 		if (bDrawVoronoiSkeletons){
@@ -136,7 +135,6 @@ void LeapVisualizer::drawVoronoi(){
 			ofPopStyle();
 		}
 		
-		
 		if (bUseVoronoiFbo){
 			voronoiFbo.end();
 			
@@ -145,14 +143,12 @@ void LeapVisualizer::drawVoronoi(){
 				ofSetColor(255);
 				voronoiFbo.draw(0,nbody_h, nbody_w,0-nbody_h);
 			}
-			
 		}
 		
 		if (bDoVoronoiShaderBlur){
 			blurShader.end();
 			blurShader.draw();
 		}
-		
 	}
 }
 
@@ -179,9 +175,6 @@ void LeapVisualizer::feedBogusPointsToVoronoi(){
 
 
 
-
-
-
 //-----------------------------------------------------------------
 void LeapVisualizer::loadXmlFile (string fileName){
     myXML.clear();
@@ -189,9 +182,9 @@ void LeapVisualizer::loadXmlFile (string fileName){
 }
 
 
+//-----------------------------------------------------------------
 ofPoint LeapVisualizer::getIndexFingertipFromXML(int whichFrame){
-    
-    // assumes only one hand
+    // assumes only one hand!
     
     ofPoint fingerTip = ofPoint(-1,-1,-1);
     
@@ -222,10 +215,10 @@ ofPoint LeapVisualizer::getIndexFingertipFromXML(int whichFrame){
         myXML.popTag();
 
 	}
-    
     return fingerTip;
 }
 
+//-----------------------------------------------------------------
 ofPoint LeapVisualizer::getIndexFingertip(ofxLeapMotion & leap){
     
     vector <Hand> hands = leap.getLeapHands();
@@ -246,7 +239,7 @@ ofPoint LeapVisualizer::getIndexFingertip(ofxLeapMotion & leap){
 		const Finger & finger = fingers[f];
 		Finger::Type fingerType = finger.type();
 		if (finger.isValid() && fingerType == Finger::TYPE_INDEX)
-        {
+		{
             return ofPoint(finger.tipPosition().x, finger.tipPosition().y, finger.tipPosition().z);
 		}
 	}
@@ -275,7 +268,6 @@ float LeapVisualizer::getDiagnosticOrientationFromColor (float r255, float g255,
 	float angle = atan2f(angleSin, angleCos);
 	float dangle = 0;
 	angle += DEG_TO_RAD * dangle;
-	
 	return angle;
 }
 
@@ -304,7 +296,6 @@ int LeapVisualizer::getDiagnosticIdentityFromColor (float r255, float g255, floa
 //--------------------------------------------------------------
 ofVec3f LeapVisualizer::getColorDiagnostically (Finger::Type fingerType, Bone::Type boneType,
 												ofPoint bonePt0, ofPoint bonePt1){
-	
 	ofVec3f outputColor;
 	outputColor.set(0,0,0);
 	
@@ -494,7 +485,6 @@ void LeapVisualizer::setColorByFinger (Finger::Type fingerType, Bone::Type boneT
 }
 
 
-
 //--------------------------------------------------------------
 void LeapVisualizer::drawOrientedCylinder (ofPoint pt0, ofPoint pt1, float radius){
 	
@@ -517,6 +507,7 @@ void LeapVisualizer::drawOrientedCylinder (ofPoint pt0, ofPoint pt1, float radiu
 	ofPopMatrix();
 }
 
+//-----------------------------------------------------------------
 void LeapVisualizer::drawGrid(){
 	
 	// Draw a grid plane.
@@ -530,7 +521,6 @@ void LeapVisualizer::drawGrid(){
 		ofDisableSmoothing();
 	}
 }
-
 
 //--------------------------------------------------------------
 void LeapVisualizer::drawVoronoiFrame (ofxLeapMotion & leap){
@@ -606,11 +596,9 @@ void LeapVisualizer::drawVoronoiFrame (ofxLeapMotion & leap){
 									
 								}
 							}
-							
-							
+							// Be sure to update the voronoi sites ("from outside")
 							NB->Polys[f]->outsideUpdate();
-							
-							
+
 						}
 					}
 				}
@@ -622,11 +610,12 @@ void LeapVisualizer::drawVoronoiFrame (ofxLeapMotion & leap){
 
 //--------------------------------------------------------------
 void LeapVisualizer::drawFrame (ofxLeapMotion & leap){
-	updateHandPointVectors();
+	// updateHandPointVectors();
 	
 	// If hand(s) exist in the frame,
 	// Get the vector of Hands from ofxLeap.
 	vector <Hand> hands = leap.getLeapHands();
+	nLeapHandsInScene = hands.size();
 	if (hands.size() > 0) {
 		
 		// For each hand,
@@ -722,13 +711,20 @@ void LeapVisualizer::drawBone (const Finger &finger, Bone &bone, ofxLeapMotion &
 	// ofPoint bonePtC = leap.getofPoint ( bone.center()); // works, but:
 	ofPoint bonePtC = (bonePt0 + bonePt1)/2.0;
 	currHandPoints.push_back(bonePtC);
-	if (boneType == (Bone::Type)0){ // TYPE_METACARPAL
-		currKnuckles.push_back (bonePt1);
+	
+	if (fingerType == (Finger::Type)0){
+		if (boneType == (Bone::Type)1){
+			currKnuckles.push_back (bonePt1);
+		}
+	} else {
+		if (boneType == (Bone::Type)0){
+			currKnuckles.push_back (bonePt1);
+		}
 	}
 	
 	if (bDrawSimple){
-		// Draw a simple white skeleton.
-		ofSetColor(ofColor::white);
+		// Draw a simple skeleton.
+		ofSetColor(0,0,255);
 		ofLine(bonePt0, bonePt1);
 		ofDrawSphere(bonePt0, boneThickness * 0.15);
 		ofDrawSphere(bonePt1, boneThickness * 0.15);
@@ -750,8 +746,6 @@ void LeapVisualizer::drawBone (const Finger &finger, Bone &bone, ofxLeapMotion &
 		ofDrawSphere(bonePt1, cylinderRadius);
 	}
 }
-
-
 
 
 //--------------------------------------------------------------
@@ -839,19 +833,16 @@ void LeapVisualizer::drawPalm (Hand &hand, ofxLeapMotion &leap){
 				}
 			}
 		}
-	
-	
-		
-		
 		
 	}
 }
 
 
-
 //--------------------------------------------------------------
 void LeapVisualizer::captureHandPropertiesFromLeap (ofxLeapMotion &leap, int whichHandId){
-	// stash a copy of the current hand's centroid and orientation bases
+	// Stash a copy of the current hand's centroid and orientation bases.
+	// Important stuff.
+	
 	vector <Hand> hands = leap.getLeapHands();
 	if (whichHandId < hands.size()) {
 		Hand &hand = hands[whichHandId];
@@ -938,7 +929,6 @@ void LeapVisualizer::drawArm (Hand & hand,ofxLeapMotion & leap){
 		ofPoint elbowPt  = leap.getofPoint ( arm.elbowPosition());
 		
 		float basisLen = 50.0;
-		
 		
 		if (bDrawSimple){
 			ofSetColor(ofColor::white);
@@ -1085,6 +1075,7 @@ float LeapVisualizer::getMotionAmountFromHandPointVectors(){
 	int nCurrHandPoints = currHandPoints.size();
 	int nPrevHandPoints = prevHandPoints.size();
 	float out = 0;
+	
 	if ((nCurrHandPoints == nPrevHandPoints) && (nCurrHandPoints > 0)){
 		
 		for (int i=0; i<nCurrHandPoints; i++){
@@ -1098,6 +1089,7 @@ float LeapVisualizer::getMotionAmountFromHandPointVectors(){
 	}
 	return out;
 }
+
 
 //--------------------------------------------------------------
 ofVec2f LeapVisualizer::getZExtentFromHandPointVectors(){
@@ -1149,6 +1141,7 @@ ofVec3f LeapVisualizer::getProjectedHandPoint (int which){
 	}
 	return out;
 }
+
 
 //--------------------------------------------------------------
 ofVec3f LeapVisualizer::getProjectedKnuckle (int which){
@@ -1212,10 +1205,6 @@ ofVec3f LeapVisualizer::getProjectedWristOrientation2 (){
 
 
 
-
-
-
-
 //--------------------------------------------------------------
 float LeapVisualizer::getCurlFromHandPointVectors(){
 	// Sum the "curl", or angles between all the finger bones.
@@ -1250,9 +1239,11 @@ float LeapVisualizer::getCurlFromHandPointVectors(){
 
 
 
+
+
 //--------------------------------------------------------------
 void LeapVisualizer::drawFrameFromXML(int whichFrame, ofxXmlSettings & XML){ // should be XML, not myXML
-	updateHandPointVectors();
+	// updateHandPointVectors();
 	
     int nFrameTags = myXML.getNumTags("FRAME");
 	if ((whichFrame >= 0) && (whichFrame < nFrameTags)){
@@ -1261,6 +1252,7 @@ void LeapVisualizer::drawFrameFromXML(int whichFrame, ofxXmlSettings & XML){ // 
 		XML.pushTag("FRAME", whichFrame);
 		
 		int nHandTags = XML.getNumTags("H");
+		nLeapHandsInScene = nHandTags;
 		if (nHandTags > 0){
 			for (int h=0; h<nHandTags; h++){
 				captureHandPropertiesFromXML (XML, whichFrame, h);
@@ -1275,7 +1267,7 @@ void LeapVisualizer::drawFrameFromXML(int whichFrame, ofxXmlSettings & XML){ // 
 
 //--------------------------------------------------------------
 void LeapVisualizer::drawFrameFromXML (int whichFrame){
-	updateHandPointVectors();
+	// updateHandPointVectors();
 	
 	int nFrameTags = this->myXML.getNumTags("FRAME");
 	if ((whichFrame >= 0) && (whichFrame < nFrameTags)){
@@ -1284,6 +1276,7 @@ void LeapVisualizer::drawFrameFromXML (int whichFrame){
 		this->myXML.pushTag("FRAME", whichFrame);
 		
 		int nHandTags = this->myXML.getNumTags("H");
+		nLeapHandsInScene = nHandTags;
 		if (nHandTags > 0){
 			for (int h=0; h<nHandTags; h++){
 				captureHandPropertiesFromXML (this->myXML, whichFrame, h);
@@ -1424,7 +1417,6 @@ void LeapVisualizer::feedXMLFingerPointsToVoronoi (int whichFinger, ofxXmlSettin
 			NB->Polys[whichFinger]->outsideUpdate();
 		}
 	}
-
 }
 
 
@@ -1473,7 +1465,7 @@ void LeapVisualizer::drawFingerFromXML (ofxXmlSettings & XML){
 			
 			if (bDrawSimple){
 				// Draw a simple skeleton.
-				ofSetColor(ofColor::orange);
+				ofSetColor(0,0, 255);
 				ofLine(bonePt0, bonePt1);
 				ofDrawSphere(bonePt0, fingerWidth * 0.15);
 				ofDrawSphere(bonePt1, fingerWidth * 0.15);
@@ -1623,8 +1615,7 @@ void LeapVisualizer::drawArmFromXML (ofxXmlSettings & XML){
 		ofSetColor(ofColor::orange);
 		ofDrawBitmapString(handType, (handPt + (basisLen*1.2)*handBasisY));
 		
-        
-        
+		
 	} else {
 		
 		// Draw a cylinder between two points, properly oriented in space.

@@ -71,9 +71,11 @@ class testApp : public ofBaseApp{
     void gotMessage(ofMessage msg);
     void exit();
 	
-	
-	void updateBufferedVideoPlayback();
+	bool bCameraHasNewFrame;
+	void updateBufferedVideoPlaybackIfUsingStoredVideo();
+	void updateLiveVideoIfUsingCameraSource();
 	void updateProcessFrameImg();
+	void updateRecordingSystem();
 	
     //------------------------------
     // Management
@@ -85,6 +87,11 @@ class testApp : public ofBaseApp{
 	void initializeCamera();
 	ofxLibdc::PointGrey cameraLibdc;
 	ofVideoGrabber cameraVidGrabber;
+	float cameraLibdcShutterInv;
+	float cameraLibdcBrightness;
+	float cameraLibdcGain;
+	float cameraLibdcGamma;
+	
 	
 	
 	int		cameraWidth;
@@ -116,7 +123,8 @@ class testApp : public ofBaseApp{
     LeapRecorder			leapRecorder;
 	LeapRecorder			prevLeapFrameRecorder;
     LeapToCameraCalibrator	leapToCameraCalibrator;
-	void updateLeapHistoryRecorder();
+	void	updateLeapHistoryRecorder();
+	int		maxNPrevLeapFrames;
 	
 	ofEasyCam				cam;
     ofFbo					leapDiagnosticFbo;
@@ -135,7 +143,7 @@ class testApp : public ofBaseApp{
 	bool	bUseRGBLeapFbo;
     bool	bShowText;
 	bool	bUseVoronoiExpansion;
-	bool	bShowOffBy1Frame;
+	bool	bShowOffsetByNFrames;
 	bool	bDoCompositeThresholdedImageWithLeapFboPixels;
 	
     int		framesBackToPlay;
@@ -195,14 +203,16 @@ class testApp : public ofBaseApp{
 	int	 whichImageToDraw;
 	
 	void updateComputerVision();
-	void extractLuminanceChannelFromVideoFrame();
+	void extractVideoMatFromLiveVideo();
+	void extractVideoMatFromBufferedVideoFrame();
+	void extractLuminanceChannelFromSourceVideoMat();
 	void computeFrameDifferencing();
 	void thresholdLuminanceImage();
 	void applyMorphologicalOps();
 	void applyEdgeAmplification();
 	void compositeThresholdedImageWithLeapFboPixels();
 	
-	
+	bool bShowAnalysisBig;
 	bool bWorkAtHalfScale;
 	bool bUseROIForFilters;
 	bool bUseRedChannelForLuminance;
@@ -255,6 +265,7 @@ class testApp : public ofBaseApp{
 	float amountOfPixelMotion01;
 	float amountOfLeapMotion01;
 	float amountOfFingerCurl01;
+	char amountOfLeapMotion01Str[64];
 	
 	float motionAlpha;
 	float zExtentAlpha;
@@ -269,6 +280,14 @@ class testApp : public ofBaseApp{
 	
 	//-------------------------------
 	HandContourAnalyzer myHandContourAnalyzer;
+	
+	
+	//-------------------------------
+	// For app state machine
+	float minHandInsertionPercent;
+	float maxAllowableMotion;
+	float maxAllowableFingerCurl;
+	float maxAllowableExtentZ;
 	
     
 };

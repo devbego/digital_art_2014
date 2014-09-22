@@ -67,11 +67,11 @@ enum HandmarkType {
 };
 
 struct Handmark { // analogous to landmark
-	ofVec2f			point;			// the final actual location
-	vector<ofVec2f>	pointHistory;
+	ofVec3f			point;			// the final actual location
+	list<ofVec3f>	pointHistory;
 	
-	ofVec2f			pointAvg;		// its running average
-	ofVec2f			pointStDv;		// its running standard deviation
+	ofVec3f			pointAvg;		// its running average
+	ofVec3f			pointStDv;		// its running standard deviation
 	
 	int				index;			// the final index in the theHandContourFinal
 	HandmarkType	type;			// the name (or type) of the point
@@ -106,16 +106,25 @@ public:
 	void acquireProjectedLeapData (LeapVisualizer &lv);
 	void acquireFingerOrientations (LeapVisualizer &lv, const Mat &leapDiagnosticFboMat);
 	void computeCrotchOrientations ();
-	void computePinkySide();
-	void computeIndexSide();
+	
+	
 	void computeFingerCentroids();
 	void computeNearestContourPointsToFingerCentroids();
 	void computeContourDistancesFromKeyHandPoints();
 	void computeFingerPointsMaximallyDistantFromKeyHandPoints();
+	
+	void computePinkySideHandmark();
+	void computeIndexSideHandmark();
 	void computePinkySideWristHandmark();
 	void computeThumbSideWristHandmark();
+	void computeThumbBaseHandmark();
+	void computeThumbKnuckleHandmark();
 	void estimateFingerTipsFromCircleFitting (LeapVisualizer &lv);
+	void estimateFingerTipsFromCircleFittingOLD (LeapVisualizer &lv);
 	void computeFingerCrotches();
+	void sortFingerCrotches();
+	void evaluateCrotchQuality();
+	void refineFingerTipsBasedOnCrotchQuality();
 	void refineFingerTips();
 	void assembleHandmarksPreliminary(); 
 	
@@ -132,23 +141,36 @@ public:
 	ofPolyline	theHandContourMetaData;
 	ofPolyline	crotchQualityData;
 	ofPolyline	crotchQualityData2;
+	ofPolyline	crotchQualityData3;
 	
 	int			theHandContourWindingDirection;
 	int			smoothingOfLowpassContour;
 	float		theHandContourArea;
 	
+	float		crotchContourSearchTukeyMaskPct;
 	float		crotchCurvaturePowf;
 	float		crotchDerivativePowf;
 	int			crotchSearchRadius; 
 	int			crotchSearchIndex0;
 	int			crotchSearchIndex1;
 	int			crotchContourIndices[4];
+	int			crotchContourIndicesTmp[4];
+	int			crotchContourIndicesExpanded[8];
+	float		crotchQuality[4];
+	vector<int> crotchContourIndicesDifs;
 	
 	
 	int			contourIndexOfPinkySide;
 	int			contourIndexOfPinkysideWrist;
 	int			contourIndexOfThumbsideWrist;
+	int			contourIndexOfThumbBase; 
 	int			contourIndexOfPointerSide;
+	int			contourIndexOfThumbKnuckle; 
+	
+	int			contourIndexOfPRCrotch;
+	int			contourIndexOfRMCrotch;
+	int			contourIndexOfMICrotch;
+	int			contourIndexOfITCrotch;
 	
 	int			contourIndexOfThumbTip;
 	int			contourIndexOfPointerTip;
@@ -161,7 +183,8 @@ public:
 	vector<ofVec3f> fingerCentroids;
 	vector<ofVec3f> fingerDistalPts;
 	vector<float>   fingerOrientations;
-	vector<float>	crotchOrientations; 
+	vector<float>	crotchOrientations;
+	float			fingerOrientationAverage; 
 	
 	vector<ofVec3f> contourPointsClosestToFingerCentroids;
 	int				indicesOfClosestContourPoints[8];
@@ -171,13 +194,14 @@ public:
 	ofVec3f			wristOrientation; 
 	ofVec3f			handCentroidLeap;// the hand centroid reported by the Leap (not the contourFinder)
 	
+	
 	SlopeInterceptLine pinkyKnuckleLine;
 	SlopeInterceptLine indexKnuckleLine;
 	
 	vector<ContourRegion> allContourRegionsTEMP;
 	vector<ContourRegion> contourRegionsConsolidated;
 	
-	bool doesHandContourExist();
+	
 	void labelHandContourWithHandPartIDs();
 	void drawLabeledHandContour();
 	void recalculateContourRegions(); 
@@ -193,6 +217,7 @@ public:
 	float distanceFromPointToLine (ofVec3f linePt1, ofVec3f linePt2,  ofVec3f aPoint);
 	SlopeInterceptLine computeFitLine (vector<ofVec3f> points, int startPointIndex, int endPointIndex);
 	int getIndexOfClosestPointOnContour (ofVec3f &aPoint, ofPolyline &aPolyline);
+	int getIndexWhereLineSegmentIntersectsPolyline (float x1, float y1, float x2, float y2, ofPolyline &aPolyline);
 	int sampleOffsetForCurvatureAnalysis;
 	vector<float> handContourCurvatures;
 	
@@ -206,13 +231,18 @@ public:
 	inline float function_PennerEaseOutQuartic (float t);
 	inline float function_PennerEaseOutQuintic (float t);
 	inline float function_PennerEaseInOutCubic (float x);
+	inline float function_TukeyWindow (float x, float a);
+	inline float function_DoubleExponentialSigmoid (float x, float a);
 	
 	
 	inline void FindLineCircleIntersections (float cx, float cy, float radiusSquared,
 											 float p1x, float p1y, float p2x, float p2y);
 	
 	
-	
+	float	getInsertionPercentageOfHand();
+	float	getDistanceOfBlobFromEntry();
+	bool	doesHandContourExist();
+	int		getNumberOfBlobs();
 	
 	
 

@@ -45,6 +45,28 @@ deal with dark skin thresholding
  check all ofmaps' for div-0
  
  dist from wrist better than dist from palm for finger calcs - check thumb in frame 87, 341, 342 in csugrue
+ 
+  computing amount of leap motion doesn't work with delayed data
+ leapVisualizer.getMotionAmountFromHandPointVectors() fails when we are using temporally offset data from prevLeapFrameRecorder
+  
+ feedback if hand is not far in enough, or in too far
+ if there's two hands in the scene, use the leap hand whose centroid is closer to the blob
+
+-- Do the crotch search as we already are, but search along the contour between knuckles 0 and 4
+-- Sort discovered crotches by index, in the right direction
+-- Fingernail-fit between crotches.
+-- Compute quality of crotches
+-- For crotches of sufficiently low quality, 
+ -- Do a pass for edge detection, with malorientation-suppression. 
+ -- Threshold to select pixels which represent sufficiently-strong edges
+ -- Compute the "perfect line", from the crotch to the midpoint between knuckles
+ -- For each thresholded edge pixel, classify according to which perfect ray it's closest to. 
+ -- Fit a line through the classified points, creating a best-fit line. 
+ -- At regular intervals, Search along the best-fit line for the darkest point of the trough
+ -- Collect those points, somehow add them to the contour
+ 
+ 
+ 
  */
 
 
@@ -111,19 +133,22 @@ void testApp::setup(){
 	bComputePixelBasedFrameDifferencing = false;
 	bDoCompositeThresholdedImageWithLeapFboPixels = true;
 	
-	bShowOffBy1Frame			= false;
-    framesBackToPlay			= 0;
+	
 	
 	//--------------- Setup leap
 	leap.open();
     leapVisualizer.setup();
 	leapVisualizer.enableVoronoiRendering (imgW, imgH, bWorkAtHalfScale);
 	leapVisualizer.bDrawGrid = false;
-	
     leapRecorder.setup();
-	prevLeapFrameRecorder.setup();
-	cam.setOrientation(ofPoint(-55, 0, 0));
 	
+	bShowOffsetByNFrames		= false;
+    framesBackToPlay			= 0;
+	maxNPrevLeapFrames			= 10;
+	prevLeapFrameRecorder.setup();
+	
+	cam.setOrientation(ofPoint(-55, 0, 0));
+
 	leapColorFbo.allocate		(imgW,imgH, GL_RGBA);
     leapDiagnosticFbo.allocate	(imgW,imgH, GL_RGB);
 
@@ -217,10 +242,10 @@ void testApp::setup(){
 	
 	
 	// Get us ready to demo in a hurry
-	string filePathCalib = "calib_chris_corrected_4";
+	string filePathCalib = "sep15_CALIBRATION"; //"calib_chris_corrected_4";
 	calibrateFromXML(filePathCalib);
 	
-	string filePathPlay = "play_chris_corrected_4";
+	string filePathPlay = "sep15-golan-perfect"; //"play_chris_corrected_4";
 	folderName = filePathPlay;
 	loadAndPlayRecording(filePathPlay);
 	bUseVirtualProjector = true;
@@ -247,16 +272,14 @@ void testApp::setup(){
 	myHandContourAnalyzer.setup(imgW, imgH);
 	
 	
+	minHandInsertionPercent = 0.29;
+	maxAllowableMotion		= 15.0;
+	maxAllowableFingerCurl	= 0.3;
+	maxAllowableExtentZ		= 0.5;
+	
+	
 	// must be last
 	setupGui();
-	
-	/*
-	//------------------------
-	contourFinder.setMinArea(imgH*imgW * 0.01);
-	contourFinder.setMaxArea(imgH*imgW * 0.33);
-	contourFinder.setFindHoles(false);
-	contourFinder.setSortBySize(true);
-	 */
 }
 
 
@@ -272,13 +295,18 @@ void testApp::initializeCamera(){
 		cameraLibdc.setImageType(OF_IMAGE_COLOR);
 		cameraLibdc.setSize (cameraWidth, cameraHeight);
 		//cameraLibdc.setBayerMode(DC1394_COLOR_FILTER_GRBG); // why turns camera video grayscale???
+	
+		cameraLibdcShutterInv = 31.0;
+		cameraLibdcBrightness = 0;
+		cameraLibdcGain = 0.0;
+		cameraLibdcGamma = 1.0;
+	
 		
 		cameraLibdc.setup();
-		cameraLibdc.setShutterAbs(1. / 31.0);
-		cameraLibdc.setExposure(1.0);
-		cameraLibdc.setBrightness(0);
-		cameraLibdc.setGain(0);
-		cameraLibdc.setGammaAbs(1);
+		cameraLibdc.setShutterAbs(1.0 / cameraLibdcShutterInv);
+		cameraLibdc.setBrightness(cameraLibdcBrightness);
+		cameraLibdc.setGain(cameraLibdcGain);
+		cameraLibdc.setGammaAbs(cameraLibdcGamma);
 		//cameraLibdc.setBlocking(true);
 	
 	#else
@@ -341,6 +369,13 @@ void testApp::setupGui() {
 	gui0->addValuePlotter("elapsedMicros", 256, 0, 50000, &elapsedMicros);
 	gui0->addIntSlider("Micros", 0, 50000, &elapsedMicrosInt);
 	
+	
+	gui0->addSlider("Shutter",			32.0, 100.0,	&cameraLibdcShutterInv);
+	gui0->addSlider("Brightness",		0.0, 1.0,		&cameraLibdcBrightness);
+	gui0->addSlider("Gain",				0.00, 1.0,		&cameraLibdcGain);
+	gui0->addSlider("Gamma",			0.00, 3.0,		&cameraLibdcGamma);
+
+	
 	gui0->autoSizeToFitWidgets();
 	ofAddListener(gui0->newGUIEvent,this,&testApp::guiEvent);
 	guiTabBar->addCanvas(gui0);
@@ -354,9 +389,9 @@ void testApp::setupGui() {
 	gui1->loadSettings(originalAppDataPath + "HandSegmenterSettings.xml");
 	gui1->addSpacer();
 	
-	gui1->addValuePlotter("amountOfLeapMotion01", 256, 0.00, 20.0, &amountOfLeapMotion01);
-	gui1->addValuePlotter("zHandExtent", 256, 0.00, 1.50, &zHandExtent);
-	gui1->addValuePlotter("amountOfFingerCurl01", 256, 0.00, 1.00, &amountOfFingerCurl01);
+	
+	
+	
 	
 	gui1->addSpacer();
 	gui1->addSlider("thresholdValue", 0.0, 128.0, &thresholdValue);
@@ -388,11 +423,38 @@ void testApp::setupGui() {
 	gui2->addSlider("crotchCurvaturePowf",  0.0, 2.0,		&(myHandContourAnalyzer.crotchCurvaturePowf));
 	gui2->addSlider("crotchDerivativePowf", 0.0, 2.0,		&(myHandContourAnalyzer.crotchDerivativePowf));
 	gui2->addIntSlider("crotchSearchRadius", 1, 32,			&(myHandContourAnalyzer.crotchSearchRadius));
+	gui2->addSlider("crotchContourSearchMask", 0.0, 0.5,&(myHandContourAnalyzer.crotchContourSearchTukeyMaskPct));
 	
 	gui2->autoSizeToFitWidgets();
 	ofAddListener(gui2->newGUIEvent,this,&testApp::guiEvent);
 	guiTabBar->addCanvas(gui2);
 	guis.push_back(gui2);
+	
+	//------------------------------------
+	// GUI for Application State
+	ofxUICanvas* gui3 = new ofxUICanvas();
+	gui3->setName("GUI3");
+	gui3->addLabel("GUI3");
+	gui3->addSlider("minHandInsertionPercent",  0.0, 1.0,	&minHandInsertionPercent);
+	
+	gui3->addSpacer();
+	gui3->addValuePlotter("amountOfLeapMotion01", 256,	0.00, 25.0, &amountOfLeapMotion01, 32);
+	gui3->addSlider("amountOfLeapMotion01",				0.00, 25.0, &amountOfLeapMotion01);
+	gui3->addSlider("maxAllowableMotion",				0.00, 25.0, &maxAllowableMotion );
+	gui3->addSpacer();
+	gui3->addValuePlotter("amountOfFingerCurl01", 256,	0.00, 1.00, &amountOfFingerCurl01, 32);
+	gui3->addSlider("amountOfFingerCurl01",				0.00, 1.00, &amountOfFingerCurl01 );
+	gui3->addSlider("maxAllowableFingerCurl",			0.00, 1.00, &maxAllowableFingerCurl );
+	gui3->addSpacer();
+	gui3->addValuePlotter("zHandExtent",		  256,	0.00, 2.00, &zHandExtent, 32);
+	gui3->addSlider("zHandExtent",						0.00, 2.00, &zHandExtent );
+	gui3->addSlider("maxAllowableExtentZ",				0.00, 2.00, &maxAllowableExtentZ );
+
+	
+	gui3->autoSizeToFitWidgets();
+	ofAddListener(gui3->newGUIEvent,this,&testApp::guiEvent);
+	guiTabBar->addCanvas(gui3);
+	guis.push_back(gui3);
 	
 
 }
@@ -409,12 +471,16 @@ void testApp::guiEvent(ofxUIEventArgs &e) {
 
 //--------------------------------------------------------------
 void testApp::update(){
-	
-	// Update the BufferedVideo playback object,
-	// which fetches image sequences from disk.
-	updateBufferedVideoPlayback();
-	
 	long long then = ofGetElapsedTimeMicros();
+	
+	updateBufferedVideoPlaybackIfUsingStoredVideo();
+	updateLiveVideoIfUsingCameraSource();
+	
+	updateProcessFrameImg();
+	updateRecordingSystem();
+	
+	computeHandStatistics();
+	leapVisualizer.updateHandPointVectors();
 	
 	// The leapVisualizer's "voronoi expansion" is a colored halo
 	// that fills in unlabeled regions of the camera-based silhouette
@@ -425,10 +491,11 @@ void testApp::update(){
 	if (bUseVoronoiExpansion){
 		leapVisualizer.updateVoronoi();
 	}
+
 	
-	updateProcessFrameImg();
 	renderDiagnosticLeapFboAndExtractItsPixelData();
-	computeHandStatistics();
+	//
+	
 	
 	// when live: use color img from processFrameImg
 	// when playing, use color img from buffered video
@@ -441,12 +508,116 @@ void testApp::update(){
 	elapsedMicrosInt = (int) elapsedMicros;
 	lastFrameTimeMicros = now;
 	
+	applicationStateMachine();
+	
 }
+
+
+//--------------------------------------------------------------
+void testApp::updateBufferedVideoPlaybackIfUsingStoredVideo(){
+	
+	//------------- Playback
+	// Updates the BufferedVideo playback object, which fetches images from disk.
+    if (bInPlaybackMode && !bRecording){
+        video.update();
+        video.setPlaying(playing);
+    }
+}
+
+//--------------------------------------------------------------
+void testApp::updateLiveVideoIfUsingCameraSource(){
+	
+    //------------- Frame grabbing.
+	// Copy fresh camera data into currentFrameImg.
+    bCameraHasNewFrame = false;
+	
+#ifdef _USE_LIBDC_GRABBER
+	
+	if (cameraLibdc.grabVideo(currentFrameImg)) {
+		
+		cameraLibdc.setShutterAbs	(1.0 / cameraLibdcShutterInv);
+		cameraLibdc.setBrightness	(cameraLibdcBrightness);
+		cameraLibdc.setGain			(cameraLibdcGain);
+		cameraLibdc.setGammaAbs		(cameraLibdcGamma);
+		
+		currentFrameImg.update();
+		bCameraHasNewFrame = true;
+	}
+#else
+	cameraVidGrabber.update();
+	bCameraHasNewFrame = cameraVidGrabber.isFrameNew();
+	if (bCameraHasNewFrame){
+		currentFrameImg.setFromPixels(cameraVidGrabber.getPixels(), cameraWidth,cameraHeight, OF_IMAGE_COLOR);
+	}
+#endif
+
+
+}
+
+//--------------------------------------------------------------
+void testApp::updateProcessFrameImg(){
+	
+	//------------- Camera undistortion.
+    // If selected, undistort the currentFrameImg into processFrameImg.
+	// (Otherwise, just copy currentFrameImg into processFrameImg).
+    if (useCorrectedCam()){
+        if (myCalibration.size() > 0) {
+            myCalibration.undistort(ofxCv::toCv(currentFrameImg), ofxCv::toCv(processFrameImg));
+            processFrameImg.update();
+        }
+    } else{
+        processFrameImg = currentFrameImg;
+        processFrameImg.update();
+    }
+}
+
+
+//--------------------------------------------------------------
+void testApp::updateRecordingSystem(){
+	
+	//------------- Recording (state machine).
+	// Stash camera images to disk, as appropriate.
+    if (bRecording && !bInPlaybackMode){
+        if (!bEndRecording && currentFrameNumber >= imageSequence.size()){
+            bEndRecording = true;
+        }
+        
+        if (!bEndRecording) {
+            if(bCameraHasNewFrame){
+                
+                // If in calibration record, mode only record some frames
+                if( (bRecordingForCalibration && bRecordThisCalibFrame) || !bRecordingForCalibration){
+                    leapRecorder.recordFrameXML(leap);
+                    
+                    ofPixels& target = imageSequence[currentFrameNumber];
+                    memcpy (target.getPixels(),
+                            processFrameImg.getPixels(),
+                            target.getWidth() * target.getHeight() * target.getNumChannels());
+					
+                    currentFrameNumber++;
+                    
+                    if(bRecordingForCalibration){
+                        bRecordThisCalibFrame = false;
+                    }
+                    // leap.markFrameAsOld();??????
+                }
+            }
+            
+        } else {
+            finishRecording();
+        }
+    }
+    
+	
+    //-------------  Leap update
+	leap.markFrameAsOld();
+}
+
 
 //--------------------------------------------------------------
 void testApp::updateLeapHistoryRecorder(){
 	//------------- Store last frame
-    if (prevLeapFrameRecorder.XML.getNumTags("FRAME") > 6){
+    if (prevLeapFrameRecorder.XML.getNumTags("FRAME") > maxNPrevLeapFrames){
         prevLeapFrameRecorder.XML.removeTag("FRAME",0);
     }
     prevLeapFrameRecorder.recordFrameXML(leap);
@@ -460,32 +631,41 @@ void testApp::updateComputerVision(){
 	// video is the playback buffered video
 
 	if (bInPlaybackMode){
-		extractLuminanceChannelFromVideoFrame();		// scale down and extract grayscale.
-		computeFrameDifferencing();						// not done presently
-		thresholdLuminanceImage();
-		applyMorphologicalOps();
-		applyEdgeAmplification();
-		compositeThresholdedImageWithLeapFboPixels();
-		
-		myHandContourAnalyzer.update (thresholdedFinal, leapDiagnosticFboMat, leapVisualizer);
-		
-		
-		/*
-		 myHandContourAnalyzer.computeLabeledContourPass1 (thresholdedFinal, leapDiagnosticFboMat);
-		myHandContourAnalyzer.acquireProjectedLeapData (leapVisualizer);
-		 myHandContourAnalyzer.computePinkySide();
-		 myHandContourAnalyzer.assembleHandmarksPreliminary();
-		 */
+		extractVideoMatFromBufferedVideoFrame();		// scale down and extract grayscale.
+	} else {
+		extractVideoMatFromLiveVideo();
 	}
+
+	extractLuminanceChannelFromSourceVideoMat(); 
+	computeFrameDifferencing();								// not done presently
+	thresholdLuminanceImage();
+	applyMorphologicalOps();
+	applyEdgeAmplification();
+	compositeThresholdedImageWithLeapFboPixels();
+	
+	myHandContourAnalyzer.update (thresholdedFinal, leapDiagnosticFboMat, leapVisualizer);
+	
 	
 
 }
 
 
 
+//--------------------------------------------------------------
+void testApp::extractVideoMatFromLiveVideo(){
+	// processFrameImg contains the live color video from the camera.
+	if (bWorkAtHalfScale){
+		colorVideo.setFromPixels(processFrameImg.getPixelsRef());
+		colorVideoHalfScale.scaleIntoMe (colorVideo);
+		videoMat = toCv(colorVideoHalfScale);
+	} else {
+		videoMat = toCv(processFrameImg);
+	}
+}
+
 
 //--------------------------------------------------------------
-void testApp::extractLuminanceChannelFromVideoFrame(){
+void testApp::extractVideoMatFromBufferedVideoFrame(){
 	
 	// videoMat is a cv::Mat version of the current video frame.
 	// It's an intermediary on the way to computing grayMat.
@@ -499,7 +679,10 @@ void testApp::extractLuminanceChannelFromVideoFrame(){
 	} else {
 		videoMat = toCv(video);
 	}
-	
+}
+
+//--------------------------------------------------------------
+void testApp::extractLuminanceChannelFromSourceVideoMat(){
 	//------------------------
 	// Extract (or compute) the grayscale luminance channel.
 	// Either use just the red channel (a very good proxy for skin),
@@ -683,10 +866,12 @@ void testApp::computeHandStatistics(){
 		float maxZ = 100.0 * zRange.y;
 		float zextent = fabs(maxZ - minZ);
 		
-		amountOfLeapMotion01 = (motionAlpha*amountOfLeapMotion01)		+ (1.0-motionAlpha)*movement;
-		zHandExtent          = (zExtentAlpha*zHandExtent)				+ (1.0-zExtentAlpha)*zextent;
-		zHandHeight          = (zExtentAlpha*zHandHeight)				+ (1.0-zExtentAlpha)*(100.0 - minZ);
-		amountOfFingerCurl01 = (fingerCurlAlpha*amountOfFingerCurl01)	+ (1.0-fingerCurlAlpha)*curl;
+		if ((bInPlaybackMode && playing) || (!bInPlaybackMode)){
+			amountOfLeapMotion01 = (motionAlpha*amountOfLeapMotion01)		+ (1.0-motionAlpha)*movement;
+			zHandExtent          = (zExtentAlpha*zHandExtent)				+ (1.0-zExtentAlpha)*zextent;
+			zHandHeight          = (zExtentAlpha*zHandHeight)				+ (1.0-zExtentAlpha)*(100.0 - minZ);
+			amountOfFingerCurl01 = (fingerCurlAlpha*amountOfFingerCurl01)	+ (1.0-fingerCurlAlpha)*curl;
+		}
 		
 	}
 }
@@ -717,7 +902,7 @@ void testApp::renderDiagnosticLeapFboAndExtractItsPixelData(){
 					// Compute the index of which frame to draw.
 					playingFrame = video.getCurrentFrameID();
 					int whichFrame = playingFrame;
-					if (playingFrame > 0 && bShowOffBy1Frame){
+					if (playingFrame > 0 && bShowOffsetByNFrames){
 						whichFrame = (playingFrame - framesBackToPlay + nFrameTags)%nFrameTags;
 					}
 					
@@ -740,10 +925,11 @@ void testApp::renderDiagnosticLeapFboAndExtractItsPixelData(){
 				
 			} else { // LIVE LEAP
 				
+								
 				// "Fluff out" the hand rendering with a voronoi-based halo
 				// computed through OpenGL tricks on the graphics card.
 				if (bUseVoronoiExpansion){
-					if (bShowOffBy1Frame && (framesBackToPlay > 0)){
+					if (bShowOffsetByNFrames && (framesBackToPlay > 0)){
 						int totalFramesSaved = prevLeapFrameRecorder.XML.getNumTags("FRAME");
 						int whichFrame = totalFramesSaved - framesBackToPlay;
 						if (whichFrame < 0) whichFrame = 0;
@@ -761,13 +947,13 @@ void testApp::renderDiagnosticLeapFboAndExtractItsPixelData(){
 				}
 				
 				// draw live leap
-				if (bShowOffBy1Frame && (framesBackToPlay > 0)){
+				if (bShowOffsetByNFrames && (framesBackToPlay > 0)){
 					int totalFramesSaved = prevLeapFrameRecorder.XML.getNumTags("FRAME");
 					int whichFrame = totalFramesSaved - framesBackToPlay;
 					if (whichFrame < 0) whichFrame = 0;
-					leapVisualizer.drawFrameFromXML (whichFrame, prevLeapFrameRecorder.XML);
+					leapVisualizer.drawFrameFromXML (whichFrame, prevLeapFrameRecorder.XML); // working
 				} else {
-					leapVisualizer.drawFrame(leap); // no frame delay
+					leapVisualizer.drawFrame(leap); // no frame delay. working
 				}
 				
 			}
@@ -801,88 +987,8 @@ void testApp::compositeThresholdedImageWithLeapFboPixels(){
 
 
 
-//--------------------------------------------------------------
-void testApp::updateBufferedVideoPlayback(){
-	
-	//------------- Playback
-	// Updates the BufferedVideo playback object, which fetches images from disk.
-    if (bInPlaybackMode && !bRecording){
-        video.update();
-        video.setPlaying(playing);
-    }
-}
 
-//--------------------------------------------------------------
-void testApp::updateProcessFrameImg(){
-	
-	
-    //------------- Frame grabbing.
-	// Copy fresh camera data into currentFrameImg.
-    bool bCameraHasNewFrame = false;
-	#ifdef _USE_LIBDC_GRABBER
-		if (cameraLibdc.grabVideo(currentFrameImg)) {
-			bCameraHasNewFrame = true;
-			currentFrameImg.update();
-		}
-	#else
-		cameraVidGrabber.update();
-		bCameraHasNewFrame = cameraVidGrabber.isFrameNew();
-		if (bCameraHasNewFrame){
-			currentFrameImg.setFromPixels(cameraVidGrabber.getPixels(), cameraWidth,cameraHeight, OF_IMAGE_COLOR);
-		}
-	#endif
-    
-	//------------- Camera undistortion.
-    // If selected, undistort the currentFrameImg into processFrameImg.
-	// (Otherwise, just copy currentFrameImg into processFrameImg).
-    if (useCorrectedCam()){
-        if (myCalibration.size() > 0) {
-            myCalibration.undistort(ofxCv::toCv(currentFrameImg), ofxCv::toCv(processFrameImg));
-            processFrameImg.update();
-        }
-    } else{
-        processFrameImg = currentFrameImg;
-        processFrameImg.update();
-    }
-    
-	
-	//------------- Recording (state machine).
-	// Stash camera images to disk, as appropriate.
-    if (bRecording && !bInPlaybackMode){
-        if (!bEndRecording && currentFrameNumber >= imageSequence.size()){
-            bEndRecording = true;
-        }
-        
-        if (!bEndRecording) {
-            if(bCameraHasNewFrame){
-                
-                // If in calibration record, mode only record some frames
-                if( (bRecordingForCalibration && bRecordThisCalibFrame) || !bRecordingForCalibration){
-                    leapRecorder.recordFrameXML(leap);
-                    
-                    ofPixels& target = imageSequence[currentFrameNumber];
-                    memcpy (target.getPixels(),
-                            processFrameImg.getPixels(),
-                            target.getWidth() * target.getHeight() * target.getNumChannels());
-					
-                    currentFrameNumber++;
-                    
-                    if(bRecordingForCalibration){
-                        bRecordThisCalibFrame = false;
-                    }
-                    // leap.markFrameAsOld();??????
-                }
-            }
-            
-        } else {
-            finishRecording();
-        }
-    }
-    
-	
-    //-------------  Leap update
-	leap.markFrameAsOld();
-}
+
 
 
 
@@ -954,7 +1060,7 @@ void testApp::draw(){
 	
 
 	
-	float sca = 2.0;
+	float sca = (bShowAnalysisBig) ? 2.0 : 1;
 	float insetX = (ofGetWidth() - sca*imgW);
 	float insetY = (ofGetHeight()- sca*imgH);
 	ofPushMatrix();
@@ -1014,8 +1120,7 @@ void testApp::draw(){
 	}
 	
 
-
-
+	
 }
 
 
@@ -1044,11 +1149,40 @@ void testApp::applicationStateMachine(){
 	int		FAULT_HAND_TOO_HIGH;			// The hand is physically too close to the cameras
 	int		FAULT_HAND_TOO_CURLED;			// The hand is a fist or curled up, or has a curled finger
 	int		FAULT_HAND_TOO_VERTICAL;		// The hand is turned away from the camera
+	int		FAULT_HAND_NOT_DEEP_ENOUGH;		// THe hand needs to be inserted deeper into the box. 
 	*/
 	
 	ApplicationFault theApplicationFault = FAULT_NOTHING_WRONG;
 	
 	
+	float	insertionPercentage		= myHandContourAnalyzer.getInsertionPercentageOfHand(); // gets percentage of left side of blob.
+	float	distanceOfBlobFromEntry	= myHandContourAnalyzer.getDistanceOfBlobFromEntry();	// gets percentage of right side of blob.
+	int		nBlobsInScene			= myHandContourAnalyzer.getNumberOfBlobs();
+	
+	bool	bLeapIsConnected		= leap.isConnected();
+	int		nLeapHandsInScene		= leapVisualizer.nLeapHandsInScene;
+	
+	//256, 0.00, 20.0, &amountOfLeapMotion01);
+	//gui1->addValuePlotter("zHandExtent", 256, 0.00, 1.50, &zHandExtent);
+	//gui1->addValuePlotter("amountOfFingerCurl01", 256, 0.00, 1.00, &amountOfFingerCurl01);
+	
+	
+	
+	
+	//printf ("amountOfLeapMotion01 = %f\n", amountOfLeapMotion01);
+	
+	
+	// int nBlobs = contourFinder.size()
+	// things we need to know:
+	bool bSomethingIsPresentInCamera;
+	
+	// high values of distanceOfBlobFromEntry indicate either (A) bad thresholding or (B) object in scene.
+	
+	// An object is in the scene:
+	// -- does not move (is stationary)
+	// -- no hand in leap
+	// -- area is larger than minRecognizeableObject area
+	// -- nBlobsInScene is > 0
 	
 	
 }
@@ -1192,7 +1326,7 @@ void testApp::drawLeapWorld(){
 			
             playingFrame = video.getCurrentFrameID();
 			int whichFrame = playingFrame;
-			if (playingFrame > 0 && bShowOffBy1Frame){
+			if (playingFrame > 0 && bShowOffsetByNFrames){
 				whichFrame = (playingFrame - framesBackToPlay + nFrameTags)%nFrameTags;
 			}
 			
@@ -1207,7 +1341,7 @@ void testApp::drawLeapWorld(){
     } else{
         // draw live leap
 		
-		if (bShowOffBy1Frame && (framesBackToPlay > 0)){
+		if (bShowOffsetByNFrames && (framesBackToPlay > 0)){
             int totalFramesSaved = prevLeapFrameRecorder.XML.getNumTags("FRAME");
             int whichFrame = totalFramesSaved - framesBackToPlay;
             if (whichFrame < 0) whichFrame = 0;
@@ -1288,7 +1422,7 @@ void testApp::drawText(){
     ofDrawBitmapString("Press 'left/right' to advance frame by frame", 20, textY); textY+=15;
     ofDrawBitmapString("Press '' (space) to pause/play", 20, textY); textY+=15;
 	
-	string usePrev = bShowOffBy1Frame ? "on" : "off";
+	string usePrev = bShowOffsetByNFrames ? "on" : "off";
     ofDrawBitmapString("Press 'o' toggle use prev "+usePrev+" {} frames behind: "+ofToString(framesBackToPlay), 20, textY); textY+=15;
 
 	textY+=15;
@@ -1497,7 +1631,6 @@ void testApp::keyPressed(int key){
             leapVisualizer.bDrawGrid = !leapVisualizer.bDrawGrid;
             break;
 		case 'G':
-			/* gui->toggleVisible(); */
 			guiTabBar->toggleVisible();
 			break;
         case 'l':
@@ -1564,14 +1697,17 @@ void testApp::keyPressed(int key){
 		case '*':	whichImageToDraw = 8; break;
 		
 		case 'o':
-            bShowOffBy1Frame= !bShowOffBy1Frame;
+            bShowOffsetByNFrames= !bShowOffsetByNFrames;
             break;
         case '{':
-            framesBackToPlay = (framesBackToPlay+6 -1)%6;
+            framesBackToPlay = (framesBackToPlay+maxNPrevLeapFrames -1)%maxNPrevLeapFrames;
 			break;
         case '}':
-			framesBackToPlay = (framesBackToPlay+6 +1)%6;
+			framesBackToPlay = (framesBackToPlay+maxNPrevLeapFrames +1)%maxNPrevLeapFrames;
             break;
+		case '.':
+			bShowAnalysisBig = !bShowAnalysisBig;
+			break;
             
     }
     
