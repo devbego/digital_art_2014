@@ -1115,6 +1115,7 @@ void ofApp::draw(){
 		myHandContourAnalyzer.draw();
 	}
 	
+	
 	// Draw the actual puppet mesh.
 	ofPushStyle();
 	{

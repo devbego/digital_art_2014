@@ -693,17 +693,12 @@ void HandMeshBuilder::buildMesh (ofPolyline &handContour, ofVec3f &handCentroid,
 				
 				
 				// Add texture coordinates to mesh;
-				// Be cognizant of half-scale stuff
-				if (bWorkAtHalfScale){
-					for (int i = 0; i < handMesh.getNumVertices(); i++) {
-						handMesh.addTexCoord(2.0*(handMesh.getVertex(i)));
-					}
-				} else {
-					for (int i = 0; i < handMesh.getNumVertices(); i++) {
-						handMesh.addTexCoord(    (handMesh.getVertex(i)));
-					}
+				// Be cognizant of half-scale stuff.
+				float vertexScale = (bWorkAtHalfScale) ? 2.0 : 1.0;
+				for (int i = 0; i < handMesh.getNumVertices(); i++) {
+					handMesh.addTexCoord( vertexScale*(handMesh.getVertex(i)));
 				}
-				
+
 				bCalculatedMesh = true;
 			}
 			
