@@ -20,6 +20,12 @@ void HandMeshBuilder::initialize(){
 	fingerTipIndices[4] = HANDMARK_POINTER_TIP;
 	
 	informThereIsNoHandPresent();
+	bWorkAtHalfScale = true; // most likely
+}
+
+//============================================================
+void HandMeshBuilder::setWorkAtHalfScale (bool bwork){
+	bWorkAtHalfScale = bwork;
 }
 
 //============================================================
@@ -38,6 +44,7 @@ void HandMeshBuilder::informThereIsNoHandPresent(){
 //============================================================
 void HandMeshBuilder::buildMesh (ofPolyline &handContour, ofVec3f &handCentroid, Handmark *hmarks){
 	bool bDraw = false;
+	bCalculatedMesh = false;
 	
 	// Check to make sure the contour contains data
 	int nContourPoints = handContour.size();
@@ -685,12 +692,19 @@ void HandMeshBuilder::buildMesh (ofPolyline &handContour, ofVec3f &handCentroid,
 				handMesh.addTriangle (295, 334, 375);
 				
 				
-				
-				for (int i = 0; i < handMesh.getNumVertices(); i++) {
-					handMesh.addTexCoord(2.0*(handMesh.getVertex(i))); // DIRTY HACK for half scale compensation
+				// Add texture coordinates to mesh;
+				// Be cognizant of half-scale stuff
+				if (bWorkAtHalfScale){
+					for (int i = 0; i < handMesh.getNumVertices(); i++) {
+						handMesh.addTexCoord(2.0*(handMesh.getVertex(i)));
+					}
+				} else {
+					for (int i = 0; i < handMesh.getNumVertices(); i++) {
+						handMesh.addTexCoord(    (handMesh.getVertex(i)));
+					}
 				}
 				
-				bCalculatedMesh = true ; //should really go here.
+				bCalculatedMesh = true;
 			}
 			
 			
@@ -701,23 +715,18 @@ void HandMeshBuilder::buildMesh (ofPolyline &handContour, ofVec3f &handCentroid,
 
 //=================================================================
 void HandMeshBuilder::drawMesh(){
-	
 	if (bCalculatedMesh){
-		
-		
-	
-		ofSetColor(255,255,255);
+		ofSetColor(ofColor::white);
 		handMesh.drawFaces();
-		
-		ofSetColor(0,200,255); //255,120,120, 50);
-		handMesh.drawWireframe();
-		 
-		 
 	}
-	bCalculatedMesh = false;
 }
 
-
+void HandMeshBuilder::drawMeshWireframe(){
+	if (bCalculatedMesh){
+		ofSetColor(0,204,255);
+		handMesh.drawWireframe();
+	}
+}
 
 
 

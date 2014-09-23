@@ -25,8 +25,10 @@ class HandMeshBuilder {
 public:
 	
 	void			initialize();
+	void			setWorkAtHalfScale(bool bwork);
 	void			buildMesh (ofPolyline &handContour, ofVec3f &handCentroid, Handmark *hmarks);
-	void			drawMesh(); 
+	void			drawMesh();
+	void			drawMeshWireframe();
 	void			informThereIsNoHandPresent();
 	ofMesh			&getMesh();
 	
@@ -36,8 +38,8 @@ public:
 	int				fingerTipIndices[5];
 	
 	bool			bCalculatedMesh;
+	bool			bWorkAtHalfScale;
 	
-	void			drawMeshWireframe();
 	void			drawJoints();
 	
 	

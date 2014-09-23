@@ -216,7 +216,8 @@ class ofApp : public ofBaseApp{
 	bool bDoMorphologicalOps;
 	bool bDoAdaptiveThresholding;
 	bool bComputePixelBasedFrameDifferencing;
-	bool bDoLaplacianEdgeDetect; 
+	bool bDoLaplacianEdgeDetect;
+	bool bDrawContourAnalyzer;
 	
 	ofxCvColorImage colorVideo;
 	ofxCvColorImage colorVideoHalfScale;

@@ -93,12 +93,12 @@ void ofApp::setup(){
 	
 	imgW			= cameraWidth;
     imgH			= cameraHeight;
-	bWorkAtHalfScale = true;
+	
+	bWorkAtHalfScale = true; // HAS to be, cuz something no longer works otherwise.
 	if (bWorkAtHalfScale){
 		imgW		= cameraWidth/2;
 		imgH		= cameraHeight/2;
 	}
-	
 	
     
     initializeCamera();
@@ -132,6 +132,7 @@ void ofApp::setup(){
     bShowText					= true;
     bShowLargeCamImageOnTop		= false;    // temp for quickly showing on hand video only
 	bUseVoronoiExpansion		= true;
+	bDrawContourAnalyzer		= true;
 	bComputePixelBasedFrameDifferencing = false;
 	bDoCompositeThresholdedImageWithLeapFboPixels = true;
 	
@@ -274,6 +275,7 @@ void ofApp::setup(){
 	
 	myHandContourAnalyzer.setup(imgW, imgH);
 	myHandMeshBuilder.initialize();
+	myHandMeshBuilder.setWorkAtHalfScale(bWorkAtHalfScale);
 	
 	minHandInsertionPercent = 0.29;
 	maxAllowableMotion		= 15.0;
@@ -1087,51 +1089,60 @@ void ofApp::draw(){
 	float insetY = (ofGetHeight()- sca*imgH);
 	ofPushMatrix();
 	ofPushStyle();
+	
 	ofTranslate (insetX, insetY);
 	ofScale(sca, sca);
-	ofSetColor(ofColor::white);
-	switch(whichImageToDraw){
-		default:
-		case 1:		drawMat(grayMat,				0,0, imgW,imgH);	break;
-		case 2:		drawMat(thresholded,			0,0, imgW,imgH);	break;
-		case 3:		drawMat(adaptiveThreshImg,		0,0, imgW,imgH);	break;
-		case 4:		drawMat(thresholdedFinal,		0,0, imgW,imgH);	break;
-		case 5:		drawMat(edgesMat1,				0,0, imgW,imgH);	break;
-		case 6:		drawMat(leapDiagnosticFboMat,	0,0, imgW,imgH);	break;
-		case 7:		drawMat(coloredBinarizedImg,	0,0, imgW,imgH);	break;
-		case 8:		if(bInPlaybackMode ){
-						video.draw(0, 0, imgW,imgH);
-					} else {
-						processFrameImg.draw(0,0,imgW,imgH);
-					}
-					break;
-		
+	
+	// Draw the contour analyzer and associated CV images.
+	if (bDrawContourAnalyzer){
+		ofSetColor(ofColor::white);
+		switch(whichImageToDraw){
+			default:
+			case 1:		drawMat(grayMat,				0,0, imgW,imgH);	break;
+			case 2:		drawMat(thresholded,			0,0, imgW,imgH);	break;
+			case 3:		drawMat(adaptiveThreshImg,		0,0, imgW,imgH);	break;
+			case 4:		drawMat(thresholdedFinal,		0,0, imgW,imgH);	break;
+			case 5:		drawMat(edgesMat1,				0,0, imgW,imgH);	break;
+			case 6:		drawMat(leapDiagnosticFboMat,	0,0, imgW,imgH);	break;
+			case 7:		drawMat(coloredBinarizedImg,	0,0, imgW,imgH);	break;
+			case 8:		if(bInPlaybackMode ){
+							video.draw(0, 0, imgW,imgH);
+						} else {
+							processFrameImg.draw(0,0,imgW,imgH);
+						}
+						break;
+		}
+		myHandContourAnalyzer.draw();
 	}
-
 	
-	
-	myHandContourAnalyzer.draw();
-	
-	
+	// Draw the actual puppet mesh.
 	ofPushStyle();
-	
-	if(bInPlaybackMode ){
-		video.getTextureReference().bind();
-	} else {
-		processFrameImg.getTextureReference().bind();
+	{
+		// Bind the texture
+		if(bInPlaybackMode ){
+			video.getTextureReference().bind();
+		} else {
+			processFrameImg.getTextureReference().bind();
+		}
+		
+		// DRAW THE MESH
+		myHandMeshBuilder.drawMesh();
+		// OR puppet.drawFaces();
+		
+		// Unbind the texture
+		if(bInPlaybackMode ){
+			video.getTextureReference().unbind();
+		} else {
+			processFrameImg.getTextureReference().unbind();
+		}
+		
+		// DRAW THE MESH WIREFRAME
+		myHandMeshBuilder.drawMeshWireframe();
 	}
-	
-	myHandMeshBuilder.drawMesh();
-	// OR puppet.drawFaces();
-	
-	if(bInPlaybackMode ){
-		video.getTextureReference().unbind();
-	} else {
-		processFrameImg.getTextureReference().unbind();
-	}
-	
 	ofPopStyle();
 
+	
+	
 	ofPopStyle();
 	ofPopMatrix();
 	
@@ -1749,6 +1760,9 @@ void ofApp::keyPressed(int key){
             break;
 		case '.':
 			bShowAnalysisBig = !bShowAnalysisBig;
+			break;
+		case ',':
+			bDrawContourAnalyzer = !bDrawContourAnalyzer;
 			break;
             
     }
