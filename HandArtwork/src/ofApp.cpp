@@ -1112,24 +1112,25 @@ void ofApp::draw(){
 	
 	myHandContourAnalyzer.draw();
 	
+	
+	ofPushStyle();
+	
 	if(bInPlaybackMode ){
 		video.getTextureReference().bind();
 	} else {
 		processFrameImg.getTextureReference().bind();
 	}
 	
-	// currentFrameImg.getTextureReference().bind();
 	myHandMeshBuilder.drawMesh();
-	// puppet.drawFaces();
-	// currentFrameImg.getTextureReference().unbind();
+	// OR puppet.drawFaces();
 	
 	if(bInPlaybackMode ){
-		video.getTextureReference().bind();
+		video.getTextureReference().unbind();
 	} else {
-		processFrameImg.getTextureReference().bind();
+		processFrameImg.getTextureReference().unbind();
 	}
 	
-	
+	ofPopStyle();
 
 	ofPopStyle();
 	ofPopMatrix();

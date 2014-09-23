@@ -26,7 +26,6 @@ public:
 	
 	void			initialize();
 	void			buildMesh (ofPolyline &handContour, ofVec3f &handCentroid, Handmark *hmarks);
-	void			bindMeshToTexture();
 	void			drawMesh(); 
 	void			informThereIsNoHandPresent();
 	ofMesh			&getMesh();

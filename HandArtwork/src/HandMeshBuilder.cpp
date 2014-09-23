@@ -698,23 +698,21 @@ void HandMeshBuilder::buildMesh (ofPolyline &handContour, ofVec3f &handCentroid,
 	}
 }
 
-//=================================================================
-void HandMeshBuilder::bindMeshToTexture(){
-	
-}
 
 //=================================================================
 void HandMeshBuilder::drawMesh(){
 	
 	if (bCalculatedMesh){
-		//ofSetColor(255,100,100, 70);
-		//handMesh.draw();
 		
+		
+	
 		ofSetColor(255,255,255);
 		handMesh.drawFaces();
 		
 		ofSetColor(0,200,255); //255,120,120, 50);
 		handMesh.drawWireframe();
+		 
+		 
 	}
 	bCalculatedMesh = false;
 }
@@ -723,6 +721,8 @@ void HandMeshBuilder::drawMesh(){
 
 
 
+//ofSetColor(255,100,100, 70);
+//handMesh.draw();
 
 
 
