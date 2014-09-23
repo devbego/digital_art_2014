@@ -2246,11 +2246,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				3B667348199B0C02005EA028 /* voronoi.cpp in Sources */,
-<<<<<<< HEAD
 				3BA28DFA19D1277E00163E06 /* HandMeshBuilder.cpp in Sources */,
-=======
 				278669DA19D0F0A000920FE7 /* PointGrey.cpp in Sources */,
->>>>>>> FETCH_HEAD
 				E4B69E200A3A1BDC003C02F2 /* main.cpp in Sources */,
 				8493AF361985A22F00226D61 /* LeapFrame.cpp in Sources */,
 				3B58FD90198DB39100F44C98 /* ofxUI2DGraph.cpp in Sources */,
@@ -2786,7 +2783,7 @@
 					"$(LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_51)",
 					"$(LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_52)",
 					../../../addons/ofxLeapMotion/libs/lib/osx,
-					/Users/kyle/Documents/openFrameworks/addons/ofxLibdc/libs/osx/lib,
+					../../../addons/ofxLibdc/libs/osx/lib,
 				);
 				MACOSX_DEPLOYMENT_TARGET = 10.8;
 				PRODUCT_NAME = leapAndCamHandSegmenterDebug;
@@ -2963,7 +2960,7 @@
 					"$(LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_50)",
 					"$(LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_51)",
 					../../../addons/ofxLeapMotion/libs/lib/osx,
-					/Users/kyle/Documents/openFrameworks/addons/ofxLibdc/libs/osx/lib,
+					../../../addons/ofxLibdc/libs/osx/lib,
 				);
 				MACOSX_DEPLOYMENT_TARGET = 10.8;
 				PRODUCT_NAME = leapAndCamHandSegmenter;
