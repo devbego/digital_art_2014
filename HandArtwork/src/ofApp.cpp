@@ -124,7 +124,7 @@ void ofApp::setup(){
     bUseVirtualProjector		= false;
     bUseFbo						= true;
     bInputMousePoints			= false;
-    bShowCalibPoints			= true;
+    bShowCalibPoints			= false;
     bRecordingForCalibration	= false;
     bRecordThisCalibFrame		= false;
     bUseCorrectedCamera			= true;
@@ -281,11 +281,99 @@ void ofApp::setup(){
 	maxAllowableFingerCurl	= 0.3;
 	maxAllowableExtentZ		= 0.5;
 	
-
+	
+	setupPuppeteer();
+	setupPuppetGui();
+	
 	// must be last
 	setupGui();
+	
+	
 }
 
+
+//--------------------------------------------------------------
+void ofApp::setupPuppeteer(){
+	
+	// Create all of the scenes
+	scenes.push_back(new NoneScene(&puppet, &handSkeleton, &immutableHandSkeleton));
+	scenes.push_back(new WaveScene(&puppet, &handSkeleton, &immutableHandSkeleton));
+    scenes.push_back(new WiggleScene(&puppet, &handSkeleton, &immutableHandSkeleton));
+	scenes.push_back(new WobbleScene(&puppet, &handSkeleton, &immutableHandSkeleton));
+	scenes.push_back(new EqualizeScene(&puppet, &handSkeleton, &immutableHandSkeleton));
+	scenes.push_back(new NorthScene(&puppet, &handSkeleton, &immutableHandSkeleton));
+	scenes.push_back(new LissajousScene(&puppet, &threePointSkeleton, &immutableThreePointSkeleton));
+	scenes.push_back(new MeanderScene(&puppet, &handSkeleton, &immutableHandSkeleton));
+	scenes.push_back(new PropogatingWiggleScene(&puppet, &handWithFingertipsSkeleton, &immutableHandWithFingertipsSkeleton));
+	scenes.push_back(new SinusoidalLengthScene(&puppet, &handSkeleton, &immutableHandSkeleton));
+	scenes.push_back(new PulsatingPalmScene(&puppet, &palmSkeleton, &immutablePalmSkeleton));
+	scenes.push_back(new RetractingFingersScene(&puppet, &handWithFingertipsSkeleton, &immutableHandWithFingertipsSkeleton));
+	scenes.push_back(new SinusoidalWiggleScene(&puppet, &handWithFingertipsSkeleton, &immutableHandWithFingertipsSkeleton));
+	scenes.push_back(new MiddleDifferentLengthScene(&puppet, &handSkeleton, &immutableHandSkeleton));
+	scenes.push_back(new GrowingMiddleFingerScene(&puppet, &handWithFingertipsSkeleton, &immutableHandWithFingertipsSkeleton));
+	scenes.push_back(new StartrekScene(&puppet, &handSkeleton, &immutableHandSkeleton));
+	scenes.push_back(new StraightenFingersScene(&puppet, &handWithFingertipsSkeleton, &immutableHandWithFingertipsSkeleton));
+	scenes.push_back(new SplayFingersScene(&puppet, &handWithFingertipsSkeleton, &immutableHandWithFingertipsSkeleton));
+	scenes.push_back(new TwitchScene(&puppet, &handSkeleton, &immutableHandSkeleton));
+	scenes.push_back(new PinkyPuppeteerScene(&puppet, &handWithFingertipsSkeleton, &immutableHandWithFingertipsSkeleton));
+	scenes.push_back(new FingerLengthPuppeteerScene(&puppet, &handWithFingertipsSkeleton, &immutableHandWithFingertipsSkeleton));
+	
+	
+	
+	handTestImage.loadImage("models/handmarksNew90.jpg");
+	myHandMeshBuilder.loadDefaultMesh();
+	
+	//--------------------
+	// Set up the puppet.
+	ofMesh &mesh = myHandMeshBuilder.getMesh();
+	puppet.setup (mesh);
+
+	//--------------------
+	// Set up all of the skeletons.
+	previousSkeleton = NULL;
+	currentSkeleton  = NULL;
+	
+	handSkeleton.setup(mesh);
+	handWithFingertipsSkeleton.setup(mesh);
+	immutableHandWithFingertipsSkeleton.setup(mesh);
+	immutableHandSkeleton.setup(mesh);
+	threePointSkeleton.setup(mesh);
+	immutableThreePointSkeleton.setup(mesh);
+	palmSkeleton.setup(mesh);
+	immutablePalmSkeleton.setup(mesh);
+	wristSpineSkeleton.setup(mesh);
+	immutableWristSpineSkeleton.setup(mesh);
+	
+	// set the initial skeleton
+	setSkeleton(&handSkeleton);
+
+	
+	mouseControl  = false;
+	showImage     = true;
+	showWireframe = true;
+	showSkeleton  = true;
+	frameBasedAnimation = false;
+	showPuppetGuis = true;
+}
+
+
+//--------------------------------------------------------------
+void ofApp::setSkeleton(Skeleton* skeleton) {
+	if(skeleton != currentSkeleton) {
+		previousSkeleton = currentSkeleton;
+		currentSkeleton = skeleton;
+		if(previousSkeleton != NULL) {
+			vector<int>& previousControlIndices = previousSkeleton->getControlIndices();
+			for(int i = 0; i < previousControlIndices.size(); i++) {
+				puppet.removeControlPoint(previousControlIndices[i]);
+			}
+		}
+		vector<int>& currentControlIndices = currentSkeleton->getControlIndices();
+		for(int i = 0; i < currentControlIndices.size(); i++) {
+			puppet.setControlPoint(currentControlIndices[i]);
+		}
+	}
+}
 
 
 //--------------------------------------------------------------
@@ -393,10 +481,7 @@ void ofApp::setupGui() {
 	gui1->loadSettings(originalAppDataPath + "HandSegmenterSettings.xml");
 	gui1->addSpacer();
 	
-	
-	
-	
-	
+
 	gui1->addSpacer();
 	gui1->addSlider("thresholdValue", 0.0, 128.0, &thresholdValue);
 	gui1->addSlider("blurKernelSize", 1, 63, &blurKernelSize);
@@ -464,11 +549,55 @@ void ofApp::setupGui() {
 }
 
 //--------------------------------------------------------------
+void ofApp::setupPuppetGui(){
+	
+	// set up the guis for each scene
+	for (int i=0; i < scenes.size(); i++) {
+		sceneNames.push_back(scenes[i]->getName());
+		sceneWithSkeletonNames.push_back(scenes[i]->getNameWithSkeleton());
+		scenes[i]->setupGui();
+		scenes[i]->setupMouseGui();
+	}
+    
+	// create the main gui
+	puppetGui = new ofxUICanvas();
+	puppetGui->setFont("GUI/NewMedia Fett.ttf");
+	puppetGui->addLabel("Mesh Deformer");
+	puppetGui->addSpacer();
+	puppetGui->addFPS();
+	puppetGui->addSpacer();
+	sceneRadio = puppetGui->addRadio("Scene", sceneNames);
+	//sceneRadio = gui->addRadio("Scene", sceneWithSkeletonNames);
+	puppetGui->addSpacer();
+	puppetGui->addLabelToggle("Show Image", &showImage);
+	puppetGui->addLabelToggle("Show Wireframe", &showWireframe);
+	puppetGui->addLabelToggle("Show Skeleton",  &showSkeleton);
+	puppetGui->addLabelToggle("Mouse Control",  &mouseControl);
+	puppetGui->addLabelToggle("FrameBasedAnim", &frameBasedAnimation);
+	puppetGui->addSpacer();
+	puppetGui->autoSizeToFitWidgets();
+	puppetGui->setPosition(256, 10);
+	
+	// set the initial scene
+    sceneRadio->getToggles()[0/*scenes.size()-1*/]->setValue(true);
+}
+
+//--------------------------------------------------------------
 void ofApp::guiEvent(ofxUIEventArgs &e) {
 	string name = e.widget->getName();
 	int kind = e.widget->getKind();
     string canvasParent = e.widget->getCanvasParent()->getName();
     // cout << canvasParent << endl;
+}
+
+int getSelection(ofxUIRadio* radio) {
+	vector<ofxUIToggle*> toggles = radio->getToggles();
+	for(int i = 0; i < toggles.size(); i++) {
+		if(toggles[i]->getValue()) {
+			return i;
+		}
+	}
+	return -1;
 }
 
 
@@ -508,10 +637,112 @@ void ofApp::update(){
 	lastFrameTimeMicros = now;
 	
 	applicationStateMachine();
-	
+	// updatePuppeteer();
 	
 	
 }
+
+//--------------------------------------------------------------
+void ofApp::updateHandMesh(){
+	
+	ofPolyline &theHandContour = myHandContourAnalyzer.theHandContourResampled;
+	Handmark *theHandmarks = myHandContourAnalyzer.Handmarks;
+	ofVec3f theHandCentroid = myHandContourAnalyzer.handCentroidLeap;
+	myHandMeshBuilder.buildMesh (theHandContour, theHandCentroid, theHandmarks);
+}
+
+
+//--------------------------------------------------------------
+void ofApp::updatePuppeteer(){
+	
+	ofMesh &mesh = myHandMeshBuilder.getMesh();
+	puppet.setup (mesh);
+	
+   
+    // every frame we get a new mesh from the hand tracker
+	handWithFingertipsSkeleton.setup(mesh);
+	immutableHandWithFingertipsSkeleton.setup(mesh);
+	handSkeleton.setup(mesh);
+	immutableHandSkeleton.setup(mesh);
+	threePointSkeleton.setup(mesh);
+	immutableThreePointSkeleton.setup(mesh);
+	palmSkeleton.setup(mesh);
+	immutablePalmSkeleton.setup(mesh);
+	wristSpineSkeleton.setup(mesh);
+	immutableWristSpineSkeleton.setup(mesh);
+	
+    
+	// get the current scene, turn off all other scenes
+	int scene = getSelection(sceneRadio);
+	for (int i=0; i < scenes.size(); i++) {
+		if (i != scene){
+			scenes[i]->turnOff();
+		} else {
+			scenes[scene]->turnOn();
+		}
+	}
+	
+	mouseControl = false;
+	showWireframe = true;
+
+    
+	// update skeleton
+	scenes[scene]->update();
+	setSkeleton(scenes[scene]->getSkeleton());
+    
+	// update the puppet using the current scene's skeleton
+	for (int i = 0; i<currentSkeleton->size(); i++) {
+		puppet.setControlPoint(currentSkeleton->getControlIndex(i),
+							   currentSkeleton->getPositionAbsolute(i));
+	}
+	
+	puppet.update();
+	puppetGui->setVisible(showPuppetGuis);
+	
+}
+
+
+
+
+
+
+/*
+ if (mouseControl) {
+ // turn on mouse gui for current scene
+ if (!scenes[scene]->mouseGuiIsOn()) scenes[scene]->turnOnMouse();
+ // update the mouse
+ scenes[scene]->updateMouse(mouseX, mouseY);
+ }
+ else {
+ scenes[scene]->turnOffMouse();
+ }
+ 
+ // turn on the gui for the current scene
+ if (!scenes[scene]->guiIsOn()) {
+ scenes[scene]->turnOn();
+ showImage = scenes[scene]->isStartShowImage();
+ showWireframe = scenes[scene]->isStartShowWireframe();
+ showSkeleton = scenes[scene]->isStartShowSkeleton();
+ mouseControl = scenes[scene]->isStartMouseControl();
+ }
+ 
+ if (!showPuppetGuis) {
+ this->puppetGui->setVisible(false);
+ for(int i=0; i < scenes.size(); i++) {
+ scenes[i]->turnOffGui();
+ scenes[i]->turnOffMouse();
+ }
+ // showSkeleton = false;
+ }
+ else {
+ this->puppetGui->setVisible(true);
+ }
+ */
+
+
+
+
+
 
 
 //--------------------------------------------------------------
@@ -647,20 +878,6 @@ void ofApp::updateComputerVision(){
 	compositeThresholdedImageWithLeapFboPixels();
 	
 	myHandContourAnalyzer.update (thresholdedFinal, leapDiagnosticFboMat, leapVisualizer);
-}
-
-//--------------------------------------------------------------
-void ofApp::updateHandMesh(){
-	
-	long t0 = ofGetElapsedTimeMicros();
-	
-	ofPolyline &theHandContour = myHandContourAnalyzer.theHandContourResampled;
-	Handmark *theHandmarks = myHandContourAnalyzer.Handmarks;
-	ofVec3f theHandCentroid = myHandContourAnalyzer.handCentroidLeap;
-	myHandMeshBuilder.buildMesh (theHandContour, theHandCentroid, theHandmarks);
-	
-	long t1 = ofGetElapsedTimeMicros();
-	printf("Elapsed  = %d\n", (int)(t1-t0));
 }
 
 
@@ -1034,6 +1251,8 @@ void ofApp::draw(){
         }
     }
 	
+	
+	
     if(bShowText){
        drawText();
     }
@@ -1119,7 +1338,8 @@ void ofApp::draw(){
 			
 			// DRAW THE MESH
 			myHandMeshBuilder.drawMesh();
-			// OR puppet.drawFaces();
+			//ofSetColor(ofColor::white);
+			//puppet.drawFaces();
 			
 			// Unbind the texture
 			if(bInPlaybackMode ){
@@ -1165,7 +1385,73 @@ void ofApp::draw(){
 		}
 	}
 
+	//ofSetColor(255);
+	//handTestImage.draw(mouseX, mouseY, 768/4,1024/4);
 	
+	ofPushMatrix();
+	ofScale (2,2);
+	drawPuppet();
+	ofPopMatrix();
+
+		
+}
+
+//--------------------------------------------------------------
+void ofApp::drawPuppet(){
+	ofPushStyle();
+	{
+	
+		
+		updatePuppeteer();
+		
+
+			
+		//ofMesh &mesh = myHandMeshBuilder.getMesh();
+		//puppet.setup (mesh);
+		
+		/*
+		handWithFingertipsSkeleton.setup(mesh);
+		immutableHandWithFingertipsSkeleton.setup(mesh);
+		handSkeleton.setup(mesh);
+		immutableHandSkeleton.setup(mesh);
+		threePointSkeleton.setup(mesh);
+		immutableThreePointSkeleton.setup(mesh);
+		palmSkeleton.setup(mesh);
+		immutablePalmSkeleton.setup(mesh);
+		wristSpineSkeleton.setup(mesh);
+		immutableWristSpineSkeleton.setup(mesh);
+		 */
+		
+		
+		
+		//handTestImage.bind();
+		
+		if (bInPlaybackMode ){	video.getTextureReference().bind(); }
+		else { processFrameImg.getTextureReference().bind(); }
+		
+		ofSetColor(255);
+		puppet.drawFaces();
+		
+		if(bInPlaybackMode ){ video.getTextureReference().unbind(); }
+		else { processFrameImg.getTextureReference().unbind(); }
+		
+		//handTestImage.unbind();
+		
+			
+			
+			
+		
+		if (showWireframe) {
+			puppet.drawWireframe();
+			puppet.drawControlPoints();
+		}
+		if (showSkeleton) {
+			currentSkeleton->draw();
+		}
+		int scene = getSelection(sceneRadio);
+		scenes[scene]->draw();
+	}
+	ofPopStyle();
 }
 
 
@@ -1673,10 +1959,9 @@ void ofApp::keyPressed(int key){
             bUseFbo = !bUseFbo;
             break;
         case 'g':
-            leapVisualizer.bDrawGrid = !leapVisualizer.bDrawGrid;
-            break;
 		case 'G':
 			guiTabBar->toggleVisible();
+			showPuppetGuis = !showPuppetGuis;
 			break;
         case 'l':
             if(bInPlaybackMode) bInPlaybackMode = false;

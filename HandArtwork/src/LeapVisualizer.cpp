@@ -12,7 +12,7 @@
 void LeapVisualizer::setup(){
     
     bDrawSimple					= false;
-    bDrawGrid					= true;
+    bDrawGrid					= false;
 	bDrawDiagnosticColors		= true;
 	bProjectorSet				= false;
 	

@@ -21,6 +21,28 @@
 		222C3AB10FA3158602718602 /* ofxUIMultiImageButton.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 17E06821FB98542FDB806E50 /* ofxUIMultiImageButton.cpp */; };
 		250A95BA26587BE85DB0A353 /* ofxCvColorImage.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CE9C7160245B19131DAE6128 /* ofxCvColorImage.cpp */; };
 		26874B150C8535AEA0F24C8C /* ofxUIImageSlider.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2689C5C8A97002C218125F2F /* ofxUIImageSlider.cpp */; };
+		3B04CBDC19D1DE8A005E6F31 /* EqualizeScene.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3B04CBAF19D1DE8A005E6F31 /* EqualizeScene.cpp */; };
+		3B04CBDD19D1DE8A005E6F31 /* FingerLengthPuppeteerScene.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3B04CBB119D1DE8A005E6F31 /* FingerLengthPuppeteerScene.cpp */; };
+		3B04CBDE19D1DE8A005E6F31 /* GrowingMiddleFingerScene.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3B04CBB319D1DE8A005E6F31 /* GrowingMiddleFingerScene.cpp */; };
+		3B04CBDF19D1DE8A005E6F31 /* LissajousScene.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3B04CBB519D1DE8A005E6F31 /* LissajousScene.cpp */; };
+		3B04CBE019D1DE8A005E6F31 /* MeanderScene.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3B04CBB719D1DE8A005E6F31 /* MeanderScene.cpp */; };
+		3B04CBE119D1DE8A005E6F31 /* MiddleDifferentLengthScene.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3B04CBB919D1DE8A005E6F31 /* MiddleDifferentLengthScene.cpp */; };
+		3B04CBE219D1DE8A005E6F31 /* NoneScene.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3B04CBBB19D1DE8A005E6F31 /* NoneScene.cpp */; };
+		3B04CBE319D1DE8A005E6F31 /* NorthScene.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3B04CBBD19D1DE8A005E6F31 /* NorthScene.cpp */; };
+		3B04CBE419D1DE8A005E6F31 /* PinkyPuppeteerScene.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3B04CBBF19D1DE8A005E6F31 /* PinkyPuppeteerScene.cpp */; };
+		3B04CBE519D1DE8A005E6F31 /* PropogatingWiggleScene.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3B04CBC119D1DE8A005E6F31 /* PropogatingWiggleScene.cpp */; };
+		3B04CBE619D1DE8A005E6F31 /* PulsatingPalmScene.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3B04CBC319D1DE8A005E6F31 /* PulsatingPalmScene.cpp */; };
+		3B04CBE719D1DE8A005E6F31 /* RetractingFingersScene.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3B04CBC519D1DE8A005E6F31 /* RetractingFingersScene.cpp */; };
+		3B04CBE819D1DE8A005E6F31 /* SinusoidalLengthScene.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3B04CBC819D1DE8A005E6F31 /* SinusoidalLengthScene.cpp */; };
+		3B04CBE919D1DE8A005E6F31 /* SinusoidalWiggleScene.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3B04CBCA19D1DE8A005E6F31 /* SinusoidalWiggleScene.cpp */; };
+		3B04CBEA19D1DE8A005E6F31 /* SplayFingersScene.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3B04CBCC19D1DE8A005E6F31 /* SplayFingersScene.cpp */; };
+		3B04CBEB19D1DE8A005E6F31 /* StartrekScene.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3B04CBCE19D1DE8A005E6F31 /* StartrekScene.cpp */; };
+		3B04CBEC19D1DE8A005E6F31 /* StraightenFingersScene.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3B04CBD019D1DE8A005E6F31 /* StraightenFingersScene.cpp */; };
+		3B04CBED19D1DE8A005E6F31 /* TwitchScene.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3B04CBD219D1DE8A005E6F31 /* TwitchScene.cpp */; };
+		3B04CBEE19D1DE8A005E6F31 /* WaveScene.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3B04CBD419D1DE8A005E6F31 /* WaveScene.cpp */; };
+		3B04CBEF19D1DE8A005E6F31 /* WiggleScene.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3B04CBD619D1DE8A005E6F31 /* WiggleScene.cpp */; };
+		3B04CBF019D1DE8A005E6F31 /* WigglingWristScene.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3B04CBD819D1DE8A005E6F31 /* WigglingWristScene.cpp */; };
+		3B04CBF119D1DE8A005E6F31 /* WobbleScene.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3B04CBDA19D1DE8A005E6F31 /* WobbleScene.cpp */; };
 		3B4384E319D1BFB7001F75FE /* ofxPuppet.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3B4384B519D1BFB7001F75FE /* ofxPuppet.cpp */; };
 		3B4384E419D1BFB7001F75FE /* ofxPuppetInteractive.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3B4384B719D1BFB7001F75FE /* ofxPuppetInteractive.cpp */; };
 		3B4384E519D1BFB7001F75FE /* LinearAlgebra.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3B4384BC19D1BFB7001F75FE /* LinearAlgebra.cpp */; };
@@ -294,6 +316,51 @@
 		38F81A808C39C556AB3B559F /* result_set.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 30; name = result_set.h; path = ../../../addons/ofxCvMin/libs/opencv/include/opencv2/flann/result_set.h; sourceTree = SOURCE_ROOT; };
 		3950D781C9C11D274311F364 /* viz3d.hpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 30; name = viz3d.hpp; path = ../../../addons/ofxCvMin/libs/opencv/include/opencv2/viz/viz3d.hpp; sourceTree = SOURCE_ROOT; };
 		397D72073F8C58EDF5A16771 /* types.hpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 30; name = types.hpp; path = ../../../addons/ofxCvMin/libs/opencv/include/opencv2/viz/types.hpp; sourceTree = SOURCE_ROOT; };
+		3B04CBAF19D1DE8A005E6F31 /* EqualizeScene.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = EqualizeScene.cpp; sourceTree = "<group>"; };
+		3B04CBB019D1DE8A005E6F31 /* EqualizeScene.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = EqualizeScene.h; sourceTree = "<group>"; };
+		3B04CBB119D1DE8A005E6F31 /* FingerLengthPuppeteerScene.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = FingerLengthPuppeteerScene.cpp; sourceTree = "<group>"; };
+		3B04CBB219D1DE8A005E6F31 /* FingerLengthPuppeteerScene.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FingerLengthPuppeteerScene.h; sourceTree = "<group>"; };
+		3B04CBB319D1DE8A005E6F31 /* GrowingMiddleFingerScene.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = GrowingMiddleFingerScene.cpp; sourceTree = "<group>"; };
+		3B04CBB419D1DE8A005E6F31 /* GrowingMiddleFingerScene.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GrowingMiddleFingerScene.h; sourceTree = "<group>"; };
+		3B04CBB519D1DE8A005E6F31 /* LissajousScene.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = LissajousScene.cpp; sourceTree = "<group>"; };
+		3B04CBB619D1DE8A005E6F31 /* LissajousScene.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LissajousScene.h; sourceTree = "<group>"; };
+		3B04CBB719D1DE8A005E6F31 /* MeanderScene.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = MeanderScene.cpp; sourceTree = "<group>"; };
+		3B04CBB819D1DE8A005E6F31 /* MeanderScene.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MeanderScene.h; sourceTree = "<group>"; };
+		3B04CBB919D1DE8A005E6F31 /* MiddleDifferentLengthScene.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = MiddleDifferentLengthScene.cpp; sourceTree = "<group>"; };
+		3B04CBBA19D1DE8A005E6F31 /* MiddleDifferentLengthScene.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MiddleDifferentLengthScene.h; sourceTree = "<group>"; };
+		3B04CBBB19D1DE8A005E6F31 /* NoneScene.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = NoneScene.cpp; sourceTree = "<group>"; };
+		3B04CBBC19D1DE8A005E6F31 /* NoneScene.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = NoneScene.h; sourceTree = "<group>"; };
+		3B04CBBD19D1DE8A005E6F31 /* NorthScene.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = NorthScene.cpp; sourceTree = "<group>"; };
+		3B04CBBE19D1DE8A005E6F31 /* NorthScene.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = NorthScene.h; sourceTree = "<group>"; };
+		3B04CBBF19D1DE8A005E6F31 /* PinkyPuppeteerScene.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = PinkyPuppeteerScene.cpp; sourceTree = "<group>"; };
+		3B04CBC019D1DE8A005E6F31 /* PinkyPuppeteerScene.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PinkyPuppeteerScene.h; sourceTree = "<group>"; };
+		3B04CBC119D1DE8A005E6F31 /* PropogatingWiggleScene.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = PropogatingWiggleScene.cpp; sourceTree = "<group>"; };
+		3B04CBC219D1DE8A005E6F31 /* PropogatingWiggleScene.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PropogatingWiggleScene.h; sourceTree = "<group>"; };
+		3B04CBC319D1DE8A005E6F31 /* PulsatingPalmScene.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = PulsatingPalmScene.cpp; sourceTree = "<group>"; };
+		3B04CBC419D1DE8A005E6F31 /* PulsatingPalmScene.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PulsatingPalmScene.h; sourceTree = "<group>"; };
+		3B04CBC519D1DE8A005E6F31 /* RetractingFingersScene.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = RetractingFingersScene.cpp; sourceTree = "<group>"; };
+		3B04CBC619D1DE8A005E6F31 /* RetractingFingersScene.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RetractingFingersScene.h; sourceTree = "<group>"; };
+		3B04CBC719D1DE8A005E6F31 /* Scene.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Scene.h; sourceTree = "<group>"; };
+		3B04CBC819D1DE8A005E6F31 /* SinusoidalLengthScene.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = SinusoidalLengthScene.cpp; sourceTree = "<group>"; };
+		3B04CBC919D1DE8A005E6F31 /* SinusoidalLengthScene.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SinusoidalLengthScene.h; sourceTree = "<group>"; };
+		3B04CBCA19D1DE8A005E6F31 /* SinusoidalWiggleScene.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = SinusoidalWiggleScene.cpp; sourceTree = "<group>"; };
+		3B04CBCB19D1DE8A005E6F31 /* SinusoidalWiggleScene.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SinusoidalWiggleScene.h; sourceTree = "<group>"; };
+		3B04CBCC19D1DE8A005E6F31 /* SplayFingersScene.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = SplayFingersScene.cpp; sourceTree = "<group>"; };
+		3B04CBCD19D1DE8A005E6F31 /* SplayFingersScene.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SplayFingersScene.h; sourceTree = "<group>"; };
+		3B04CBCE19D1DE8A005E6F31 /* StartrekScene.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = StartrekScene.cpp; sourceTree = "<group>"; };
+		3B04CBCF19D1DE8A005E6F31 /* StartrekScene.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = StartrekScene.h; sourceTree = "<group>"; };
+		3B04CBD019D1DE8A005E6F31 /* StraightenFingersScene.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = StraightenFingersScene.cpp; sourceTree = "<group>"; };
+		3B04CBD119D1DE8A005E6F31 /* StraightenFingersScene.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = StraightenFingersScene.h; sourceTree = "<group>"; };
+		3B04CBD219D1DE8A005E6F31 /* TwitchScene.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = TwitchScene.cpp; sourceTree = "<group>"; };
+		3B04CBD319D1DE8A005E6F31 /* TwitchScene.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TwitchScene.h; sourceTree = "<group>"; };
+		3B04CBD419D1DE8A005E6F31 /* WaveScene.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = WaveScene.cpp; sourceTree = "<group>"; };
+		3B04CBD519D1DE8A005E6F31 /* WaveScene.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = WaveScene.h; sourceTree = "<group>"; };
+		3B04CBD619D1DE8A005E6F31 /* WiggleScene.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = WiggleScene.cpp; sourceTree = "<group>"; };
+		3B04CBD719D1DE8A005E6F31 /* WiggleScene.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = WiggleScene.h; sourceTree = "<group>"; };
+		3B04CBD819D1DE8A005E6F31 /* WigglingWristScene.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = WigglingWristScene.cpp; sourceTree = "<group>"; };
+		3B04CBD919D1DE8A005E6F31 /* WigglingWristScene.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = WigglingWristScene.h; sourceTree = "<group>"; };
+		3B04CBDA19D1DE8A005E6F31 /* WobbleScene.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = WobbleScene.cpp; sourceTree = "<group>"; };
+		3B04CBDB19D1DE8A005E6F31 /* WobbleScene.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = WobbleScene.h; sourceTree = "<group>"; };
 		3B4384B519D1BFB7001F75FE /* ofxPuppet.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = ofxPuppet.cpp; sourceTree = "<group>"; };
 		3B4384B619D1BFB7001F75FE /* ofxPuppet.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ofxPuppet.h; sourceTree = "<group>"; };
 		3B4384B719D1BFB7001F75FE /* ofxPuppetInteractive.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = ofxPuppetInteractive.cpp; sourceTree = "<group>"; };
@@ -379,51 +446,6 @@
 		3BFC9EE819D1754F00284002 /* ThreePointSkeleton.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ThreePointSkeleton.h; sourceTree = "<group>"; };
 		3BFC9EE919D1754F00284002 /* WristSpineSkeleton.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = WristSpineSkeleton.h; sourceTree = "<group>"; };
 		3BFC9EEA19D1754F00284002 /* MeshUtils.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MeshUtils.h; sourceTree = "<group>"; };
-		3BFC9EEC19D1754F00284002 /* EqualizeScene.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = EqualizeScene.cpp; sourceTree = "<group>"; };
-		3BFC9EED19D1754F00284002 /* EqualizeScene.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = EqualizeScene.h; sourceTree = "<group>"; };
-		3BFC9EEE19D1754F00284002 /* FingerLengthPuppeteerScene.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = FingerLengthPuppeteerScene.cpp; sourceTree = "<group>"; };
-		3BFC9EEF19D1754F00284002 /* FingerLengthPuppeteerScene.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = FingerLengthPuppeteerScene.h; sourceTree = "<group>"; };
-		3BFC9EF019D1754F00284002 /* GrowingMiddleFingerScene.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = GrowingMiddleFingerScene.cpp; sourceTree = "<group>"; };
-		3BFC9EF119D1754F00284002 /* GrowingMiddleFingerScene.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = GrowingMiddleFingerScene.h; sourceTree = "<group>"; };
-		3BFC9EF219D1754F00284002 /* LissajousScene.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = LissajousScene.cpp; sourceTree = "<group>"; };
-		3BFC9EF319D1754F00284002 /* LissajousScene.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = LissajousScene.h; sourceTree = "<group>"; };
-		3BFC9EF419D1754F00284002 /* MeanderScene.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = MeanderScene.cpp; sourceTree = "<group>"; };
-		3BFC9EF519D1754F00284002 /* MeanderScene.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MeanderScene.h; sourceTree = "<group>"; };
-		3BFC9EF619D1754F00284002 /* MiddleDifferentLengthScene.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = MiddleDifferentLengthScene.cpp; sourceTree = "<group>"; };
-		3BFC9EF719D1754F00284002 /* MiddleDifferentLengthScene.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MiddleDifferentLengthScene.h; sourceTree = "<group>"; };
-		3BFC9EF819D1754F00284002 /* NoneScene.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = NoneScene.cpp; sourceTree = "<group>"; };
-		3BFC9EF919D1754F00284002 /* NoneScene.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = NoneScene.h; sourceTree = "<group>"; };
-		3BFC9EFA19D1754F00284002 /* NorthScene.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = NorthScene.cpp; sourceTree = "<group>"; };
-		3BFC9EFB19D1754F00284002 /* NorthScene.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = NorthScene.h; sourceTree = "<group>"; };
-		3BFC9EFC19D1754F00284002 /* PinkyPuppeteerScene.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = PinkyPuppeteerScene.cpp; sourceTree = "<group>"; };
-		3BFC9EFD19D1754F00284002 /* PinkyPuppeteerScene.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = PinkyPuppeteerScene.h; sourceTree = "<group>"; };
-		3BFC9EFE19D1754F00284002 /* PropogatingWiggleScene.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = PropogatingWiggleScene.cpp; sourceTree = "<group>"; };
-		3BFC9EFF19D1754F00284002 /* PropogatingWiggleScene.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = PropogatingWiggleScene.h; sourceTree = "<group>"; };
-		3BFC9F0019D1754F00284002 /* PulsatingPalmScene.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = PulsatingPalmScene.cpp; sourceTree = "<group>"; };
-		3BFC9F0119D1754F00284002 /* PulsatingPalmScene.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = PulsatingPalmScene.h; sourceTree = "<group>"; };
-		3BFC9F0219D1754F00284002 /* RetractingFingersScene.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = RetractingFingersScene.cpp; sourceTree = "<group>"; };
-		3BFC9F0319D1754F00284002 /* RetractingFingersScene.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RetractingFingersScene.h; sourceTree = "<group>"; };
-		3BFC9F0419D1754F00284002 /* Scene.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Scene.h; sourceTree = "<group>"; };
-		3BFC9F0519D1754F00284002 /* SinusoidalLengthScene.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = SinusoidalLengthScene.cpp; sourceTree = "<group>"; };
-		3BFC9F0619D1754F00284002 /* SinusoidalLengthScene.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SinusoidalLengthScene.h; sourceTree = "<group>"; };
-		3BFC9F0719D1754F00284002 /* SinusoidalWiggleScene.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = SinusoidalWiggleScene.cpp; sourceTree = "<group>"; };
-		3BFC9F0819D1754F00284002 /* SinusoidalWiggleScene.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SinusoidalWiggleScene.h; sourceTree = "<group>"; };
-		3BFC9F0919D1754F00284002 /* SplayFingersScene.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = SplayFingersScene.cpp; sourceTree = "<group>"; };
-		3BFC9F0A19D1754F00284002 /* SplayFingersScene.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SplayFingersScene.h; sourceTree = "<group>"; };
-		3BFC9F0B19D1754F00284002 /* StartrekScene.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = StartrekScene.cpp; sourceTree = "<group>"; };
-		3BFC9F0C19D1754F00284002 /* StartrekScene.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = StartrekScene.h; sourceTree = "<group>"; };
-		3BFC9F0D19D1754F00284002 /* StraightenFingersScene.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = StraightenFingersScene.cpp; sourceTree = "<group>"; };
-		3BFC9F0E19D1754F00284002 /* StraightenFingersScene.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = StraightenFingersScene.h; sourceTree = "<group>"; };
-		3BFC9F0F19D1754F00284002 /* TwitchScene.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = TwitchScene.cpp; sourceTree = "<group>"; };
-		3BFC9F1019D1754F00284002 /* TwitchScene.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TwitchScene.h; sourceTree = "<group>"; };
-		3BFC9F1119D1754F00284002 /* WaveScene.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = WaveScene.cpp; sourceTree = "<group>"; };
-		3BFC9F1219D1754F00284002 /* WaveScene.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = WaveScene.h; sourceTree = "<group>"; };
-		3BFC9F1319D1754F00284002 /* WiggleScene.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = WiggleScene.cpp; sourceTree = "<group>"; };
-		3BFC9F1419D1754F00284002 /* WiggleScene.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = WiggleScene.h; sourceTree = "<group>"; };
-		3BFC9F1519D1754F00284002 /* WigglingWristScene.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = WigglingWristScene.cpp; sourceTree = "<group>"; };
-		3BFC9F1619D1754F00284002 /* WigglingWristScene.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = WigglingWristScene.h; sourceTree = "<group>"; };
-		3BFC9F1719D1754F00284002 /* WobbleScene.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = WobbleScene.cpp; sourceTree = "<group>"; };
-		3BFC9F1819D1754F00284002 /* WobbleScene.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = WobbleScene.h; sourceTree = "<group>"; };
 		3BFC9F1919D1754F00284002 /* SharedUtils.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SharedUtils.h; sourceTree = "<group>"; };
 		3BFC9F5019D175BB00284002 /* LeapBone.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = LeapBone.cpp; sourceTree = "<group>"; };
 		3BFC9F5119D175BB00284002 /* LeapBone.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LeapBone.h; sourceTree = "<group>"; };
@@ -1087,6 +1109,58 @@
 			name = src;
 			sourceTree = "<group>";
 		};
+		3B04CBAE19D1DE8A005E6F31 /* scenes */ = {
+			isa = PBXGroup;
+			children = (
+				3B04CBAF19D1DE8A005E6F31 /* EqualizeScene.cpp */,
+				3B04CBB019D1DE8A005E6F31 /* EqualizeScene.h */,
+				3B04CBB119D1DE8A005E6F31 /* FingerLengthPuppeteerScene.cpp */,
+				3B04CBB219D1DE8A005E6F31 /* FingerLengthPuppeteerScene.h */,
+				3B04CBB319D1DE8A005E6F31 /* GrowingMiddleFingerScene.cpp */,
+				3B04CBB419D1DE8A005E6F31 /* GrowingMiddleFingerScene.h */,
+				3B04CBB519D1DE8A005E6F31 /* LissajousScene.cpp */,
+				3B04CBB619D1DE8A005E6F31 /* LissajousScene.h */,
+				3B04CBB719D1DE8A005E6F31 /* MeanderScene.cpp */,
+				3B04CBB819D1DE8A005E6F31 /* MeanderScene.h */,
+				3B04CBB919D1DE8A005E6F31 /* MiddleDifferentLengthScene.cpp */,
+				3B04CBBA19D1DE8A005E6F31 /* MiddleDifferentLengthScene.h */,
+				3B04CBBB19D1DE8A005E6F31 /* NoneScene.cpp */,
+				3B04CBBC19D1DE8A005E6F31 /* NoneScene.h */,
+				3B04CBBD19D1DE8A005E6F31 /* NorthScene.cpp */,
+				3B04CBBE19D1DE8A005E6F31 /* NorthScene.h */,
+				3B04CBBF19D1DE8A005E6F31 /* PinkyPuppeteerScene.cpp */,
+				3B04CBC019D1DE8A005E6F31 /* PinkyPuppeteerScene.h */,
+				3B04CBC119D1DE8A005E6F31 /* PropogatingWiggleScene.cpp */,
+				3B04CBC219D1DE8A005E6F31 /* PropogatingWiggleScene.h */,
+				3B04CBC319D1DE8A005E6F31 /* PulsatingPalmScene.cpp */,
+				3B04CBC419D1DE8A005E6F31 /* PulsatingPalmScene.h */,
+				3B04CBC519D1DE8A005E6F31 /* RetractingFingersScene.cpp */,
+				3B04CBC619D1DE8A005E6F31 /* RetractingFingersScene.h */,
+				3B04CBC719D1DE8A005E6F31 /* Scene.h */,
+				3B04CBC819D1DE8A005E6F31 /* SinusoidalLengthScene.cpp */,
+				3B04CBC919D1DE8A005E6F31 /* SinusoidalLengthScene.h */,
+				3B04CBCA19D1DE8A005E6F31 /* SinusoidalWiggleScene.cpp */,
+				3B04CBCB19D1DE8A005E6F31 /* SinusoidalWiggleScene.h */,
+				3B04CBCC19D1DE8A005E6F31 /* SplayFingersScene.cpp */,
+				3B04CBCD19D1DE8A005E6F31 /* SplayFingersScene.h */,
+				3B04CBCE19D1DE8A005E6F31 /* StartrekScene.cpp */,
+				3B04CBCF19D1DE8A005E6F31 /* StartrekScene.h */,
+				3B04CBD019D1DE8A005E6F31 /* StraightenFingersScene.cpp */,
+				3B04CBD119D1DE8A005E6F31 /* StraightenFingersScene.h */,
+				3B04CBD219D1DE8A005E6F31 /* TwitchScene.cpp */,
+				3B04CBD319D1DE8A005E6F31 /* TwitchScene.h */,
+				3B04CBD419D1DE8A005E6F31 /* WaveScene.cpp */,
+				3B04CBD519D1DE8A005E6F31 /* WaveScene.h */,
+				3B04CBD619D1DE8A005E6F31 /* WiggleScene.cpp */,
+				3B04CBD719D1DE8A005E6F31 /* WiggleScene.h */,
+				3B04CBD819D1DE8A005E6F31 /* WigglingWristScene.cpp */,
+				3B04CBD919D1DE8A005E6F31 /* WigglingWristScene.h */,
+				3B04CBDA19D1DE8A005E6F31 /* WobbleScene.cpp */,
+				3B04CBDB19D1DE8A005E6F31 /* WobbleScene.h */,
+			);
+			path = scenes;
+			sourceTree = "<group>";
+		};
 		3B4384B319D1BFB7001F75FE /* ofxPuppet */ = {
 			isa = PBXGroup;
 			children = (
@@ -1342,10 +1416,10 @@
 		3BFC9EE019D1754F00284002 /* SharedCode */ = {
 			isa = PBXGroup;
 			children = (
+				3B04CBAE19D1DE8A005E6F31 /* scenes */,
 				3BFC9EE119D1754F00284002 /* BufferedVideo.h */,
 				3BFC9EE219D1754F00284002 /* hand-structure */,
 				3BFC9EEA19D1754F00284002 /* MeshUtils.h */,
-				3BFC9EEB19D1754F00284002 /* scenes */,
 				3BFC9F1919D1754F00284002 /* SharedUtils.h */,
 			);
 			name = SharedCode;
@@ -1364,58 +1438,6 @@
 				3BFC9EE919D1754F00284002 /* WristSpineSkeleton.h */,
 			);
 			path = "hand-structure";
-			sourceTree = "<group>";
-		};
-		3BFC9EEB19D1754F00284002 /* scenes */ = {
-			isa = PBXGroup;
-			children = (
-				3BFC9EEC19D1754F00284002 /* EqualizeScene.cpp */,
-				3BFC9EED19D1754F00284002 /* EqualizeScene.h */,
-				3BFC9EEE19D1754F00284002 /* FingerLengthPuppeteerScene.cpp */,
-				3BFC9EEF19D1754F00284002 /* FingerLengthPuppeteerScene.h */,
-				3BFC9EF019D1754F00284002 /* GrowingMiddleFingerScene.cpp */,
-				3BFC9EF119D1754F00284002 /* GrowingMiddleFingerScene.h */,
-				3BFC9EF219D1754F00284002 /* LissajousScene.cpp */,
-				3BFC9EF319D1754F00284002 /* LissajousScene.h */,
-				3BFC9EF419D1754F00284002 /* MeanderScene.cpp */,
-				3BFC9EF519D1754F00284002 /* MeanderScene.h */,
-				3BFC9EF619D1754F00284002 /* MiddleDifferentLengthScene.cpp */,
-				3BFC9EF719D1754F00284002 /* MiddleDifferentLengthScene.h */,
-				3BFC9EF819D1754F00284002 /* NoneScene.cpp */,
-				3BFC9EF919D1754F00284002 /* NoneScene.h */,
-				3BFC9EFA19D1754F00284002 /* NorthScene.cpp */,
-				3BFC9EFB19D1754F00284002 /* NorthScene.h */,
-				3BFC9EFC19D1754F00284002 /* PinkyPuppeteerScene.cpp */,
-				3BFC9EFD19D1754F00284002 /* PinkyPuppeteerScene.h */,
-				3BFC9EFE19D1754F00284002 /* PropogatingWiggleScene.cpp */,
-				3BFC9EFF19D1754F00284002 /* PropogatingWiggleScene.h */,
-				3BFC9F0019D1754F00284002 /* PulsatingPalmScene.cpp */,
-				3BFC9F0119D1754F00284002 /* PulsatingPalmScene.h */,
-				3BFC9F0219D1754F00284002 /* RetractingFingersScene.cpp */,
-				3BFC9F0319D1754F00284002 /* RetractingFingersScene.h */,
-				3BFC9F0419D1754F00284002 /* Scene.h */,
-				3BFC9F0519D1754F00284002 /* SinusoidalLengthScene.cpp */,
-				3BFC9F0619D1754F00284002 /* SinusoidalLengthScene.h */,
-				3BFC9F0719D1754F00284002 /* SinusoidalWiggleScene.cpp */,
-				3BFC9F0819D1754F00284002 /* SinusoidalWiggleScene.h */,
-				3BFC9F0919D1754F00284002 /* SplayFingersScene.cpp */,
-				3BFC9F0A19D1754F00284002 /* SplayFingersScene.h */,
-				3BFC9F0B19D1754F00284002 /* StartrekScene.cpp */,
-				3BFC9F0C19D1754F00284002 /* StartrekScene.h */,
-				3BFC9F0D19D1754F00284002 /* StraightenFingersScene.cpp */,
-				3BFC9F0E19D1754F00284002 /* StraightenFingersScene.h */,
-				3BFC9F0F19D1754F00284002 /* TwitchScene.cpp */,
-				3BFC9F1019D1754F00284002 /* TwitchScene.h */,
-				3BFC9F1119D1754F00284002 /* WaveScene.cpp */,
-				3BFC9F1219D1754F00284002 /* WaveScene.h */,
-				3BFC9F1319D1754F00284002 /* WiggleScene.cpp */,
-				3BFC9F1419D1754F00284002 /* WiggleScene.h */,
-				3BFC9F1519D1754F00284002 /* WigglingWristScene.cpp */,
-				3BFC9F1619D1754F00284002 /* WigglingWristScene.h */,
-				3BFC9F1719D1754F00284002 /* WobbleScene.cpp */,
-				3BFC9F1819D1754F00284002 /* WobbleScene.h */,
-			);
-			path = scenes;
 			sourceTree = "<group>";
 		};
 		3BFC9F4F19D1757A00284002 /* LeapEtc */ = {
@@ -2536,6 +2558,7 @@
 				3BFC9FA019D175F500284002 /* HandMeshBuilder.cpp in Sources */,
 				3B4384F319D1BFB7001F75FE /* WmlVector4.cpp in Sources */,
 				E4B69E200A3A1BDC003C02F2 /* main.cpp in Sources */,
+				3B04CBDF19D1DE8A005E6F31 /* LissajousScene.cpp in Sources */,
 				3BFC9F6219D175BB00284002 /* LeapRecorder.cpp in Sources */,
 				E4B69E210A3A1BDC003C02F2 /* ofApp.cpp in Sources */,
 				856AA354D08AB4B323081444 /* ofxBaseGui.cpp in Sources */,
@@ -2546,10 +2569,12 @@
 				F285EB3169F1566CA3D93C20 /* ofxPanel.cpp in Sources */,
 				837220E80EB56CD44AD27F2A /* ofxSlider.cpp in Sources */,
 				B56FE57CC35806596D38118C /* ofxSliderGroup.cpp in Sources */,
+				3B04CBE919D1DE8A005E6F31 /* SinusoidalWiggleScene.cpp in Sources */,
 				3BFC9F9619D175DB00284002 /* polygon_object.cpp in Sources */,
 				1CD33E884D9E3358252E82A1 /* ofxToggle.cpp in Sources */,
 				250A95BA26587BE85DB0A353 /* ofxCvColorImage.cpp in Sources */,
 				3B4384E819D1BFB7001F75FE /* WmlExtTriangleUtils.cpp in Sources */,
+				3B04CBDE19D1DE8A005E6F31 /* GrowingMiddleFingerScene.cpp in Sources */,
 				1D5F3298C2FA073628012944 /* ofxCvContourFinder.cpp in Sources */,
 				3B4384E919D1BFB7001F75FE /* WmlLinearSystemExt.cpp in Sources */,
 				169D3C72FDE6C5590A1616F5 /* ofxCvFloatImage.cpp in Sources */,
@@ -2579,8 +2604,12 @@
 				7CDAD32BE4FA46701E3552C7 /* RunningBackground.cpp in Sources */,
 				3B4384F119D1BFB7001F75FE /* WmlVector2.cpp in Sources */,
 				10B69DE456AED1288FC9316B /* Tracker.cpp in Sources */,
+				3B04CBE319D1DE8A005E6F31 /* NorthScene.cpp in Sources */,
 				A6668C5B1272D7FCD5B5A16F /* Utilities.cpp in Sources */,
+				3B04CBEC19D1DE8A005E6F31 /* StraightenFingersScene.cpp in Sources */,
 				DBCB84A37F9AECC254870D79 /* Wrappers.cpp in Sources */,
+				3B04CBE119D1DE8A005E6F31 /* MiddleDifferentLengthScene.cpp in Sources */,
+				3B04CBEE19D1DE8A005E6F31 /* WaveScene.cpp in Sources */,
 				4819DE4CF1E0CBFA204D3638 /* Helpers.cpp in Sources */,
 				3B4384EC19D1BFB7001F75FE /* WmlGMatrix.cpp in Sources */,
 				3BFC9F9319D175DB00284002 /* voronoi_site_setofsites.cpp in Sources */,
@@ -2590,11 +2619,13 @@
 				A0C1C42F6293BEC48CA02D5D /* Base.cpp in Sources */,
 				DF2B08505F60BABD6D71FD96 /* Camera.cpp in Sources */,
 				9ABE161F13B1E8B87B7C04F9 /* Plane.cpp in Sources */,
+				3B04CBEB19D1DE8A005E6F31 /* StartrekScene.cpp in Sources */,
 				DE51E964916E52B1AB50BB5F /* Projector.cpp in Sources */,
 				028A1A54F7661FB669A7DFF8 /* Ray.cpp in Sources */,
 				9F5C6DD965B4F3A6DB5B88F8 /* ofxUI2DGraph.cpp in Sources */,
 				4B3ED367CA852D522E2EE996 /* ofxUI2DPad.cpp in Sources */,
 				3BFC9F5F19D175BB00284002 /* LeapFinger.cpp in Sources */,
+				3B04CBE419D1DE8A005E6F31 /* PinkyPuppeteerScene.cpp in Sources */,
 				3BFC9F6419D175BB00284002 /* LeapVisualizer.cpp in Sources */,
 				3BFC9F9F19D175F500284002 /* HandContourAnalyzer.cpp in Sources */,
 				F1E8DE8734BA6F69A5112FA8 /* ofxUIBaseDraws.cpp in Sources */,
@@ -2611,11 +2642,13 @@
 				3B4384E619D1BFB7001F75FE /* RigidMeshDeformer2D.cpp in Sources */,
 				7252706DA14C1BE63950ADDA /* ofxUIFPS.cpp in Sources */,
 				22030CBDCC25D815E7ED6757 /* ofxUIFPSSlider.cpp in Sources */,
+				3B04CBE619D1DE8A005E6F31 /* PulsatingPalmScene.cpp in Sources */,
 				3D4EA8E172D3E4A30FEFA969 /* ofxUIImage.cpp in Sources */,
 				7F2CD93F681F3C1547B3BF2C /* ofxUIImageButton.cpp in Sources */,
 				3BFC9F8B19D175DB00284002 /* voronoi_pixel_error.cpp in Sources */,
 				FBD0CD0AFE3849C14E829CAF /* ofxUIImageSampler.cpp in Sources */,
 				26874B150C8535AEA0F24C8C /* ofxUIImageSlider.cpp in Sources */,
+				3B04CBDC19D1DE8A005E6F31 /* EqualizeScene.cpp in Sources */,
 				FB8AA9FA6535767BE31806BC /* ofxUIImageToggle.cpp in Sources */,
 				7C3DC84C9BFCBD2866DB2B6C /* ofxUILabel.cpp in Sources */,
 				FFD1EBFCA24DFB4E4427B4FE /* ofxUILabelButton.cpp in Sources */,
@@ -2624,12 +2657,15 @@
 				9A83D1B3FB64456BC907667F /* ofxUIMinimalSlider.cpp in Sources */,
 				F440B307990F8F5CE40B9111 /* ofxUIMovingGraph.cpp in Sources */,
 				3B4384E419D1BFB7001F75FE /* ofxPuppetInteractive.cpp in Sources */,
+				3B04CBEF19D1DE8A005E6F31 /* WiggleScene.cpp in Sources */,
 				3B4384ED19D1BFB7001F75FE /* WmlGVector.cpp in Sources */,
 				222C3AB10FA3158602718602 /* ofxUIMultiImageButton.cpp in Sources */,
+				3B04CBDD19D1DE8A005E6F31 /* FingerLengthPuppeteerScene.cpp in Sources */,
 				3BFC9F8E19D175DB00284002 /* voronoi_site_cull.cpp in Sources */,
 				3B43851919D1C014001F75FE /* PointGrey.cpp in Sources */,
 				3B4384EB19D1BFB7001F75FE /* WmlBox2.cpp in Sources */,
 				F9C20834354ACC8337320B8C /* ofxUIMultiImageToggle.cpp in Sources */,
+				3B04CBF119D1DE8A005E6F31 /* WobbleScene.cpp in Sources */,
 				E3D59A6B55F05669B3FBF8BD /* ofxUINumberDialer.cpp in Sources */,
 				D60E54E7FD6E19BC8636E0D2 /* ofxUIRadio.cpp in Sources */,
 				1587708E3CAC72997E43504E /* ofxUIRangeSlider.cpp in Sources */,
@@ -2645,23 +2681,31 @@
 				52AFF80A869790144ACCC9BA /* ofxUISpectrum.cpp in Sources */,
 				1DAAC3FB4B98B08AE63F4687 /* ofxUISuperCanvas.cpp in Sources */,
 				5AE95ADB5549701423B6DA48 /* ofxUITabBar.cpp in Sources */,
+				3B04CBE219D1DE8A005E6F31 /* NoneScene.cpp in Sources */,
+				3B04CBEA19D1DE8A005E6F31 /* SplayFingersScene.cpp in Sources */,
 				C961BE22AB9A8CCF037FC18F /* ofxUITextArea.cpp in Sources */,
 				3BFC9F8F19D175DB00284002 /* voronoi_site_line.cpp in Sources */,
 				F8D05F7C7F785CE323983B47 /* ofxUITextInput.cpp in Sources */,
+				3B04CBE719D1DE8A005E6F31 /* RetractingFingersScene.cpp in Sources */,
 				04C82720B149CE576B8CBB06 /* ofxUIToggle.cpp in Sources */,
 				3B4384F219D1BFB7001F75FE /* WmlVector3.cpp in Sources */,
 				E3A1109F67D711D6C256031E /* ofxUIToggleMatrix.cpp in Sources */,
+				3B04CBE019D1DE8A005E6F31 /* MeanderScene.cpp in Sources */,
 				60012C723B05938A3D388335 /* ofxUIValuePlotter.cpp in Sources */,
 				AE281BEBF3A00F1FC37F3DA0 /* ofxUIWaveform.cpp in Sources */,
 				82845E1F8C90E1F5A99D9868 /* ofxUIWidget.cpp in Sources */,
+				3B04CBE819D1DE8A005E6F31 /* SinusoidalLengthScene.cpp in Sources */,
 				3BFC9F6319D175BB00284002 /* LeapToCameraCalibrator.cpp in Sources */,
+				3B04CBE519D1DE8A005E6F31 /* PropogatingWiggleScene.cpp in Sources */,
 				3BFC9F8C19D175DB00284002 /* voronoi_queries.cpp in Sources */,
+				3B04CBED19D1DE8A005E6F31 /* TwitchScene.cpp in Sources */,
 				3B43851819D1C014001F75FE /* Grabber.cpp in Sources */,
 				3B4384EE19D1BFB7001F75FE /* WmlLinearSystem.cpp in Sources */,
 				3BFC9F9519D175DB00284002 /* nbody.cpp in Sources */,
 				3BFC9F9019D175DB00284002 /* voronoi_site_polygon.cpp in Sources */,
 				CE5D89B9893EAA12F511DCAC /* ofxUIWidgetWithLabel.cpp in Sources */,
 				3B4384E319D1BFB7001F75FE /* ofxPuppet.cpp in Sources */,
+				3B04CBF019D1DE8A005E6F31 /* WigglingWristScene.cpp in Sources */,
 				3BFC9F6019D175BB00284002 /* LeapFrame.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

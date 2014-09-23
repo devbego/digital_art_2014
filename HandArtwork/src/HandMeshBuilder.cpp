@@ -24,6 +24,19 @@ void HandMeshBuilder::initialize(){
 }
 
 //============================================================
+void HandMeshBuilder::loadDefaultMesh(){
+	handMesh.load("models/handmarksNew.ply");
+	for (int i = 0; i < handMesh.getNumVertices(); i++) {
+		// handMesh.addTexCoord(handMesh.getVertex(i));
+		
+		ofVec2f handMeshVertex;
+		handMeshVertex.x =  handMesh.getVertex(i).y;
+		handMeshVertex.y =  768 - handMesh.getVertex(i).x;
+		handMesh.addTexCoord( handMeshVertex );
+	}
+}
+
+//============================================================
 void HandMeshBuilder::setWorkAtHalfScale (bool bwork){
 	bWorkAtHalfScale = bwork;
 }
@@ -39,6 +52,11 @@ void HandMeshBuilder::informThereIsNoHandPresent(){
 		Handmarks[i].pointAvg.set     (0,0);
 		Handmarks[i].pointStDv.set    (0,0);
 	}
+}
+
+//============================================================
+ofMesh& HandMeshBuilder::getMesh(){
+	return handMesh;
 }
 
 //============================================================

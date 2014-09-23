@@ -27,6 +27,7 @@ public:
 	void			initialize();
 	void			setWorkAtHalfScale(bool bwork);
 	void			buildMesh (ofPolyline &handContour, ofVec3f &handCentroid, Handmark *hmarks);
+	void			loadDefaultMesh();
 	void			drawMesh();
 	void			drawMeshWireframe();
 	void			informThereIsNoHandPresent();

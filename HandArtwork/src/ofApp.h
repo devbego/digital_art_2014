@@ -325,6 +325,30 @@ class ofApp : public ofBaseApp{
 	
 	//-------------------------------
 	// PUPPETEER!
+	void setupPuppeteer();
+	void updatePuppeteer();
+	void drawPuppet();
 	
+	ofxPuppet puppet;
+	void setSkeleton(Skeleton* skeleton);
+	vector<Scene*> scenes;
+	ofImage handTestImage;
+
+	PalmSkeleton palmSkeleton, immutablePalmSkeleton;
+	HandSkeleton handSkeleton, immutableHandSkeleton;
+	ThreePointSkeleton threePointSkeleton, immutableThreePointSkeleton;
+	WristSpineSkeleton wristSpineSkeleton, immutableWristSpineSkeleton;
+	HandWithFingertipsSkeleton handWithFingertipsSkeleton, immutableHandWithFingertipsSkeleton;
+	Skeleton* previousSkeleton, *currentSkeleton;
+	vector<string> sceneNames, sceneWithSkeletonNames;
+	
+	ofxUICanvas*	puppetGui;
+	ofxUICanvas**	puppetGuis;
+	ofxUIRadio*		sceneRadio;
+	
+	void setupPuppetGui();
+	bool showPuppetGuis;
+	bool showImage, showWireframe, showSkeleton, mouseControl;
+	bool frameBasedAnimation;
 	
 };
