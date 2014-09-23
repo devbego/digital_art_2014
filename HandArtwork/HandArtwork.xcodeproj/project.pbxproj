@@ -371,7 +371,7 @@
 		3BFC9ECD19D174DA00284002 /* ofxLeapMotion.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ofxLeapMotion.cpp; sourceTree = "<group>"; };
 		3BFC9ECE19D174DA00284002 /* ofxLeapMotion.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ofxLeapMotion.h; sourceTree = "<group>"; };
 		3BFC9EE119D1754F00284002 /* BufferedVideo.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = BufferedVideo.h; sourceTree = "<group>"; };
-		3BFC9EE319D1754F00284002 /* Bone.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Bone.h; sourceTree = "<group>"; };
+		3BFC9EE319D1754F00284002 /* HandArtBone.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = HandArtBone.h; sourceTree = "<group>"; };
 		3BFC9EE419D1754F00284002 /* HandSkeleton.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = HandSkeleton.h; sourceTree = "<group>"; };
 		3BFC9EE519D1754F00284002 /* HandWithFingertipsSkeleton.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = HandWithFingertipsSkeleton.h; sourceTree = "<group>"; };
 		3BFC9EE619D1754F00284002 /* PalmSkeleton.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = PalmSkeleton.h; sourceTree = "<group>"; };
@@ -1355,7 +1355,7 @@
 		3BFC9EE219D1754F00284002 /* hand-structure */ = {
 			isa = PBXGroup;
 			children = (
-				3BFC9EE319D1754F00284002 /* Bone.h */,
+				3BFC9EE319D1754F00284002 /* HandArtBone.h */,
 				3BFC9EE419D1754F00284002 /* HandSkeleton.h */,
 				3BFC9EE519D1754F00284002 /* HandWithFingertipsSkeleton.h */,
 				3BFC9EE619D1754F00284002 /* PalmSkeleton.h */,

@@ -65,7 +65,6 @@ deal with dark skin thresholding
  -- At regular intervals, Search along the best-fit line for the darkest point of the trough
  -- Collect those points, somehow add them to the contour
  
- Make sure mesh is at double-scale!
  Use direction-extremality * fingernailfit to compute tip quality
  make it work with left hands
  
@@ -497,14 +496,8 @@ void ofApp::update(){
 		leapVisualizer.updateVoronoi();
 	}
 
-	
 	renderDiagnosticLeapFboAndExtractItsPixelData();
-	//
-	
-	
-	// when live: use color img from processFrameImg
-	// when playing, use color img from buffered video
-	
+
 	updateComputerVision();
 	updateHandMesh();
 	updateLeapHistoryRecorder();
@@ -515,12 +508,6 @@ void ofApp::update(){
 	lastFrameTimeMicros = now;
 	
 	applicationStateMachine();
-	
-	
-	ofPolyline &theHandContour = myHandContourAnalyzer.theHandContourResampled;
-	Handmark *theHandmarks = myHandContourAnalyzer.Handmarks;
-	ofVec3f theHandCentroid = myHandContourAnalyzer.handCentroidLeap;
-	myHandMeshBuilder.buildMesh (theHandContour, theHandCentroid, theHandmarks);
 	
 	
 	
@@ -644,6 +631,8 @@ void ofApp::updateComputerVision(){
 	// processedFrameImg is a copy of currentFrameImg if there's no undistortion being done; if it is, it's undistorted.
 	// video is the playback buffered video
 
+	// when live: use color img from processFrameImg
+	// when playing, use color img from buffered video.
 	if (bInPlaybackMode){
 		extractVideoMatFromBufferedVideoFrame();		// scale down and extract grayscale.
 	} else {
@@ -665,12 +654,13 @@ void ofApp::updateHandMesh(){
 	
 	long t0 = ofGetElapsedTimeMicros();
 	
-	// ofPolyline &theHandContour = myHandContourAnalyzer.theHandContourResampled;
-	// Handmark *theHandmarks = myHandContourAnalyzer.Handmarks;
-	// myHandMeshBuilder.buildMesh (theHandContour, theHandmarks); //PUT THIS BACK!!!
+	ofPolyline &theHandContour = myHandContourAnalyzer.theHandContourResampled;
+	Handmark *theHandmarks = myHandContourAnalyzer.Handmarks;
+	ofVec3f theHandCentroid = myHandContourAnalyzer.handCentroidLeap;
+	myHandMeshBuilder.buildMesh (theHandContour, theHandCentroid, theHandmarks);
 	
 	long t1 = ofGetElapsedTimeMicros();
-	// printf("Elapsed  = %d\n", (int)(t1-t0));
+	printf("Elapsed  = %d\n", (int)(t1-t0));
 }
 
 
@@ -1056,8 +1046,9 @@ void ofApp::draw(){
 	//ofSetColor(255);
 	//drawMat(leapFboMat, mouseX, mouseY, 320,240);
 	
-	
-	if (true) {
+	bool bDrawMiniImages = true;
+	if (bDrawMiniImages) {
+		
 		ofPushMatrix();
 		float miniScale = 0.15;
 		ofTranslate(0, ofGetHeight() - (miniScale * imgH));
@@ -1083,96 +1074,96 @@ void ofApp::draw(){
 	
 	
 
-	
-	float sca = (bShowAnalysisBig) ? 2.0 : 1;
+	//-----------------------------------
+	float sca = (bShowAnalysisBig) ? 2.0 : 1.0;
 	float insetX = (ofGetWidth() - sca*imgW);
 	float insetY = (ofGetHeight()- sca*imgH);
 	ofPushMatrix();
 	ofPushStyle();
-	
-	ofTranslate (insetX, insetY);
-	ofScale(sca, sca);
-	
-	// Draw the contour analyzer and associated CV images.
-	if (bDrawContourAnalyzer){
-		ofSetColor(ofColor::white);
-		switch(whichImageToDraw){
-			default:
-			case 1:		drawMat(grayMat,				0,0, imgW,imgH);	break;
-			case 2:		drawMat(thresholded,			0,0, imgW,imgH);	break;
-			case 3:		drawMat(adaptiveThreshImg,		0,0, imgW,imgH);	break;
-			case 4:		drawMat(thresholdedFinal,		0,0, imgW,imgH);	break;
-			case 5:		drawMat(edgesMat1,				0,0, imgW,imgH);	break;
-			case 6:		drawMat(leapDiagnosticFboMat,	0,0, imgW,imgH);	break;
-			case 7:		drawMat(coloredBinarizedImg,	0,0, imgW,imgH);	break;
-			case 8:		if(bInPlaybackMode ){
-							video.draw(0, 0, imgW,imgH);
-						} else {
-							processFrameImg.draw(0,0,imgW,imgH);
-						}
-						break;
-		}
-		myHandContourAnalyzer.draw();
-	}
-	
-	
-	// Draw the actual puppet mesh.
-	ofPushStyle();
 	{
-		// Bind the texture
-		if(bInPlaybackMode ){
-			video.getTextureReference().bind();
-		} else {
-			processFrameImg.getTextureReference().bind();
+		ofTranslate (insetX, insetY);
+		ofScale(sca, sca);
+		
+		// Draw the contour analyzer and associated CV images.
+		if (bDrawContourAnalyzer){
+			ofSetColor(ofColor::white);
+			switch(whichImageToDraw){
+				default:
+				case 1:		drawMat(grayMat,				0,0, imgW,imgH);	break;
+				case 2:		drawMat(thresholded,			0,0, imgW,imgH);	break;
+				case 3:		drawMat(adaptiveThreshImg,		0,0, imgW,imgH);	break;
+				case 4:		drawMat(thresholdedFinal,		0,0, imgW,imgH);	break;
+				case 5:		drawMat(edgesMat1,				0,0, imgW,imgH);	break;
+				case 6:		drawMat(leapDiagnosticFboMat,	0,0, imgW,imgH);	break;
+				case 7:		drawMat(coloredBinarizedImg,	0,0, imgW,imgH);	break;
+				case 8:		if(bInPlaybackMode ){
+								video.draw(0, 0, imgW,imgH);
+							} else {
+								processFrameImg.draw(0,0,imgW,imgH);
+							}
+							break;
+			}
+			myHandContourAnalyzer.draw();
 		}
 		
-		// DRAW THE MESH
-		myHandMeshBuilder.drawMesh();
-		// OR puppet.drawFaces();
 		
-		// Unbind the texture
-		if(bInPlaybackMode ){
-			video.getTextureReference().unbind();
-		} else {
-			processFrameImg.getTextureReference().unbind();
+		// Draw the actual puppet mesh.
+		ofPushStyle();
+		{
+			// Bind the texture
+			if(bInPlaybackMode ){
+				video.getTextureReference().bind();
+			} else {
+				processFrameImg.getTextureReference().bind();
+			}
+			
+			// DRAW THE MESH
+			myHandMeshBuilder.drawMesh();
+			// OR puppet.drawFaces();
+			
+			// Unbind the texture
+			if(bInPlaybackMode ){
+				video.getTextureReference().unbind();
+			} else {
+				processFrameImg.getTextureReference().unbind();
+			}
+			
+			// DRAW THE MESH WIREFRAME
+			myHandMeshBuilder.drawMeshWireframe();
 		}
-		
-		// DRAW THE MESH WIREFRAME
-		myHandMeshBuilder.drawMeshWireframe();
-	}
-	ofPopStyle();
+		ofPopStyle();
 
-	
-	
+	}
 	ofPopStyle();
 	ofPopMatrix();
 	
 	
-
-	
-	int px = mouseX - insetX;
-	int py = mouseY - insetY;
-	if ((px > 0) && (px < imgW) &&
-		(py > 0) && (py < imgH)){
-		
-		int index1 = py * imgW + px;
-		int index3 = index1 * 3;
-		
-		unsigned char *pixels = leapDiagnosticFboMat.data;
-		float pr = (float) pixels[index3+0];
-		float pg = (float) pixels[index3+1];
-		float pb = (float) pixels[index3+2];
-		
-		float orientation = leapVisualizer.getDiagnosticOrientationFromColor(pr,pg,pb);
-		
-		float angX = 60.0 * cos(orientation);
-		float angY = 60.0 * sin(orientation);
-		
-		ofSetColor(255);
-		ofLine (mouseX, mouseY, mouseX+angX, mouseY+angY);
-		ofDrawBitmapString( ofToString( RAD_TO_DEG*orientation), mouseX, mouseY-10);
+	//-----------------------------------
+	bool bDrawMouseOrientationProbe = false;
+	if (bDrawMouseOrientationProbe){
+		int px = mouseX - insetX;
+		int py = mouseY - insetY;
+		if ((px > 0) && (px < imgW) &&
+			(py > 0) && (py < imgH)){
+			
+			int index1 = py * imgW + px;
+			int index3 = index1 * 3;
+			
+			unsigned char *pixels = leapDiagnosticFboMat.data;
+			float pr = (float) pixels[index3+0];
+			float pg = (float) pixels[index3+1];
+			float pb = (float) pixels[index3+2];
+			
+			float orientation = leapVisualizer.getDiagnosticOrientationFromColor(pr,pg,pb);
+			
+			float angX = 60.0 * cos(orientation);
+			float angY = 60.0 * sin(orientation);
+			
+			ofSetColor(255);
+			ofLine (mouseX, mouseY, mouseX+angX, mouseY+angY);
+			ofDrawBitmapString( ofToString( RAD_TO_DEG*orientation), mouseX, mouseY-10);
+		}
 	}
-	
 
 	
 }

@@ -1,11 +1,12 @@
 #pragma once
 
 #include "ofMain.h"
-#include "Bone.h"
+#include "HandArtBone.h"
+
 
 class Skeleton {
 protected:
-	vector<Bone> bones;
+	vector<HandArtBone> bones;
 	vector<int> cachedChildren;
 	vector<ofVec2f> cachedPositions;
 	vector<int> controlIndices;
@@ -24,9 +25,9 @@ public:
 		for(int i = 0; i < size(); i++) {
 			int controlPoint = controlIndices[i];
 			ofVec2f curPosition = mesh.getVertex(controlPoint);
-			Bone& cur = bones[i];
+			HandArtBone& cur = bones[i];
 			if(cur.getParent() != NULL) {
-				Bone& parent = *((Bone*) cur.getParent());
+				HandArtBone& parent = *((HandArtBone*) cur.getParent());
 				ofVec2f parentPosition = parent.getGlobalPosition();
 				float rotation = ofVec2f(1, 0).angle(curPosition - parentPosition);
 				ofQuaternion orientation;
@@ -55,7 +56,7 @@ public:
 		ofFill();
 		ofSetLineWidth(2);
 		for(int i = 0; i < size(); i++) {
-			Bone& cur = bones[i];
+			HandArtBone& cur = bones[i];
 			ofSetColor(ofColor::green);
 			ofCircle(cur.getGlobalPosition(), 3);
 			ofSetColor(ofColor::white);
@@ -72,11 +73,11 @@ public:
 	ofVec2f getPositionAbsolute(int i) {
 		return bones[i].getGlobalPosition();
 	}
-	Bone& getBone(int i) {
+	HandArtBone& getBone(int i) {
 		return bones[i];
 	}
 	void setBoneLength(int i, float distance) {
-		Bone& bone = bones[i];
+		HandArtBone& bone = bones[i];
 		if(bone.getParent() != NULL) {
 			//ofVec2f dir = bone.getGlobalPosition() - bone.getParent()->getGlobalPosition();
 			//dir.normalize();
@@ -90,7 +91,7 @@ public:
 		}
 	}
 	void setBoneLength(int i, ofVec2f distance) {
-		Bone& bone = bones[i];
+		HandArtBone& bone = bones[i];
 		if (bone.getParent() != NULL) {
 			bone.setGlobalPosition(bone.getParent()->getGlobalPosition());
 			//bone.move(distance);
@@ -98,9 +99,9 @@ public:
 		}
 	}
 	void stashChildren(int i) {
-		Bone& bone = bones[i];
+		HandArtBone& bone = bones[i];
 		for(int j = 0; j < size(); j++) {
-			Bone* parent = (Bone*) bones[j].getParent();
+			HandArtBone* parent = (HandArtBone*) bones[j].getParent();
 			if(parent == &bone) {
 				cachedChildren.push_back(j);
 				cachedPositions.push_back(bones[j].getGlobalPosition());
@@ -113,7 +114,7 @@ public:
 		}		
 	}
 	void setPosition(int i, ofVec2f position, bool absolute = true, bool independent = false) {
-		Bone& bone = bones[i];
+		HandArtBone& bone = bones[i];
 		if(independent) {
 			stashChildren(i);
 		}
@@ -142,3 +143,4 @@ public:
 		}
 	}
 };
+

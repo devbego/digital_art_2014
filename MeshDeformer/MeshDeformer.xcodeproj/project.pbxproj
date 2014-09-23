@@ -293,7 +293,7 @@
 		8326CDEDA153D242D924D2B6 /* Flow.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 30; name = Flow.h; path = ../../../addons/ofxCv/libs/ofxCv/include/ofxCv/Flow.h; sourceTree = SOURCE_ROOT; };
 		832BDC407620CDBA568B713D /* tinyxmlerror.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 30; name = tinyxmlerror.cpp; path = ../../../addons/ofxXmlSettings/libs/tinyxmlerror.cpp; sourceTree = SOURCE_ROOT; };
 		848EDF7F198DB1CE005F3B23 /* BufferedVideo.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = BufferedVideo.h; path = ../SharedCode/BufferedVideo.h; sourceTree = "<group>"; };
-		848EDF81198DB1CE005F3B23 /* Bone.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Bone.h; sourceTree = "<group>"; };
+		848EDF81198DB1CE005F3B23 /* HandArtBone.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HandArtBone.h; sourceTree = "<group>"; };
 		848EDF82198DB1CE005F3B23 /* HandSkeleton.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HandSkeleton.h; sourceTree = "<group>"; };
 		848EDF83198DB1CE005F3B23 /* HandWithFingertipsSkeleton.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HandWithFingertipsSkeleton.h; sourceTree = "<group>"; };
 		848EDF84198DB1CE005F3B23 /* PalmSkeleton.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PalmSkeleton.h; sourceTree = "<group>"; };
@@ -847,7 +847,7 @@
 		848EDF80198DB1CE005F3B23 /* hand-structure */ = {
 			isa = PBXGroup;
 			children = (
-				848EDF81198DB1CE005F3B23 /* Bone.h */,
+				848EDF81198DB1CE005F3B23 /* HandArtBone.h */,
 				848EDF82198DB1CE005F3B23 /* HandSkeleton.h */,
 				848EDF83198DB1CE005F3B23 /* HandWithFingertipsSkeleton.h */,
 				848EDF84198DB1CE005F3B23 /* PalmSkeleton.h */,

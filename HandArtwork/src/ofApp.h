@@ -18,6 +18,37 @@
 #include "HandContourAnalyzer.h"
 #include "HandMeshBuilder.h"
 
+//------------------------------
+#include "ofxPuppetInteractive.h"
+#include "NoneScene.h"
+#include "WaveScene.h"
+#include "WiggleScene.h"
+#include "WobbleScene.h"
+#include "EqualizeScene.h"
+#include "NorthScene.h"
+#include "LissajousScene.h"
+#include "MeanderScene.h"
+#include "PropogatingWiggleScene.h"
+#include "SinusoidalLengthScene.h"
+#include "PulsatingPalmScene.h"
+#include "RetractingFingersScene.h"
+#include "SinusoidalWiggleScene.h"
+#include "MiddleDifferentLengthScene.h"
+#include "GrowingMiddleFingerScene.h"
+#include "StartrekScene.h"
+#include "StraightenFingersScene.h"
+#include "SplayFingersScene.h"
+#include "TwitchScene.h"
+#include "PinkyPuppeteerScene.h"
+#include "FingerLengthPuppeteerScene.h"
+
+#include "HandSkeleton.h"
+#include "ThreePointSkeleton.h"
+#include "HandWithFingertipsSkeleton.h"
+#include "PalmSkeleton.h"
+#include "WristSpineSkeleton.h"
+
+
 /* 
  Made some sanity changes in ofxXmlSettings:
 	const float floatPrecision = 4; // changed by GL
@@ -291,6 +322,9 @@ class ofApp : public ofBaseApp{
 	// MESH BUILDER!
 	HandMeshBuilder myHandMeshBuilder;
 	void updateHandMesh();
+	
+	//-------------------------------
+	// PUPPETEER!
 	
 	
 };

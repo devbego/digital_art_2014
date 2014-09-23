@@ -2,7 +2,8 @@
 
 #include "ofMain.h"
 
-class Bone : public ofNode {
+
+class HandArtBone : public ofNode {
 public:
 	void customDraw() {
 		ofPushStyle();
@@ -14,3 +15,4 @@ public:
 	}
 	bool forwardOriented;
 };
+
