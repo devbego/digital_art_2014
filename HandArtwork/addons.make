@@ -1,0 +1,10 @@
+ofxGui
+ofxOpenCv
+ofxXmlSettings
+ofxCv
+ofxCvMin
+ofxLeapMotion
+ofxLibdc
+ofxRay
+ofxTiming
+ofxUI

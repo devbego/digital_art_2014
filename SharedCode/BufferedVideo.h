@@ -73,6 +73,9 @@ public:
 	ofPixels& getFrame(int i) {
 		return images[i];
 	}
+	ofTexture& getTextureReference(){
+		return texture;
+	}
 	void setPlaying(bool playing) {
 		this->playing = playing;
 	}
