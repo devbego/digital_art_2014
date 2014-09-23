@@ -590,16 +590,18 @@ void HandMeshBuilder::buildMesh (ofPolyline &handContour, ofVec3f &handCentroid,
 				
 				int nDesiredResampledPoints = 9;
 				palmSideContourResampled.clear();
+                // THIS PART WAS FUCKED UP. BAD BAD BAD.
 				int palmSideContourSize = palmSideContour.size();
-				int nDesiredSamples = nDesiredResampledPoints-1;
+				int nDesiredSamples = nDesiredResampledPoints;
 				for (int i=0; i<nDesiredSamples; i++){
 					float indexf = ofMap((float)i,0,nDesiredSamples-1, 0,palmSideContourSize-1);
 					int outindex = (int)((i==(nDesiredSamples-1)) ? floorf(indexf) : roundf(indexf));
 					ofVec3f pointi = palmSideContour[outindex];
 					palmSideContourResampled.addVertex(pointi.x, pointi.y, pointi.z);
 				}
-				ofPoint cpt = handContour[palmContourIndex1];
-				palmSideContourResampled.addVertex( cpt.x, cpt.y );
+                // EVIL
+//				ofPoint cpt = handContour[palmContourIndex1];
+//				palmSideContourResampled.addVertex( cpt.x, cpt.y );
 				
 				
 			} else {

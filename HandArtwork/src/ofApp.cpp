@@ -655,9 +655,15 @@ void ofApp::updateHandMesh(){
 //--------------------------------------------------------------
 void ofApp::updatePuppeteer(){
 	
-	ofMesh &mesh = myHandMeshBuilder.getMesh();
+    ofMesh &mesh = myHandMeshBuilder.getMesh();
+    mesh.save("funkymesh.ply");
+    
+//    for(int i = 0; i < mesh.getNumVertices(); i++) {
+//        mesh.getVertices()[i].z = 0;
+//    }
+    
+    mesh.save("funkymesh-post0.ply");
 	puppet.setup (mesh);
-	
    
     // every frame we get a new mesh from the hand tracker
 	handWithFingertipsSkeleton.setup(mesh);
@@ -670,7 +676,6 @@ void ofApp::updatePuppeteer(){
 	immutablePalmSkeleton.setup(mesh);
 	wristSpineSkeleton.setup(mesh);
 	immutableWristSpineSkeleton.setup(mesh);
-	
     
 	// get the current scene, turn off all other scenes
 	int scene = getSelection(sceneRadio);
@@ -681,7 +686,7 @@ void ofApp::updatePuppeteer(){
 			scenes[scene]->turnOn();
 		}
 	}
-	
+
 	mouseControl = false;
 	showWireframe = true;
 
@@ -695,9 +700,27 @@ void ofApp::updatePuppeteer(){
 		puppet.setControlPoint(currentSkeleton->getControlIndex(i),
 							   currentSkeleton->getPositionAbsolute(i));
 	}
+    
+    ofPushMatrix();
+    ofTranslate(100, 100);
+    mesh.drawWireframe();
+    ofPopMatrix();
 	
 	puppet.update();
 	puppetGui->setVisible(showPuppetGuis);
+    
+    ofPushMatrix();
+    ofMesh cur = puppet.getDeformedMesh();
+//    ofVec3f centroid = cur.getCentroid();
+//    ofTranslate(ofGetWidth() / 2, ofGetHeight() / 2);
+//    ofTranslate(-centroid.x / 2, -centroid.y / 2);
+    
+    cur.setMode(OF_PRIMITIVE_POINTS);
+    ofSetColor(255);
+    glPointSize(2);
+    cur.clearIndices();
+    cur.draw();
+    ofPopMatrix();
 	
 }
 
@@ -1446,7 +1469,7 @@ void ofApp::drawPuppet(){
 			puppet.drawControlPoints();
 		}
 		if (showSkeleton) {
-			currentSkeleton->draw();
+//			currentSkeleton->draw();
 		}
 		int scene = getSelection(sceneRadio);
 		scenes[scene]->draw();
