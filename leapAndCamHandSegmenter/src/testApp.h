@@ -8,6 +8,7 @@
 #include "ofxCv.h"
 #include "ofxCvMin.h"
 #include "ofxLibdc.h"
+
 #include "LeapFrame.h"
 #include "BufferedVideo.h"
 #include "LeapRecorder.h"
@@ -15,6 +16,7 @@
 #include "FingerTipCalibRecorder.h"
 #include "LeapToCameraCalibrator.h"
 #include "HandContourAnalyzer.h"
+#include "HandMeshBuilder.h"
 
 /* 
  Made some sanity changes in ofxXmlSettings:
@@ -45,11 +47,6 @@ enum ApplicationFault {
 	FAULT_HAND_TOO_CURLED			= 256,	/* The hand is a fist or curled up, or has a curled finger */
 	FAULT_HAND_TOO_VERTICAL			= 512	/* The hand is turned away from the camera */
 };
-
-
-
-
-
 
 
 
@@ -289,5 +286,10 @@ class testApp : public ofBaseApp{
 	float maxAllowableFingerCurl;
 	float maxAllowableExtentZ;
 	
-    
+    //-------------------------------
+	// MESH BUILDER!
+	HandMeshBuilder myHandMeshBuilder;
+	void updateHandMesh();
+	
+	
 };

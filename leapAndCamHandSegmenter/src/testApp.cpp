@@ -270,14 +270,14 @@ void testApp::setup(){
 	
 	
 	myHandContourAnalyzer.setup(imgW, imgH);
-	
+	myHandMeshBuilder.initialize();
 	
 	minHandInsertionPercent = 0.29;
 	maxAllowableMotion		= 15.0;
 	maxAllowableFingerCurl	= 0.3;
 	maxAllowableExtentZ		= 0.5;
 	
-	
+
 	// must be last
 	setupGui();
 }
@@ -501,6 +501,7 @@ void testApp::update(){
 	// when playing, use color img from buffered video
 	
 	updateComputerVision();
+	updateHandMesh();
 	updateLeapHistoryRecorder();
 	
 	long long now = ofGetElapsedTimeMicros();
@@ -644,9 +645,19 @@ void testApp::updateComputerVision(){
 	compositeThresholdedImageWithLeapFboPixels();
 	
 	myHandContourAnalyzer.update (thresholdedFinal, leapDiagnosticFboMat, leapVisualizer);
-	
-	
+}
 
+//--------------------------------------------------------------
+void testApp::updateHandMesh(){
+	
+	long t0 = ofGetElapsedTimeMicros();
+	
+	// ofPolyline &theHandContour = myHandContourAnalyzer.theHandContourResampled;
+	// Handmark *theHandmarks = myHandContourAnalyzer.Handmarks;
+	// myHandMeshBuilder.buildMesh (theHandContour, theHandmarks); //PUT THIS BACK!!!
+	
+	long t1 = ofGetElapsedTimeMicros();
+	// printf("Elapsed  = %d\n", (int)(t1-t0));
 }
 
 
@@ -1089,6 +1100,11 @@ void testApp::draw(){
 	
 	
 	myHandContourAnalyzer.draw();
+	
+	ofPolyline &theHandContour = myHandContourAnalyzer.theHandContourResampled;
+	Handmark *theHandmarks = myHandContourAnalyzer.Handmarks;
+	ofVec3f theHandCentroid = myHandContourAnalyzer.handCentroidLeap;
+	myHandMeshBuilder.buildMesh (theHandContour, theHandCentroid, theHandmarks);
 
 	ofPopStyle();
 	ofPopMatrix();

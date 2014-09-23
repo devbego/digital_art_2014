@@ -74,6 +74,7 @@
 		3B667356199B0C02005EA028 /* polygon_object.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3B667346199B0C02005EA028 /* polygon_object.cpp */; };
 		3B6D7C05198BE3BE00396CF6 /* libLeap.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 3B6D7BED198BE3BE00396CF6 /* libLeap.dylib */; };
 		3B6D7C08198BE3BE00396CF6 /* ofxLeapMotion.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3B6D7BFC198BE3BE00396CF6 /* ofxLeapMotion.cpp */; };
+		3BA28DFA19D1277E00163E06 /* HandMeshBuilder.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3BA28DF819D1277E00163E06 /* HandMeshBuilder.cpp */; };
 		3BBEFBE419A02A40002CB8AE /* ofxBlur.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3BBEFBE219A02A40002CB8AE /* ofxBlur.cpp */; };
 		4819DE4CF1E0CBFA204D3638 /* Helpers.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F18ECD985319507514ABDD9B /* Helpers.cpp */; };
 		483908258D00B98B4BE69F07 /* ofxLabel.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 78D67A00EB899FAC09430597 /* ofxLabel.cpp */; };
@@ -381,6 +382,8 @@
 		3B6D7BED198BE3BE00396CF6 /* libLeap.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; path = libLeap.dylib; sourceTree = "<group>"; };
 		3B6D7BFC198BE3BE00396CF6 /* ofxLeapMotion.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ofxLeapMotion.cpp; sourceTree = "<group>"; };
 		3B6D7BFD198BE3BE00396CF6 /* ofxLeapMotion.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ofxLeapMotion.h; sourceTree = "<group>"; };
+		3BA28DF819D1277E00163E06 /* HandMeshBuilder.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = HandMeshBuilder.cpp; sourceTree = "<group>"; };
+		3BA28DF919D1277E00163E06 /* HandMeshBuilder.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HandMeshBuilder.h; sourceTree = "<group>"; };
 		3BB5E3A12BFEB583A265CC90 /* vec_math.hpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 30; name = vec_math.hpp; path = ../../../addons/ofxCvMin/libs/opencv/include/opencv2/gpu/device/vec_math.hpp; sourceTree = SOURCE_ROOT; };
 		3BBEFBE219A02A40002CB8AE /* ofxBlur.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ofxBlur.cpp; path = src/ofxBlur/ofxBlur.cpp; sourceTree = SOURCE_ROOT; };
 		3BBEFBE319A02A40002CB8AE /* ofxBlur.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ofxBlur.h; path = src/ofxBlur/ofxBlur.h; sourceTree = SOURCE_ROOT; };
@@ -2057,6 +2060,8 @@
 				8493AF571986EFE900226D61 /* LeapToCameraCalibrator.h */,
 				3B3BA03519B0CCC1007E6F95 /* HandContourAnalyzer.cpp */,
 				3B3BA03619B0CCC1007E6F95 /* HandContourAnalyzer.h */,
+				3BA28DF819D1277E00163E06 /* HandMeshBuilder.cpp */,
+				3BA28DF919D1277E00163E06 /* HandMeshBuilder.h */,
 				3BBEFBC8199FF3AB002CB8AE /* ofxBlur */,
 				3B667326199B0C02005EA028 /* havoc2d */,
 				8493AF4719867BFE00226D61 /* LeapUtils */,
@@ -2223,6 +2228,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				3B667348199B0C02005EA028 /* voronoi.cpp in Sources */,
+				3BA28DFA19D1277E00163E06 /* HandMeshBuilder.cpp in Sources */,
 				E4B69E200A3A1BDC003C02F2 /* main.cpp in Sources */,
 				8493AF361985A22F00226D61 /* LeapFrame.cpp in Sources */,
 				3B58FD90198DB39100F44C98 /* ofxUI2DGraph.cpp in Sources */,

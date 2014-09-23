@@ -115,17 +115,18 @@ public:
 	
 	void computePinkySideHandmark();
 	void computeIndexSideHandmark();
-	void computePinkySideWristHandmark();
-	void computeThumbSideWristHandmark();
+	void computePalmBaseHandmark();
 	void computeThumbBaseHandmark();
+	void computeWristHandmarks();
 	void computeThumbKnuckleHandmark();
+	void computeThumbTopKnuckleHandmark();
 	void estimateFingerTipsFromCircleFitting (LeapVisualizer &lv);
 	void estimateFingerTipsFromCircleFittingOLD (LeapVisualizer &lv);
 	void computeFingerCrotches();
 	void sortFingerCrotches();
 	void evaluateCrotchQuality();
 	void refineFingerTipsBasedOnCrotchQuality();
-	void refineFingerTips();
+	void refineOtherHandmarks();
 	void assembleHandmarksPreliminary(); 
 	
 	void drawOrientations();
@@ -159,7 +160,7 @@ public:
 	float		crotchQuality[4];
 	vector<int> crotchContourIndicesDifs;
 	
-	
+	int			contourIndexOfPalmBase;
 	int			contourIndexOfPinkySide;
 	int			contourIndexOfPinkysideWrist;
 	int			contourIndexOfThumbsideWrist;

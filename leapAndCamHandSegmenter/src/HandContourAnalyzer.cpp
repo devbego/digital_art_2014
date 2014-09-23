@@ -64,8 +64,8 @@ void HandContourAnalyzer::update (const Mat &thresholdedImageOfHandMat, const Ma
 	
 	computePinkySideHandmark();			// Find the outside base-point of the pinky
 	computeIndexSideHandmark();			// Find the outside base-point of the pointer
-	computePinkySideWristHandmark();
-	computeThumbSideWristHandmark();
+	computePalmBaseHandmark();
+	computeThumbBaseHandmark();
 	
 	acquireFingerOrientations (lv, leapDiagnosticFboMat);
 	computeCrotchOrientations ();
@@ -80,9 +80,11 @@ void HandContourAnalyzer::update (const Mat &thresholdedImageOfHandMat, const Ma
 	estimateFingerTipsFromCircleFitting (lv);
 	evaluateCrotchQuality();
 	refineFingerTipsBasedOnCrotchQuality();
+	refineOtherHandmarks();
 	
-	computeThumbBaseHandmark();
-	computeThumbKnuckleHandmark();
+	computeWristHandmarks();
+	computeThumbKnuckleHandmark(); // comes late because it requires thumb tip
+	// computeThumbTopKnuckleHandmark(); // WORKING BUT NOT USED
 	
 	
 	assembleHandmarksPreliminary(); // last
@@ -192,14 +194,9 @@ void HandContourAnalyzer::draw(){
 	drawHandmarks();
 	
 	
-	// computeThumbKnuckleHandmark();
-	
 	// drawOrientations();
 	// drawCrotchCalculations (crotchSearchIndex0, crotchSearchIndex1);
 	// evaluateCrotchQuality();
-	
-	//ofSetColor(200,100,0, 100);
-	//theHandContourVerySmooth.draw();
 	
 	
 	
@@ -1223,12 +1220,11 @@ void HandContourAnalyzer::computePinkySideHandmark(){
 }
 
 //--------------------------------------------------------------
-void HandContourAnalyzer::computePinkySideWristHandmark(){
-	// HANDMARK_PINKYSIDE_WRIST	= 13
+void HandContourAnalyzer::computePalmBaseHandmark(){
+	// HANDMARK_PALM_BASE	= 14
 	bool bComputeWristAxisIntersection	= false;
 	bool bComputeLastPalmIndex			= false;
 	bool bComputeHandAxisIntersection	= true;
-	
 	
 	float	x1,y1, x2,y2;
 	int		nContourPts = theHandContourResampled.size();
@@ -1274,7 +1270,7 @@ void HandContourAnalyzer::computePinkySideWristHandmark(){
 
 	//-------------
 	if (indexOfPinkySideHandAxisContourIntersection > -1){
-		contourIndexOfPinkysideWrist = indexOfPinkySideHandAxisContourIntersection;
+		contourIndexOfPalmBase = indexOfPinkySideHandAxisContourIntersection;
 	}
 }
 
@@ -1282,10 +1278,10 @@ void HandContourAnalyzer::computePinkySideWristHandmark(){
 
 
 //--------------------------------------------------------------
-void HandContourAnalyzer::computeThumbSideWristHandmark(){
+void HandContourAnalyzer::computeThumbBaseHandmark(){
 	
 	//--------------
-	// HANDMARK_THUMBSIDE_WRIST	= 12
+	// HANDMARK_THUMB_BASE	= 11
 	//
 	// First, find indexOfThumbSideFingerOrientationContourIntersection.
 	// This is the place at which a ray emanating from the wrist position,
@@ -1327,7 +1323,7 @@ void HandContourAnalyzer::computeThumbSideWristHandmark(){
 		searchBoundB = tmp;
 	}
 	
-	// To find the contourIndexOfThumbsideWrist (ciotsw),
+	// To find the contourIndexOfThumbBase,
 	// we will look for the point of most significant negative curvature in that range.
 	float sharpestCurvatureValue = 0;
 	int sharpestCurvatureIndex = searchBoundA;
@@ -1349,30 +1345,110 @@ void HandContourAnalyzer::computeThumbSideWristHandmark(){
 
 	// If the curvature is sufficient (and kosher), use the point of greatest curvature.
 	if ((sharpestCurvatureValue < curvatureCutoffA) && (sharpestCurvatureValue > lessThanThisIsMessedUp)){
-		contourIndexOfThumbsideWrist = sharpestCurvatureIndex;
+		contourIndexOfThumbBase = sharpestCurvatureIndex;
 	// If the curvature is too flat, use the location where the wrist perpendicular intersects the contour.
 	} else if ((sharpestCurvatureValue > curvatureCutoffB) && (indexOfThumbSideFingerOrientationContourIntersection > -1)){
-		contourIndexOfThumbsideWrist = indexOfThumbSideFingerOrientationContourIntersection;
+		contourIndexOfThumbBase = indexOfThumbSideFingerOrientationContourIntersection;
 	// Otherwise, blend these using ofMap
 	} else if (indexOfThumbSideFingerOrientationContourIntersection > -1){
 		float blend  = ofMap (sharpestCurvatureValue, curvatureCutoffA,curvatureCutoffB, 1,0);
 		float indexf = (blend * sharpestCurvatureIndex) + ((1.0-blend) * indexOfThumbSideFingerOrientationContourIntersection);
-		contourIndexOfThumbsideWrist = (int)roundf(indexf);
+		contourIndexOfThumbBase = (int)roundf(indexf);
 	}
 	
 	// If we have invalid data, don't set an index.
 	if ((sharpestCurvatureValue <= lessThanThisIsMessedUp) || (indexOfThumbSideFingerOrientationContourIntersection <= -1)){
-		contourIndexOfThumbsideWrist = -1;
+		contourIndexOfThumbBase = -1;
 	}
 }
 
+
 //--------------------------------------------------------------
-void HandContourAnalyzer::computeThumbBaseHandmark(){
-	// HANDMARK_THUMB_BASE = 11
-	// Compute the base of the thumb. This is between the knuckle and wrist.
+void HandContourAnalyzer::computeWristHandmarks(){
+	
+	// We assume that the user's wrist is cut off on the right-hand edge of the camera frame.
+	// This produces two "corners" (upper and lower), which, depending on the hand orientation,
+	// Correspond to the contourIndexOfThumbsideWrist and contourIndexOfPinkysideWrist.
+	// Both are on the right-hand edge of the contour. Note, the edge may be irregular.
+	// contourIndexOfThumbsideWrist will be the one closer (along the curve) to the thumb tip.
+	// contourIndexOfPinkysideWrist will be the one closer (along the curve) to the pinky tip.
+
+	// Let's define the "right hand edge" of the contour to mean, all points in the rightmost 3% of the width.
+	int nContourPts = theHandContourResampled.size();
+	if (nContourPts > 0){
+		
+		// Determine the overall width of the contour.
+		float contourL =  99999;
+		float contourR = -99999;
+		for (int i=0; i<nContourPts; i++){
+			float ptx = theHandContourResampled[i].x;
+			if (ptx > contourR){
+				contourR = ptx;
+			}
+			if (ptx < contourL){
+				contourL = ptx;
+			}
+		}
+		float contourWidth = abs(contourR - contourL);
+		float xPercent97 = ofMap(0.99, 0,1, contourL,contourR);
+		
+		// Of those points which are to the right of xPercent97,
+		// locate the indices of topmost and the bottommost.
+		float bottomMostValue = 99999;
+		int   bottomMostIndex = 0;
+		float topMostValue = -99999;
+		int   topMostIndex = 0;
+		for (int i=0; i<nContourPts; i++){
+			float ptx = theHandContourResampled[i].x;
+			float pty = theHandContourResampled[i].y;
+			if (ptx > xPercent97){
+				if (pty > topMostValue){
+					topMostValue = pty;
+					topMostIndex = i;
+				}
+				if (pty < bottomMostValue){
+					bottomMostValue = pty;
+					bottomMostIndex = i;
+				}
+			}
+		}
+		
+		float palmBaseY = theHandContourResampled[contourIndexOfPalmBase].y;
+		float thumBaseY = theHandContourResampled[contourIndexOfThumbBase].y;
+		if (palmBaseY < thumBaseY){
+			contourIndexOfPinkysideWrist = bottomMostIndex;
+			contourIndexOfThumbsideWrist = topMostIndex;
+		} else {
+			contourIndexOfThumbsideWrist = bottomMostIndex;
+			contourIndexOfPinkysideWrist = topMostIndex;
+		}
+
+		
+		bool bDrawWristHandmarks = false;
+		if (bDrawWristHandmarks){
+			ofNoFill();
+			ofSetColor(255,255,255);
+			float px = theHandContourResampled[contourIndexOfPinkysideWrist].x;
+			float py = theHandContourResampled[contourIndexOfPinkysideWrist].y;
+			ofEllipse(px,py, 10,10);
+			ofDrawBitmapString("P", px-20,py);
+			
+			float tx = theHandContourResampled[contourIndexOfThumbsideWrist].x;
+			float ty = theHandContourResampled[contourIndexOfThumbsideWrist].y;
+			ofEllipse(tx,ty, 10,10);
+			ofDrawBitmapString("T", tx-20,ty);
+		}
+	}
+}
+
+
+//--------------------------------------------------------------
+void HandContourAnalyzer::computeThumbKnuckleHandmark(){
+	// HANDMARK_THUMB_KNUCKLE = 10
+	// Compute the base of the thumb (the lower, proximal knuckle). This is between the tip and wrist.
 	// This requires the following: contourIndexOfThumbsideWrist, contourIndexOfThumbTip
 	
-	contourIndexOfThumbBase = -1;
+	contourIndexOfThumbKnuckle = -1;
 	if ((contourIndexOfThumbsideWrist > -1) && (contourIndexOfThumbTip > -1)){
 		
 		// search for the point of highest absolute curvature (postive or negative)
@@ -1422,15 +1498,15 @@ void HandContourAnalyzer::computeThumbBaseHandmark(){
 		
 		// If the curvature signal is strong, use that
 		if ((sharpestCurvatureValue > 15.0) && (sharpestCurvatureValue < 80.0)){
-			contourIndexOfThumbBase = sharpestCurvatureIndex;
+			contourIndexOfThumbKnuckle = sharpestCurvatureIndex;
 		// If it's very weak, use an average of the bounds.
 		} else if (sharpestCurvatureValue < 10.0){
-			contourIndexOfThumbBase = (searchIndexA + searchIndexB)/2;
+			contourIndexOfThumbKnuckle = (searchIndexA + searchIndexB)/2;
 		// If it's in the middle range, make a blend.
 		} else if ((sharpestCurvatureValue >= 10.0) && (sharpestCurvatureValue <= 15.0)){
 			float above15 = sharpestCurvatureIndex;
 			float below10 = (searchIndexA + searchIndexB)/2;
-			contourIndexOfThumbBase = (int) ofMap(sharpestCurvatureValue, 10,15, below10,above15);
+			contourIndexOfThumbKnuckle = (int) ofMap(sharpestCurvatureValue, 10,15, below10,above15);
 		} else {
 			;
 		}
@@ -1440,9 +1516,11 @@ void HandContourAnalyzer::computeThumbBaseHandmark(){
 
 
 //--------------------------------------------------------------
-void HandContourAnalyzer::computeThumbKnuckleHandmark(){
-	// HANDMARK_THUMB_KNUCKLE		= 10
-	// Halfway between 9 & 11.
+void HandContourAnalyzer::computeThumbTopKnuckleHandmark(){
+	// It turns out this knuckle is not used by the 2013 mesher.
+	// The 2013 Mesher understands the "thumb knuckle" to be the outside thumb base.
+	// This is working code, but not currently used!
+	
 	
 	// If the indices exist
 	if ((contourIndexOfThumbBase > -1) && (contourIndexOfThumbTip > -1)){
@@ -1507,9 +1585,6 @@ void HandContourAnalyzer::computeThumbKnuckleHandmark(){
 		}
 
 	}
-	
-	
-	
 }
 
 
@@ -2096,19 +2171,6 @@ void HandContourAnalyzer::assembleHandmarksPreliminary(){
 	//--------------------------------------
 	// ASSEMBLE HANDMARKS
 	
-	/*
-	int nFingerTipIndices			= fingerTipContourIndices.size();
-	int contourIndexOfPinkyTip		= fingerTipContourIndices[0];
-	int contourIndexOfRingTip		= fingerTipContourIndices[1];
-	int contourIndexOfMiddleTip		= fingerTipContourIndices[2];
-	int contourIndexOfPointerTip	= fingerTipContourIndices[3];
-	int contourIndexOfThumbTip		= fingerTipContourIndices[4];
-
-	
-	int contourIndexOfPinkysideWrist = fingerTipContourIndices[nFingerTipIndices - 1];
-	int contourIndexOfThumbsideWrist = fingerTipContourIndices[nFingerTipIndices - 2];
-	 */
-	
 	Handmarks[HANDMARK_PINKY_TIP].index			= contourIndexOfPinkyTip;
 	Handmarks[HANDMARK_PR_CROTCH].index			= contourIndexOfPRCrotch;
 	Handmarks[HANDMARK_RING_TIP].index			= contourIndexOfRingTip;
@@ -2119,23 +2181,14 @@ void HandContourAnalyzer::assembleHandmarksPreliminary(){
 	Handmarks[HANDMARK_POINTER_SIDE].index		= contourIndexOfPointerSide;
 	Handmarks[HANDMARK_IT_CROTCH].index			= contourIndexOfITCrotch;
 	Handmarks[HANDMARK_THUMB_TIP].index			= contourIndexOfThumbTip;
-	
-	
 	Handmarks[HANDMARK_THUMB_KNUCKLE].index		= contourIndexOfThumbKnuckle;
 	Handmarks[HANDMARK_THUMB_BASE].index		= contourIndexOfThumbBase;
 	Handmarks[HANDMARK_THUMBSIDE_WRIST].index	= contourIndexOfThumbsideWrist;
 	Handmarks[HANDMARK_PINKYSIDE_WRIST].index	= contourIndexOfPinkysideWrist;
-	// Handmarks[HANDMARK_PALM_BASE].index			= contourIndexOfPalmBase;
-
-	
+	Handmarks[HANDMARK_PALM_BASE].index			= contourIndexOfPalmBase;
 	Handmarks[HANDMARK_PINKY_SIDE].index		= contourIndexOfPinkySide;
 	
-	
 	for (int i=0; i<N_HANDMARKS; i++){
-		
-		// bool bPreviouslyValid =
-		
-		
 		
 		Handmarks[i].type = (HandmarkType) i;
 		int aHandMarkIndex = Handmarks[i].index;
@@ -2320,7 +2373,8 @@ void HandContourAnalyzer::evaluateCrotchQuality(){
 			ofVec3f pB = theHandContourResampled[indexB];
 			ofVec3f pC = theHandContourResampled[indexC];
 			
-			// Compute the "height" of the triangle:
+			// Create a triangle between the two fingertips and the crotch between them.
+			// As a measure of crotch quality, compute the "height" of the triangle:
 			// The perpendicular distance from the AC line to point B
 			// See http://www.mathopenref.com/coordtrianglearea.html
 			float baseLength = pA.distance(pC);
@@ -2472,19 +2526,29 @@ void HandContourAnalyzer::refineFingerTipsBasedOnCrotchQuality(){
 				
 			}
 		}
-		
-		
-		
-		
-		
-		
-		
 
 	}
-	
-	
 }
 
+//============================================================
+void HandContourAnalyzer::refineOtherHandmarks(){
+	
+	// -----------------------
+	// Refine Handmark 7 (contourIndexOfPointerSide): Clobber it if it is out of range.
+	// Handmark 7 contourIndexOfPointerSide / (HANDMARK_POINTER_SIDE) should be between
+	// Handmark 6 contourIndexOfPointerTip / (HANDMARK_POINTER_TIP) and
+	// Handmark 8 contourIndexOfITCrotch / (HANDMARK_IT_CROTCH)
+	int index6 = contourIndexOfPointerTip;
+	int index8 = contourIndexOfITCrotch;
+	float frac7 = (contourIndexOfPointerSide - index6)/(float)(index8 - index6);
+	float targetFrac7 = 0.75;
+	if ((crotchQuality[3] > 0) && (crotchQuality[3] < 0.20)){
+		targetFrac7 += (0.20 - crotchQuality[3]);
+		targetFrac7 = ofClamp(targetFrac7, 0.50, 0.95);
+	}
+	contourIndexOfPointerSide = (int)ofMap(targetFrac7,0.0,1.0, index6,index8);
+	
+}
 
 
 
