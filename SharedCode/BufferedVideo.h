@@ -9,7 +9,8 @@ protected:
 	vector<ofPixels> images;
 	int loaded;
 	ofTexture texture;
-	bool newFrame, playing;
+    mutable bool newFrame;
+    bool playing;
 	bool bRolledOver; 
 	int currentFrame;
 	DelayTimer timer;
@@ -35,9 +36,12 @@ public:
 	,loaded(0) {
 		timer.setFramerate(30);
 	}
-	bool isLoaded(){
+	bool isLoaded() const {
         if(loaded > 0) return true;
         return false;
+    }
+    bool isInitialized() const {
+        return isLoaded();
     }
     void setFrameRate(float frameRate) {
 		timer.setFramerate(frameRate);
@@ -61,7 +65,7 @@ public:
 			return 0;
 		}
 	}
-	
+    
 	void close() {
 	}
 	unsigned char* getPixels() {
@@ -69,7 +73,15 @@ public:
 	}
 	ofPixels& getPixelsRef() {
 		return images[currentFrame];
-	}
+    }
+    const ofPixels& getPixelsRef() const {
+        return images[currentFrame];
+    }
+    bool setPixelFormat(ofPixelFormat pixelFormat) {
+    }
+    ofPixelFormat getPixelFormat() const {
+        return OF_PIXELS_UNKNOWN;
+    }
 	ofPixels& getFrame(int i) {
 		return images[i];
 	}
@@ -102,7 +114,7 @@ public:
 	bool isRolledOver(){
 		return bRolledOver;
 	}
-	bool isFrameNew() {
+	bool isFrameNew() const {
 		bool cur = newFrame;
 		newFrame = false;
 		return cur;
