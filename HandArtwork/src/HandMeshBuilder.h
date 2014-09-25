@@ -11,7 +11,7 @@
 #include "ofMain.h"
 #include "ofxCv.h"
 #include "HandContourAnalyzer.h"
-
+#include "ofxButterfly.h"
 
 enum HandType {
 	HAND_ERROR = -1,
@@ -30,10 +30,14 @@ public:
 	void			loadDefaultMesh();
 	void			drawMesh();
 	void			drawMeshWireframe();
+    void            drawRefinedMeshWireframe();
 	void			informThereIsNoHandPresent();
 	ofMesh			&getMesh();
 	
 	ofMesh			handMesh;
+    ofMesh          refinedHandMesh;
+    ofxButterfly    butterflyMeshSubdivider;
+    
 	vector<int>		joints;
 	Handmark		Handmarks[N_HANDMARKS];
 	int				fingerTipIndices[5];

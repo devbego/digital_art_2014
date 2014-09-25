@@ -322,6 +322,7 @@ class ofApp : public ofBaseApp{
 	// MESH BUILDER!
 	HandMeshBuilder myHandMeshBuilder;
 	void updateHandMesh();
+    
 	
 	//-------------------------------
 	// PUPPETEER!

@@ -120,6 +120,10 @@
 		837220E80EB56CD44AD27F2A /* ofxSlider.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 15F2C6477A769C03A56D1401 /* ofxSlider.cpp */; };
 		856AA354D08AB4B323081444 /* ofxBaseGui.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9604B925D32EE39065747725 /* ofxBaseGui.cpp */; };
 		933A2227713C720CEFF80FD9 /* tinyxml.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2B40EDA85BEB63E46785BC29 /* tinyxml.cpp */; };
+		97734C5519D3694E00F54464 /* cubic_spline.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 97734C4719D3694E00F54464 /* cubic_spline.cpp */; };
+		97734C5619D3694E00F54464 /* ofxButterfly.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 97734C4919D3694E00F54464 /* ofxButterfly.cpp */; };
+		97734C5719D3694E00F54464 /* cube.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 97734C4D19D3694E00F54464 /* cube.cpp */; };
+		97734C5819D3694E00F54464 /* mesh.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 97734C5219D3694E00F54464 /* mesh.cpp */; };
 		9A83D1B3FB64456BC907667F /* ofxUIMinimalSlider.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2BE7216430113F333B8351ED /* ofxUIMinimalSlider.cpp */; };
 		9ABE161F13B1E8B87B7C04F9 /* Plane.cpp in Sources */ = {isa = PBXBuildFile; fileRef = BF0F4A067A58EA2F68D32147 /* Plane.cpp */; };
 		9BE4AE0AA2B8C436BDFE9D4D /* ofxUIDragableLabelButton.cpp in Sources */ = {isa = PBXBuildFile; fileRef = FFD5D3C9D38E29DB72B32254 /* ofxUIDragableLabelButton.cpp */; };
@@ -647,6 +651,18 @@
 		9604B925D32EE39065747725 /* ofxBaseGui.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 30; name = ofxBaseGui.cpp; path = ../../../addons/ofxGui/src/ofxBaseGui.cpp; sourceTree = SOURCE_ROOT; };
 		961DE8B564EF22E65C9480AE /* ofxUI2DPad.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 30; name = ofxUI2DPad.h; path = ../../../addons/ofxUI/src/ofxUI2DPad.h; sourceTree = SOURCE_ROOT; };
 		974AACF856A0A1B7D8F259E0 /* result_set.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 30; name = result_set.h; path = ../../../addons/ofxOpenCv/libs/opencv/include/opencv2/flann/result_set.h; sourceTree = SOURCE_ROOT; };
+		97734C4719D3694E00F54464 /* cubic_spline.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = cubic_spline.cpp; sourceTree = "<group>"; };
+		97734C4819D3694E00F54464 /* cubic_spline.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = cubic_spline.h; sourceTree = "<group>"; };
+		97734C4919D3694E00F54464 /* ofxButterfly.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = ofxButterfly.cpp; sourceTree = "<group>"; };
+		97734C4A19D3694E00F54464 /* ofxButterfly.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ofxButterfly.h; sourceTree = "<group>"; };
+		97734C4D19D3694E00F54464 /* cube.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = cube.cpp; sourceTree = "<group>"; };
+		97734C4E19D3694E00F54464 /* cube.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = cube.hpp; sourceTree = "<group>"; };
+		97734C4F19D3694E00F54464 /* edge.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = edge.hpp; sourceTree = "<group>"; };
+		97734C5019D3694E00F54464 /* error.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = error.hpp; sourceTree = "<group>"; };
+		97734C5119D3694E00F54464 /* face.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = face.hpp; sourceTree = "<group>"; };
+		97734C5219D3694E00F54464 /* mesh.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = mesh.cpp; sourceTree = "<group>"; };
+		97734C5319D3694E00F54464 /* mesh.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = mesh.hpp; sourceTree = "<group>"; };
+		97734C5419D3694E00F54464 /* vertex.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = vertex.hpp; sourceTree = "<group>"; };
 		97CFAD0B2F2DB004A8A3BC0B /* objdetect.hpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 30; name = objdetect.hpp; path = ../../../addons/ofxOpenCv/libs/opencv/include/opencv2/objdetect/objdetect.hpp; sourceTree = SOURCE_ROOT; };
 		97FBD89E6180673035AD1083 /* video.hpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 30; name = video.hpp; path = ../../../addons/ofxOpenCv/libs/opencv/include/opencv2/video/video.hpp; sourceTree = SOURCE_ROOT; };
 		998BCFB6541E5290442662C4 /* devmem2d.hpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 30; name = devmem2d.hpp; path = ../../../addons/ofxCvMin/libs/opencv/include/opencv2/gpu/devmem2d.hpp; sourceTree = SOURCE_ROOT; };
@@ -1868,6 +1884,51 @@
 			name = highgui;
 			sourceTree = "<group>";
 		};
+		97734C4519D3694E00F54464 /* ofxButterfly */ = {
+			isa = PBXGroup;
+			children = (
+				97734C4619D3694E00F54464 /* src */,
+				97734C4B19D3694E00F54464 /* libs */,
+			);
+			name = ofxButterfly;
+			sourceTree = "<group>";
+		};
+		97734C4619D3694E00F54464 /* src */ = {
+			isa = PBXGroup;
+			children = (
+				97734C4719D3694E00F54464 /* cubic_spline.cpp */,
+				97734C4819D3694E00F54464 /* cubic_spline.h */,
+				97734C4919D3694E00F54464 /* ofxButterfly.cpp */,
+				97734C4A19D3694E00F54464 /* ofxButterfly.h */,
+			);
+			name = src;
+			path = ../../../addons/ofxButterfly/src;
+			sourceTree = "<group>";
+		};
+		97734C4B19D3694E00F54464 /* libs */ = {
+			isa = PBXGroup;
+			children = (
+				97734C4C19D3694E00F54464 /* butterfly */,
+			);
+			name = libs;
+			path = ../../../addons/ofxButterfly/libs;
+			sourceTree = "<group>";
+		};
+		97734C4C19D3694E00F54464 /* butterfly */ = {
+			isa = PBXGroup;
+			children = (
+				97734C4D19D3694E00F54464 /* cube.cpp */,
+				97734C4E19D3694E00F54464 /* cube.hpp */,
+				97734C4F19D3694E00F54464 /* edge.hpp */,
+				97734C5019D3694E00F54464 /* error.hpp */,
+				97734C5119D3694E00F54464 /* face.hpp */,
+				97734C5219D3694E00F54464 /* mesh.cpp */,
+				97734C5319D3694E00F54464 /* mesh.hpp */,
+				97734C5419D3694E00F54464 /* vertex.hpp */,
+			);
+			path = butterfly;
+			sourceTree = "<group>";
+		};
 		9A610898D6B03A8C21DDFC10 /* libs */ = {
 			isa = PBXGroup;
 			children = (
@@ -2034,6 +2095,7 @@
 		BB4B014C10F69532006C3DED /* addons */ = {
 			isa = PBXGroup;
 			children = (
+				97734C4519D3694E00F54464 /* ofxButterfly */,
 				3B4384F419D1C014001F75FE /* ofxLibdc */,
 				3B4384B319D1BFB7001F75FE /* ofxPuppet */,
 				3BFC9E8819D174D900284002 /* ofxLeapMotion */,
@@ -2586,6 +2648,7 @@
 				63B57AC5BF4EF088491E0317 /* ofxXmlSettings.cpp in Sources */,
 				3B4384EF19D1BFB7001F75FE /* WmlMath.cpp in Sources */,
 				933A2227713C720CEFF80FD9 /* tinyxml.cpp in Sources */,
+				97734C5719D3694E00F54464 /* cube.cpp in Sources */,
 				3BFC9F8919D175DB00284002 /* voronoi_color_ids.cpp in Sources */,
 				9D44DC88EF9E7991B4A09951 /* tinyxmlerror.cpp in Sources */,
 				5A4349E9754D6FA14C0F2A3A /* tinyxmlparser.cpp in Sources */,
@@ -2627,6 +2690,7 @@
 				3BFC9F5F19D175BB00284002 /* LeapFinger.cpp in Sources */,
 				3B04CBE419D1DE8A005E6F31 /* PinkyPuppeteerScene.cpp in Sources */,
 				3BFC9F6419D175BB00284002 /* LeapVisualizer.cpp in Sources */,
+				97734C5819D3694E00F54464 /* mesh.cpp in Sources */,
 				3BFC9F9F19D175F500284002 /* HandContourAnalyzer.cpp in Sources */,
 				F1E8DE8734BA6F69A5112FA8 /* ofxUIBaseDraws.cpp in Sources */,
 				C381F2B7CFD84C0E540EB4BC /* ofxUIBiLabelSlider.cpp in Sources */,
@@ -2663,6 +2727,7 @@
 				3B04CBDD19D1DE8A005E6F31 /* FingerLengthPuppeteerScene.cpp in Sources */,
 				3BFC9F8E19D175DB00284002 /* voronoi_site_cull.cpp in Sources */,
 				3B43851919D1C014001F75FE /* PointGrey.cpp in Sources */,
+				97734C5619D3694E00F54464 /* ofxButterfly.cpp in Sources */,
 				3B4384EB19D1BFB7001F75FE /* WmlBox2.cpp in Sources */,
 				F9C20834354ACC8337320B8C /* ofxUIMultiImageToggle.cpp in Sources */,
 				3B04CBF119D1DE8A005E6F31 /* WobbleScene.cpp in Sources */,
@@ -2699,6 +2764,7 @@
 				3B04CBE519D1DE8A005E6F31 /* PropogatingWiggleScene.cpp in Sources */,
 				3BFC9F8C19D175DB00284002 /* voronoi_queries.cpp in Sources */,
 				3B04CBED19D1DE8A005E6F31 /* TwitchScene.cpp in Sources */,
+				97734C5519D3694E00F54464 /* cubic_spline.cpp in Sources */,
 				3B43851819D1C014001F75FE /* Grabber.cpp in Sources */,
 				3B4384EE19D1BFB7001F75FE /* WmlLinearSystem.cpp in Sources */,
 				3BFC9F9519D175DB00284002 /* nbody.cpp in Sources */,
@@ -3075,6 +3141,7 @@
 				FRAMEWORK_SEARCH_PATHS_QUOTED_FOR_TARGET_1 = "\"$(SRCROOT)/../../../libs/glut/lib/osx\"";
 				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
 				GCC_MODEL_TUNING = NONE;
+				GCC_OPTIMIZATION_LEVEL = fast;
 				ICON = "$(ICON_NAME_RELEASE)";
 				ICON_FILE = "$(ICON_FILE_PATH)$(ICON)";
 				INFOPLIST_FILE = "openFrameworks-Info.plist";

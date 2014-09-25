@@ -655,72 +655,68 @@ void ofApp::updateHandMesh(){
 //--------------------------------------------------------------
 void ofApp::updatePuppeteer(){
 	
-    ofMesh &mesh = myHandMeshBuilder.getMesh();
-    mesh.save("funkymesh.ply");
-    
-//    for(int i = 0; i < mesh.getNumVertices(); i++) {
-//        mesh.getVertices()[i].z = 0;
-//    }
-    
-    mesh.save("funkymesh-post0.ply");
-	puppet.setup (mesh);
-   
-    // every frame we get a new mesh from the hand tracker
-	handWithFingertipsSkeleton.setup(mesh);
-	immutableHandWithFingertipsSkeleton.setup(mesh);
-	handSkeleton.setup(mesh);
-	immutableHandSkeleton.setup(mesh);
-	threePointSkeleton.setup(mesh);
-	immutableThreePointSkeleton.setup(mesh);
-	palmSkeleton.setup(mesh);
-	immutablePalmSkeleton.setup(mesh);
-	wristSpineSkeleton.setup(mesh);
-	immutableWristSpineSkeleton.setup(mesh);
-    
-	// get the current scene, turn off all other scenes
-	int scene = getSelection(sceneRadio);
-	for (int i=0; i < scenes.size(); i++) {
-		if (i != scene){
-			scenes[i]->turnOff();
-		} else {
-			scenes[scene]->turnOn();
-		}
-	}
+    bool bCalculatedMesh = myHandMeshBuilder.bCalculatedMesh;
+    if (bCalculatedMesh){
+        ofMesh &mesh = myHandMeshBuilder.getMesh();
+        puppet.setup (mesh);
+       
+        // every frame we get a new mesh from the hand tracker
+        handWithFingertipsSkeleton.setup(mesh);
+        immutableHandWithFingertipsSkeleton.setup(mesh);
+        handSkeleton.setup(mesh);
+        immutableHandSkeleton.setup(mesh);
+        threePointSkeleton.setup(mesh);
+        immutableThreePointSkeleton.setup(mesh);
+        palmSkeleton.setup(mesh);
+        immutablePalmSkeleton.setup(mesh);
+        wristSpineSkeleton.setup(mesh);
+        immutableWristSpineSkeleton.setup(mesh);
+        
+        // Get the current scene, turn off all other scenes
+        int scene = getSelection(sceneRadio);
+        scenes[scene]->turnOn();
+        for (int i=0; i < scenes.size(); i++) {
+            if (i != scene){ scenes[i]->turnOff(); }
+        }
 
-	mouseControl = false;
-	showWireframe = true;
-
+        // Update the skeleton, which structures the deformation,
+        // by animating the displacements of the puppet's control points.
+        scenes[scene]->update();
+        setSkeleton(scenes[scene]->getSkeleton());
+        
+        // Update the puppet using the current scene's skeleton.
+        // The (animating) skeleton sets displacements of the control points.
+        for (int i = 0; i<currentSkeleton->size(); i++) {
+            puppet.setControlPoint(currentSkeleton->getControlIndex(i),
+                                   currentSkeleton->getPositionAbsolute(i));
+        }
+        
+        // The moment of truth, when the puppet is asked to update itself.
+        // This is very computationally expensive.
+        puppet.update();
+        
+        
+        // Just a sanity check.
+        bool bDrawMeshPoints = false;
+        if (bDrawMeshPoints){
+            ofPushMatrix();
+            ofMesh cur = puppet.getDeformedMesh();
+            cur.setMode(OF_PRIMITIVE_POINTS);
+            ofSetColor(255);
+            glPointSize(2);
+            cur.clearIndices();
+            cur.draw();
+            ofPopMatrix();
+        }
+        
+    } else {
+        printf("HandMeshBuilder unsuccessful.\n");
+    }
     
-	// update skeleton
-	scenes[scene]->update();
-	setSkeleton(scenes[scene]->getSkeleton());
-    
-	// update the puppet using the current scene's skeleton
-	for (int i = 0; i<currentSkeleton->size(); i++) {
-		puppet.setControlPoint(currentSkeleton->getControlIndex(i),
-							   currentSkeleton->getPositionAbsolute(i));
-	}
-    
-    ofPushMatrix();
-    ofTranslate(100, 100);
-    mesh.drawWireframe();
-    ofPopMatrix();
 	
-	puppet.update();
 	puppetGui->setVisible(showPuppetGuis);
     
-    ofPushMatrix();
-    ofMesh cur = puppet.getDeformedMesh();
-//    ofVec3f centroid = cur.getCentroid();
-//    ofTranslate(ofGetWidth() / 2, ofGetHeight() / 2);
-//    ofTranslate(-centroid.x / 2, -centroid.y / 2);
-    
-    cur.setMode(OF_PRIMITIVE_POINTS);
-    ofSetColor(255);
-    glPointSize(2);
-    cur.clearIndices();
-    cur.draw();
-    ofPopMatrix();
+
 	
 }
 
@@ -1372,13 +1368,20 @@ void ofApp::draw(){
 			}
 			
 			// DRAW THE MESH WIREFRAME
-			myHandMeshBuilder.drawMeshWireframe();
+			// myHandMeshBuilder.drawMeshWireframe();
 		}
 		ofPopStyle();
 
 	}
 	ofPopStyle();
 	ofPopMatrix();
+    
+    ofPushMatrix()  ;
+    ofScale (2,2);
+    ofTranslate(mouseX,-50);
+    //myHandMeshBuilder.drawRefinedMesh();
+    myHandMeshBuilder.drawMeshWireframe();
+    ofPopMatrix();
 	
 	
 	//-----------------------------------
@@ -1469,7 +1472,7 @@ void ofApp::drawPuppet(){
 			puppet.drawControlPoints();
 		}
 		if (showSkeleton) {
-//			currentSkeleton->draw();
+            currentSkeleton->draw();
 		}
 		int scene = getSelection(sceneRadio);
 		scenes[scene]->draw();
@@ -1992,6 +1995,11 @@ void ofApp::keyPressed(int key){
         case 'm':
             bInputMousePoints = !bInputMousePoints;
             break;
+            
+        case 'E':
+            myHandMeshBuilder.getMesh().save("handmesh-" + ofToString(playingFrame) + ".ply");
+            break; 
+            
         case 'p':
             if(bInPlaybackMode) playing = !playing;
             break;

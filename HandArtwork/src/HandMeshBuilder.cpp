@@ -34,6 +34,17 @@ void HandMeshBuilder::loadDefaultMesh(){
 		handMeshVertex.y =  768 - handMesh.getVertex(i).x;
 		handMesh.addTexCoord( handMeshVertex );
 	}
+    
+    refinedHandMesh = handMesh; /*
+                                 //.load("models/handmarksNew.ply");
+    for (int i = 0; i < refinedHandMesh.getNumVertices(); i++) {
+        ofVec2f handMeshVertex;
+        handMeshVertex.x =  refinedHandMesh.getVertex(i).y;
+        handMeshVertex.y =  768 - refinedHandMesh.getVertex(i).x;
+        refinedHandMesh.addTexCoord( handMeshVertex );
+    }
+                                 */
+    
 }
 
 //============================================================
@@ -57,7 +68,10 @@ void HandMeshBuilder::informThereIsNoHandPresent(){
 //============================================================
 ofMesh& HandMeshBuilder::getMesh(){
 	return handMesh;
+    //return refinedHandMesh;
 }
+
+
 
 //============================================================
 void HandMeshBuilder::buildMesh (ofPolyline &handContour, ofVec3f &handCentroid, Handmark *hmarks){
@@ -75,6 +89,7 @@ void HandMeshBuilder::buildMesh (ofPolyline &handContour, ofVec3f &handCentroid,
 			if ((Handmarks[i].index < 0) || (Handmarks[i].index >= nContourPoints)){
 				bAllHandmarkIndicesValid = false;
 				printf ("problem with handmark %d: %d\n", i, Handmarks[i].index);
+                return;
 			}
 		}
 		if (bAllHandmarkIndicesValid){
@@ -104,7 +119,7 @@ void HandMeshBuilder::buildMesh (ofPolyline &handContour, ofVec3f &handCentroid,
 				for (int i=contourIndex0; i<=contourIndex1a; i++){
 					int indexSafe = (i+nContourPoints)%nContourPoints;
 					ofVec3f pointi = handContour[indexSafe];
-					poly01.addVertex(pointi.x, pointi.y, pointi.z);
+					poly01.addVertex(pointi.x, pointi.y, 0.0);
 				}
 				// Collect the reverse side of the finger, from contourIndex2 down to contourIndex1
 				ofPolyline poly21;
@@ -116,7 +131,7 @@ void HandMeshBuilder::buildMesh (ofPolyline &handContour, ofVec3f &handCentroid,
 				for (int i=contourIndex2; i>=contourIndex1b; i--){
 					int indexSafe = (i+nContourPoints)%nContourPoints;
 					ofVec3f pointi = handContour[indexSafe];
-					poly21.addVertex(pointi.x, pointi.y, pointi.z);
+					poly21.addVertex(pointi.x, pointi.y, 0.0);
 				}
 				
 				
@@ -132,7 +147,7 @@ void HandMeshBuilder::buildMesh (ofPolyline &handContour, ofVec3f &handCentroid,
 					float indexf = ofMap((float)i,0,N_FINGER_LENGTH_SAMPLES, 0,poly01size-1);
 					int poly01index = (int)((i==N_FINGER_LENGTH_SAMPLES) ? floorf(indexf) : roundf(indexf));
 					ofVec3f pointi = poly01[poly01index];
-					poly01RS.addVertex(pointi.x, pointi.y, pointi.z);
+					poly01RS.addVertex(pointi.x, pointi.y, 0.0);
 				}
 				ofPolyline poly21RS;
 				poly21RS.clear();
@@ -141,7 +156,7 @@ void HandMeshBuilder::buildMesh (ofPolyline &handContour, ofVec3f &handCentroid,
 					float indexf = ofMap((float)i,0,N_FINGER_LENGTH_SAMPLES, 0,poly21size-1);
 					int poly21index = (int)((i==N_FINGER_LENGTH_SAMPLES) ? floorf(indexf) : roundf(indexf));
 					ofVec3f pointi = poly21[poly21index];
-					poly21RS.addVertex(pointi.x, pointi.y, pointi.z);
+					poly21RS.addVertex(pointi.x, pointi.y, 0.0);
 				}
 				
 				//-----------------------
@@ -212,9 +227,9 @@ void HandMeshBuilder::buildMesh (ofPolyline &handContour, ofVec3f &handCentroid,
 								ofEllipse(QB.x, QB.y,  2, 2);
 							}
 							
-							handMesh.addVertex(ofPoint(QA.x, QA.y,0));
-							handMesh.addVertex(ofPoint(px01, py01,0));
-							handMesh.addVertex(ofPoint(QB.x, QB.y,0));
+							handMesh.addVertex(ofPoint(QA.x, QA.y, 0.0));
+							handMesh.addVertex(ofPoint(px01, py01, 0.0));
+							handMesh.addVertex(ofPoint(QB.x, QB.y, 0.0));
 							
 							
 						} else {
@@ -224,7 +239,7 @@ void HandMeshBuilder::buildMesh (ofPolyline &handContour, ofVec3f &handCentroid,
 									float ex = ofMap(j, 0,N_FINGER_WIDTH_SAMPLES-1, px01,px21);
 									float ey = ofMap(j, 0,N_FINGER_WIDTH_SAMPLES-1, py01,py21);
 									if (bDraw){ofEllipse(ex,ey, 2, 2);}
-									handMesh.addVertex(ofPoint(ex,ey,0));
+									handMesh.addVertex(ofPoint(ex,ey,0.0));
 								}
 							} else {
 								// skip the 0th point for fingers 2,3,4,
@@ -236,7 +251,7 @@ void HandMeshBuilder::buildMesh (ofPolyline &handContour, ofVec3f &handCentroid,
 									if ((j==0) && (i==0)){
 										;
 									} else {
-										handMesh.addVertex(ofPoint(ex,ey,0));
+										handMesh.addVertex(ofPoint(ex,ey,0.0));
 									}
 								}
 								
@@ -319,7 +334,7 @@ void HandMeshBuilder::buildMesh (ofPolyline &handContour, ofVec3f &handCentroid,
 				float amountToMoveKnucklesTowardCentroid = 0.25;
 				Pk = Pk - amountToMoveKnucklesTowardCentroid*(Pk - Pc);
 				if (bDraw){ ofEllipse(Pk.x,Pk.y, 2, 2);}
-				handMesh.addVertex(Pk);
+				handMesh.addVertex(ofPoint(Pk.x, Pk.y, 0.0));
 				
 				int nv = handMesh.getNumVertices();
 				for (int j=0; j<4; j++){
@@ -377,13 +392,13 @@ void HandMeshBuilder::buildMesh (ofPolyline &handContour, ofVec3f &handCentroid,
 					for (int wx=4; wx>=0; wx--){
 						ofVec2f wp = ((4.0 - (float)wx)*pL + ((float)wx)*pR)/4.0;
 						if (bDraw){ ofEllipse(wp.x,wp.y, 2, 2);}
-						handMesh.addVertex(ofPoint(wp.x,wp.y,0));
+						handMesh.addVertex(ofPoint(wp.x,wp.y,0.0));
 					}
 				} else {
 					for (int wx=4; wx>=0; wx--){
 						ofVec2f wp = wSide12[wx];
 						if (bDraw){ ofEllipse(wp.x,wp.y, 2, 2);}
-						handMesh.addVertex(ofPoint(wp.x,wp.y,0));
+						handMesh.addVertex(ofPoint(wp.x,wp.y,0.0));
 					}
 				}
 			}
@@ -415,7 +430,7 @@ void HandMeshBuilder::buildMesh (ofPolyline &handContour, ofVec3f &handCentroid,
 			if (thumbBaseIndex0 < thumbBaseIndex1){
 				for (int i=thumbBaseIndex0; i<=thumbBaseIndex1; i++){
 					ofPoint tpoint = handContour[i];
-					thumbCurve.addVertex(tpoint);
+					thumbCurve.addVertex(ofPoint(tpoint.x, tpoint.y, 0.0));
 				}
 			} else {
 				// don't want to deal with an unlikely situation
@@ -446,7 +461,7 @@ void HandMeshBuilder::buildMesh (ofPolyline &handContour, ofVec3f &handCentroid,
 					ofPoint T0 = thumbBaseHypotenuse[y];
 					ofPoint T1 = thumbBaseSide[y];
 					ofPoint Tinterp = ((topx-x)*T0 + (x)*T1) / (float)topx;
-					handMesh.addVertex(ofPoint(Tinterp.x,Tinterp.y,0));
+					handMesh.addVertex(ofPoint(Tinterp.x, Tinterp.y, 0.0));
 					if (bDraw){ ofEllipse(Tinterp.x,Tinterp.y, 2, 2);}
 				}
 			}
@@ -496,7 +511,7 @@ void HandMeshBuilder::buildMesh (ofPolyline &handContour, ofVec3f &handCentroid,
 			if (thumbWebIndex0 < thumbWebIndex1){
 				for (int i=thumbWebIndex0; i<=thumbWebIndex1; i++){
 					ofPoint tpoint = handContour[i];
-					thumbWebCurve.addVertex(tpoint);
+					thumbWebCurve.addVertex(ofPoint(tpoint.x, tpoint.y, 0.0));
 				}
 			} else {
 				// don't want to deal with an unlikely situation
@@ -508,7 +523,7 @@ void HandMeshBuilder::buildMesh (ofPolyline &handContour, ofVec3f &handCentroid,
 			for (int i=0; i<=4; i++){
 				ofVec2f hcn = ((4.0 - (float)i)*thumbWebHcn0 + ((float)i)*thumbWebHcn1)/4.0;
 				ofPoint Phcn = thumbWebCurve.getClosestPoint(hcn);
-				thumbWebSide1.push_back (Phcn);
+				thumbWebSide1.push_back (ofPoint(Phcn.x, Phcn.y, 0.0));
 				// ofEllipse(Phcn.x,Phcn.y, 10, 10);
 				// n.b., we will not use points i=0 & i=4, becasue they are handMesh vertices 0 and 233
 			}
@@ -519,7 +534,7 @@ void HandMeshBuilder::buildMesh (ofPolyline &handContour, ofVec3f &handCentroid,
 			int nWebHypSamps = 8;
 			for (int i=0; i<=nWebHypSamps; i++){
 				ofVec2f hcn = ((nWebHypSamps - (float)i)*thumbWebP0 + ((float)i)*thumbWebP1)/(float)nWebHypSamps;
-				thumbWebHypotenuse.push_back (hcn);
+				thumbWebHypotenuse.push_back (ofPoint(hcn.x, hcn.y, 0.0));
 				// ofEllipse(hcn.x,hcn.y, 10, 10);
 				// n.b., we will not use points i=0 & i=4 because they are already stored as handMesh vertices 233 & 295
 			}
@@ -531,7 +546,7 @@ void HandMeshBuilder::buildMesh (ofPolyline &handContour, ofVec3f &handCentroid,
 					ofPoint T0 = thumbWebHypotenuse[8-(y*2)];
 					ofPoint T1 = thumbWebSide1[4-y];
 					ofPoint Tinterp = ((topx-x)*T0 + (x)*T1) / (float)topx;
-					handMesh.addVertex(ofPoint(Tinterp.x,Tinterp.y,0));
+					handMesh.addVertex(ofPoint(Tinterp.x,Tinterp.y,0.0));
 					if (bDraw){ ofEllipse(Tinterp.x,Tinterp.y, 2, 2);}
 				}
 			}
@@ -585,7 +600,7 @@ void HandMeshBuilder::buildMesh (ofPolyline &handContour, ofVec3f &handCentroid,
 			if (palmContourIndex0 < palmContourIndex1){
 				for (int i=palmContourIndex0; i<=palmContourIndex1; i++){
 					ofPoint cpt = handContour[i];
-					palmSideContour.addVertex( cpt );
+					palmSideContour.addVertex( ofPoint(cpt.x, cpt.y, 0.0) );
 				}
 				
 				int nDesiredResampledPoints = 9;
@@ -597,7 +612,7 @@ void HandMeshBuilder::buildMesh (ofPolyline &handContour, ofVec3f &handCentroid,
 					float indexf = ofMap((float)i,0,nDesiredSamples-1, 0,palmSideContourSize-1);
 					int outindex = (int)((i==(nDesiredSamples-1)) ? floorf(indexf) : roundf(indexf));
 					ofVec3f pointi = palmSideContour[outindex];
-					palmSideContourResampled.addVertex(pointi.x, pointi.y, pointi.z);
+					palmSideContourResampled.addVertex(pointi.x, pointi.y, 0.0);
 				}
                 // EVIL
 //				ofPoint cpt = handContour[palmContourIndex1];
@@ -609,6 +624,7 @@ void HandMeshBuilder::buildMesh (ofPolyline &handContour, ofVec3f &handCentroid,
 				// but, it happens for all left hands facing down, or right hands facing up :)
 				bGotPalmSideContour = false;
 				printf("Problem meshing palm side.\n");
+                return;
 			}
 			
 			if (bGotPalmSideContour){
@@ -616,7 +632,7 @@ void HandMeshBuilder::buildMesh (ofPolyline &handContour, ofVec3f &handCentroid,
 				int nPalmSideResampledContourPoints = palmSideContourResampled.size();
 				for (int i=1; i<(nPalmSideResampledContourPoints-1); i++){
 					ofPoint cpt = palmSideContourResampled[i];
-					handMesh.addVertex (cpt);
+					handMesh.addVertex ( ofPoint(cpt.x, cpt.y, 0.0));
 					if (bDraw){ ofEllipse(cpt.x, cpt.y, 2,2);}
 				}
 				
@@ -640,7 +656,7 @@ void HandMeshBuilder::buildMesh (ofPolyline &handContour, ofVec3f &handCentroid,
 						float frac = (float)i/7.0;
 						float px = (1-frac)*wx + frac*kx;
 						float py = (1-frac)*wy + frac*ky;
-						handMesh.addVertex( ofVec3f (px,py, 0));
+						handMesh.addVertex( ofVec3f (px,py, 0.0));
 						if (bDraw){ ofEllipse(px, py, 2,2);}
 					}
 				}
@@ -710,9 +726,17 @@ void HandMeshBuilder::buildMesh (ofPolyline &handContour, ofVec3f &handCentroid,
 				handMesh.addTriangle (294, 375, 369);
 				handMesh.addTriangle (294, 295, 375);
 				handMesh.addTriangle (295, 334, 375);
+                
+                bool bComputeRefinedMesh = false;
+                if (bComputeRefinedMesh){
+                    long t0 = ofGetElapsedTimeMicros();
+                    refinedHandMesh = butterflyMeshSubdivider.subdivideBoundary(handMesh, 1.7);
+                    long t1 = ofGetElapsedTimeMicros();
+                    printf("Butterfly = %d\n", (int)(t1-t0));
+                }
 				
 				
-				// Add texture coordinates to mesh;
+				// Add texture coordinates to meshes;
 				// Be cognizant of half-scale stuff.
 				float vertexScale = (bWorkAtHalfScale) ? 2.0 : 1.0;
 				for (int i = 0; i < handMesh.getNumVertices(); i++) {
@@ -743,6 +767,12 @@ void HandMeshBuilder::drawMeshWireframe(){
 	}
 }
 
+void HandMeshBuilder::drawRefinedMeshWireframe(){
+    if (bCalculatedMesh){
+        ofSetColor(12,255,100);
+        refinedHandMesh.drawWireframe();
+    }
+}
 
 
 //ofSetColor(255,100,100, 70);
