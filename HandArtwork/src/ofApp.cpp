@@ -348,12 +348,13 @@ void ofApp::setupPuppeteer(){
 	setSkeleton(&handSkeleton);
 
 	
-	mouseControl  = false;
-	showImage     = true;
-	showWireframe = true;
-	showSkeleton  = true;
+	mouseControl		= false;
+	bShowPuppetTexture	= true;
+	bShowWireframe		= true;
+	bShowControlPoints  = true;
+	bShowSkeleton		= true;
 	frameBasedAnimation = false;
-	showPuppetGuis = true;
+	showPuppetGuis		= true;
 }
 
 
@@ -569,9 +570,10 @@ void ofApp::setupPuppetGui(){
 	sceneRadio = puppetGui->addRadio("Scene", sceneNames);
 	//sceneRadio = gui->addRadio("Scene", sceneWithSkeletonNames);
 	puppetGui->addSpacer();
-	puppetGui->addLabelToggle("Show Image", &showImage);
-	puppetGui->addLabelToggle("Show Wireframe", &showWireframe);
-	puppetGui->addLabelToggle("Show Skeleton",  &showSkeleton);
+	puppetGui->addLabelToggle("Show Image",		&bShowPuppetTexture);
+	puppetGui->addLabelToggle("Show Wireframe", &bShowWireframe);
+	puppetGui->addLabelToggle("Show Control Pts",&bShowControlPoints);
+	puppetGui->addLabelToggle("Show Skeleton",  &bShowSkeleton);
 	puppetGui->addLabelToggle("Mouse Control",  &mouseControl);
 	puppetGui->addLabelToggle("FrameBasedAnim", &frameBasedAnimation);
 	puppetGui->addSpacer();
@@ -655,12 +657,19 @@ void ofApp::updateHandMesh(){
 //--------------------------------------------------------------
 void ofApp::updatePuppeteer(){
 	
+	// Ask the HandMeshBuilder whether it built the mesh without errors.
     bool bCalculatedMesh = myHandMeshBuilder.bCalculatedMesh;
     if (bCalculatedMesh){
+		
+		// If so, get the mesh, and set up the puppet with it.
         ofMesh &mesh = myHandMeshBuilder.getMesh();
         puppet.setup (mesh);
        
-        // every frame we get a new mesh from the hand tracker
+        // Provide that mesh to the various skeletons.
+		// This informs each skeleton about the baseline (untransformed) location of
+		// certain landmarks on the hand, such as the puppet's control points.
+		// For example, this tells the skeleton that the pinky-tip is located at (x,y).
+		// (The skeleton then pushes these points around.)
         handWithFingertipsSkeleton.setup(mesh);
         immutableHandWithFingertipsSkeleton.setup(mesh);
         handSkeleton.setup(mesh);
@@ -672,14 +681,14 @@ void ofApp::updatePuppeteer(){
         wristSpineSkeleton.setup(mesh);
         immutableWristSpineSkeleton.setup(mesh);
         
-        // Get the current scene, turn off all other scenes
+        // Get the current scene; turn off all other scenes.
         int scene = getSelection(sceneRadio);
         scenes[scene]->turnOn();
         for (int i=0; i < scenes.size(); i++) {
             if (i != scene){ scenes[i]->turnOff(); }
         }
 
-        // Update the skeleton, which structures the deformation,
+        // Update the skeleton, which scaffolds the puppet's deformation,
         // by animating the displacements of the puppet's control points.
         scenes[scene]->update();
         setSkeleton(scenes[scene]->getSkeleton());
@@ -692,9 +701,8 @@ void ofApp::updatePuppeteer(){
         }
         
         // The moment of truth, when the puppet is asked to update itself.
-        // This is very computationally expensive.
+        // This involves SVD with Accelerate, etc. and is very computationally expensive.
         puppet.update();
-        
         
         // Just a sanity check.
         bool bDrawMeshPoints = false;
@@ -739,9 +747,9 @@ void ofApp::updatePuppeteer(){
  // turn on the gui for the current scene
  if (!scenes[scene]->guiIsOn()) {
  scenes[scene]->turnOn();
- showImage = scenes[scene]->isStartShowImage();
- showWireframe = scenes[scene]->isStartShowWireframe();
- showSkeleton = scenes[scene]->isStartShowSkeleton();
+ bShowPuppetTexture = scenes[scene]->isStartShowImage();
+ bShowWireframe = scenes[scene]->isStartShowWireframe();
+ bShowSkeleton = scenes[scene]->isStartShowSkeleton();
  mouseControl = scenes[scene]->isStartMouseControl();
  }
  
@@ -1424,56 +1432,35 @@ void ofApp::draw(){
 
 //--------------------------------------------------------------
 void ofApp::drawPuppet(){
+	
 	ofPushStyle();
 	{
-	
-		
+		// Update all aspects of the puppet geometry
 		updatePuppeteer();
 		
-
+		if (bShowPuppetTexture){
+			// Draw the main puppet texture (the image of the user's hand)
+			if (bInPlaybackMode ){	video.getTextureReference().bind(); }
+			else { processFrameImg.getTextureReference().bind(); }
 			
-		//ofMesh &mesh = myHandMeshBuilder.getMesh();
-		//puppet.setup (mesh);
-		
-		/*
-		handWithFingertipsSkeleton.setup(mesh);
-		immutableHandWithFingertipsSkeleton.setup(mesh);
-		handSkeleton.setup(mesh);
-		immutableHandSkeleton.setup(mesh);
-		threePointSkeleton.setup(mesh);
-		immutableThreePointSkeleton.setup(mesh);
-		palmSkeleton.setup(mesh);
-		immutablePalmSkeleton.setup(mesh);
-		wristSpineSkeleton.setup(mesh);
-		immutableWristSpineSkeleton.setup(mesh);
-		 */
-		
-		
-		
-		//handTestImage.bind();
-		
-		if (bInPlaybackMode ){	video.getTextureReference().bind(); }
-		else { processFrameImg.getTextureReference().bind(); }
-		
-		ofSetColor(255);
-		puppet.drawFaces();
-		
-		if(bInPlaybackMode ){ video.getTextureReference().unbind(); }
-		else { processFrameImg.getTextureReference().unbind(); }
-		
-		//handTestImage.unbind();
-		
+			ofSetColor(255);
+			puppet.drawFaces();
 			
-			
-			
-		
-		if (showWireframe) {
-			puppet.drawWireframe();
-			puppet.drawControlPoints();
+			if(bInPlaybackMode ){ video.getTextureReference().unbind(); }
+			else { processFrameImg.getTextureReference().unbind(); }
 		}
-		if (showSkeleton) {
+		
+		if (bShowWireframe) {
+			ofSetColor(255,255,255, 180);
+			puppet.drawWireframe();
+		}
+		if (bShowSkeleton) {
             currentSkeleton->draw();
 		}
+		if (bShowControlPoints){
+			puppet.drawControlPoints();
+		}
+		
 		int scene = getSelection(sceneRadio);
 		scenes[scene]->draw();
 	}

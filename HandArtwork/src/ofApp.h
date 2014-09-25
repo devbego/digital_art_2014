@@ -349,7 +349,8 @@ class ofApp : public ofBaseApp{
 	
 	void setupPuppetGui();
 	bool showPuppetGuis;
-	bool showImage, showWireframe, showSkeleton, mouseControl;
+	bool bShowPuppetTexture, bShowWireframe, bShowControlPoints, bShowSkeleton;
+	bool mouseControl;
 	bool frameBasedAnimation;
 	
 };
