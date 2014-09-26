@@ -120,7 +120,7 @@ class LeapVisualizer{
 	void				initPointsToVoronoi();
 	void				feedBogusPointsToVoronoi();
 	void				feedXMLFingerPointsToVoronoi (int whichFinger, ofxXmlSettings & XML);
-	void				updateVoronoi();
+	void				updateVoronoiExpansion();
 	void				drawVoronoi();
 	void				drawVoronoiFrameFromXML (int whichFrame, ofxXmlSettings & XML);
 	void				drawVoronoiFrame (ofxLeapMotion & leap);

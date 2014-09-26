@@ -170,9 +170,9 @@ class ofApp : public ofBaseApp{
     bool	bShowLargeCamImageOnTop;
 	bool	bUseRGBLeapFbo;
     bool	bShowText;
-	bool	bUseVoronoiExpansion;
 	bool	bShowOffsetByNFrames;
 	bool	bDoCompositeThresholdedImageWithLeapFboPixels;
+	bool	bComputeAndDisplayPuppet;
 	
     int		framesBackToPlay;
 	int		playingFrame;
@@ -323,7 +323,6 @@ class ofApp : public ofBaseApp{
 	HandMeshBuilder myHandMeshBuilder;
 	void updateHandMesh();
     
-	
 	//-------------------------------
 	// PUPPETEER!
 	void setupPuppeteer();
@@ -333,15 +332,14 @@ class ofApp : public ofBaseApp{
 	ofxPuppet puppet;
 	void setSkeleton(Skeleton* skeleton);
 	vector<Scene*> scenes;
-	ofImage handTestImage;
 
-	PalmSkeleton palmSkeleton, immutablePalmSkeleton;
-	HandSkeleton handSkeleton, immutableHandSkeleton;
-	ThreePointSkeleton threePointSkeleton, immutableThreePointSkeleton;
-	WristSpineSkeleton wristSpineSkeleton, immutableWristSpineSkeleton;
+	PalmSkeleton		palmSkeleton, immutablePalmSkeleton;
+	HandSkeleton		handSkeleton, immutableHandSkeleton;
+	ThreePointSkeleton	threePointSkeleton, immutableThreePointSkeleton;
+	WristSpineSkeleton	wristSpineSkeleton, immutableWristSpineSkeleton;
 	HandWithFingertipsSkeleton handWithFingertipsSkeleton, immutableHandWithFingertipsSkeleton;
-	Skeleton* previousSkeleton, *currentSkeleton;
-	vector<string> sceneNames, sceneWithSkeletonNames;
+	Skeleton*		previousSkeleton, *currentSkeleton;
+	vector<string>	sceneNames, sceneWithSkeletonNames;
 	
 	ofxUICanvas*	puppetGui;
 	ofxUICanvas**	puppetGuis;
@@ -349,8 +347,15 @@ class ofApp : public ofBaseApp{
 	
 	void setupPuppetGui();
 	bool showPuppetGuis;
-	bool bShowPuppetTexture, bShowWireframe, bShowControlPoints, bShowSkeleton;
-	bool mouseControl;
+	bool bShowPuppetTexture;
+	bool bShowPuppetWireframe;
+	bool bShowPuppetControlPoints;
+	bool bShowPuppetSkeleton;
+	bool bShowPuppetMeshPoints;
+	bool bPuppetMouseControl;
 	bool frameBasedAnimation;
+	
+	float elapsedPuppetMicros;
+	int   elapsedPuppetMicrosInt;
 	
 };

@@ -85,7 +85,14 @@ void LeapVisualizer::initPointsToVoronoi(){
 }
 
 //--------------------------------------------------------------
-void LeapVisualizer::updateVoronoi(){
+void LeapVisualizer::updateVoronoiExpansion(){
+	// The leapVisualizer's "voronoi expansion" is a colored halo
+	// that fills in unlabeled regions of the camera-based silhouette
+	// that aren't covered by the geometrically-rendered LEAP hand.
+	// The red/green channels indicate the local orientation of the finger
+	// (which is used to suppress orthogonal creases), while the blue channel
+	// indicates which finger is which (including joint information).
+	
 	if (bEnableVoronoiRendering){
 		NB->myIdle();
 	}
@@ -604,7 +611,7 @@ void LeapVisualizer::drawVoronoiFrame (ofxLeapMotion & leap){
 				}
 			}
 		}
-		updateVoronoi();
+		updateVoronoiExpansion();
 	}
 }
 
@@ -1327,7 +1334,7 @@ void LeapVisualizer::drawVoronoiFrameFromXML (int whichFrame, ofxXmlSettings & X
 			}
 			XML.popTag();
 		}
-		updateVoronoi();
+		updateVoronoiExpansion();
 	}
 }
 
