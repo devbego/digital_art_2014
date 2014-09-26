@@ -43,6 +43,7 @@
 		3B04CBEF19D1DE8A005E6F31 /* WiggleScene.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3B04CBD619D1DE8A005E6F31 /* WiggleScene.cpp */; };
 		3B04CBF019D1DE8A005E6F31 /* WigglingWristScene.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3B04CBD819D1DE8A005E6F31 /* WigglingWristScene.cpp */; };
 		3B04CBF119D1DE8A005E6F31 /* WobbleScene.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3B04CBDA19D1DE8A005E6F31 /* WobbleScene.cpp */; };
+		3B35DC6B19D526680008E9A1 /* PuppetManager.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3B35DC6919D526680008E9A1 /* PuppetManager.cpp */; };
 		3B4384E319D1BFB7001F75FE /* ofxPuppet.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3B4384B519D1BFB7001F75FE /* ofxPuppet.cpp */; };
 		3B4384E419D1BFB7001F75FE /* ofxPuppetInteractive.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3B4384B719D1BFB7001F75FE /* ofxPuppetInteractive.cpp */; };
 		3B4384E519D1BFB7001F75FE /* LinearAlgebra.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3B4384BC19D1BFB7001F75FE /* LinearAlgebra.cpp */; };
@@ -365,6 +366,8 @@
 		3B04CBD919D1DE8A005E6F31 /* WigglingWristScene.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = WigglingWristScene.h; sourceTree = "<group>"; };
 		3B04CBDA19D1DE8A005E6F31 /* WobbleScene.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = WobbleScene.cpp; sourceTree = "<group>"; };
 		3B04CBDB19D1DE8A005E6F31 /* WobbleScene.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = WobbleScene.h; sourceTree = "<group>"; };
+		3B35DC6919D526680008E9A1 /* PuppetManager.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = PuppetManager.cpp; sourceTree = "<group>"; };
+		3B35DC6A19D526680008E9A1 /* PuppetManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PuppetManager.h; sourceTree = "<group>"; };
 		3B4384B519D1BFB7001F75FE /* ofxPuppet.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = ofxPuppet.cpp; sourceTree = "<group>"; };
 		3B4384B619D1BFB7001F75FE /* ofxPuppet.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ofxPuppet.h; sourceTree = "<group>"; };
 		3B4384B719D1BFB7001F75FE /* ofxPuppetInteractive.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = ofxPuppetInteractive.cpp; sourceTree = "<group>"; };
@@ -2462,6 +2465,8 @@
 				3BFC9F5C19D175BB00284002 /* LeapVisualizer.cpp */,
 				3BFC9F5D19D175BB00284002 /* LeapVisualizer.h */,
 				3BFC9FA119D1760000284002 /* FingerTipCalibRecorder.h */,
+				3B35DC6919D526680008E9A1 /* PuppetManager.cpp */,
+				3B35DC6A19D526680008E9A1 /* PuppetManager.h */,
 				3BFC9F4F19D1757A00284002 /* LeapEtc */,
 				3BFC9F6619D175DB00284002 /* havoc2d */,
 				3BFC9F9719D175E500284002 /* ofxBlur */,
@@ -2631,6 +2636,7 @@
 				F285EB3169F1566CA3D93C20 /* ofxPanel.cpp in Sources */,
 				837220E80EB56CD44AD27F2A /* ofxSlider.cpp in Sources */,
 				B56FE57CC35806596D38118C /* ofxSliderGroup.cpp in Sources */,
+				3B35DC6B19D526680008E9A1 /* PuppetManager.cpp in Sources */,
 				3B04CBE919D1DE8A005E6F31 /* SinusoidalWiggleScene.cpp in Sources */,
 				3BFC9F9619D175DB00284002 /* polygon_object.cpp in Sources */,
 				1CD33E884D9E3358252E82A1 /* ofxToggle.cpp in Sources */,

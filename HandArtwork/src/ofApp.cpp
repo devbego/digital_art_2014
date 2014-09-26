@@ -291,103 +291,14 @@ void ofApp::setup(){
 	maxAllowableExtentZ		= 0.5;
 	
 	
-	setupPuppeteer();
-	setupPuppetGui();
+	myPuppetManager.setupPuppeteer (myHandMeshBuilder);
+	myPuppetManager.setupPuppetGui ();
 	
 	// must be last
 	setupGui();
 	
 }
 
-
-//--------------------------------------------------------------
-void ofApp::setupPuppeteer(){
-	
-	// Create all of the scenes
-	scenes.push_back(new NoneScene				(&puppet, &handSkeleton, &immutableHandSkeleton));
-	scenes.push_back(new WaveScene				(&puppet, &handSkeleton, &immutableHandSkeleton));
-    scenes.push_back(new WiggleScene			(&puppet, &handSkeleton, &immutableHandSkeleton));
-	scenes.push_back(new WobbleScene			(&puppet, &handSkeleton, &immutableHandSkeleton));
-	scenes.push_back(new EqualizeScene			(&puppet, &handSkeleton, &immutableHandSkeleton));
-	scenes.push_back(new NorthScene				(&puppet, &handSkeleton, &immutableHandSkeleton));
-	scenes.push_back(new LissajousScene			(&puppet, &threePointSkeleton, &immutableThreePointSkeleton));
-	scenes.push_back(new MeanderScene			(&puppet, &handSkeleton, &immutableHandSkeleton));
-	scenes.push_back(new PropogatingWiggleScene	(&puppet, &handWithFingertipsSkeleton, &immutableHandWithFingertipsSkeleton));
-	scenes.push_back(new SinusoidalLengthScene	(&puppet, &handSkeleton, &immutableHandSkeleton));
-	scenes.push_back(new PulsatingPalmScene		(&puppet, &palmSkeleton, &immutablePalmSkeleton));
-	scenes.push_back(new RetractingFingersScene	(&puppet, &handWithFingertipsSkeleton, &immutableHandWithFingertipsSkeleton));
-	scenes.push_back(new SinusoidalWiggleScene	(&puppet, &handWithFingertipsSkeleton, &immutableHandWithFingertipsSkeleton));
-	scenes.push_back(new MiddleDifferentLengthScene(&puppet, &handSkeleton, &immutableHandSkeleton));
-	scenes.push_back(new GrowingMiddleFingerScene(&puppet, &handWithFingertipsSkeleton, &immutableHandWithFingertipsSkeleton));
-	scenes.push_back(new StartrekScene			(&puppet, &handSkeleton, &immutableHandSkeleton));
-	scenes.push_back(new StraightenFingersScene	(&puppet, &handWithFingertipsSkeleton, &immutableHandWithFingertipsSkeleton));
-	scenes.push_back(new SplayFingersScene		(&puppet, &handWithFingertipsSkeleton, &immutableHandWithFingertipsSkeleton));
-	scenes.push_back(new TwitchScene			(&puppet, &handSkeleton, &immutableHandSkeleton));
-	scenes.push_back(new PinkyPuppeteerScene	(&puppet, &handWithFingertipsSkeleton, &immutableHandWithFingertipsSkeleton));
-	scenes.push_back(new FingerLengthPuppeteerScene(&puppet, &handWithFingertipsSkeleton, &immutableHandWithFingertipsSkeleton));
-	
-	myHandMeshBuilder.loadDefaultMesh();
-	
-	//--------------------
-	// Set up the puppet.
-	ofMesh &mesh = myHandMeshBuilder.getMesh();
-	puppet.setup (mesh);
-
-	//--------------------
-	// Set up all of the skeletons.
-	previousSkeleton = NULL;
-	currentSkeleton  = NULL;
-	
-	handSkeleton.setup(mesh);
-	handWithFingertipsSkeleton.setup(mesh);
-	immutableHandWithFingertipsSkeleton.setup(mesh);
-	immutableHandSkeleton.setup(mesh);
-	threePointSkeleton.setup(mesh);
-	immutableThreePointSkeleton.setup(mesh);
-	palmSkeleton.setup(mesh);
-	immutablePalmSkeleton.setup(mesh);
-	wristSpineSkeleton.setup(mesh);
-	immutableWristSpineSkeleton.setup(mesh);
-	
-	// set the initial skeleton
-	setSkeleton(&handSkeleton);
-
-	
-	bPuppetMouseControl		= false;
-	bShowPuppetTexture		= true;
-	bShowPuppetWireframe	= true;
-	bShowPuppetControlPoints= true;
-	bShowPuppetSkeleton		= true;
-	bShowPuppetMeshPoints	= false;
-	frameBasedAnimation		= false;
-	showPuppetGuis			= true;
-	
-	elapsedPuppetMicros		= 10000;
-	elapsedPuppetMicrosInt	= 10000;
-}
-
-
-//--------------------------------------------------------------
-void ofApp::setSkeleton(Skeleton* skeleton) {
-	// The "skeleton" is a graph of control points that animate in related ways
-	// (to propagate relative movements to subsequent joints, for example).
-	// Here we inform the Puppet about its control points, from the current skeleton.
-	
-	if (skeleton != currentSkeleton) {
-		previousSkeleton = currentSkeleton;
-		currentSkeleton = skeleton;
-		if (previousSkeleton != NULL) {
-			vector<int>& previousControlIndices = previousSkeleton->getControlIndices();
-			for (int i=0; i<previousControlIndices.size(); i++) {
-				puppet.removeControlPoint(previousControlIndices[i]);
-			}
-		}
-		vector<int>& currentControlIndices = currentSkeleton->getControlIndices();
-		for (int i=0; i<currentControlIndices.size(); i++) {
-			puppet.setControlPoint(currentControlIndices[i]);
-		}
-	}
-}
 
 
 //--------------------------------------------------------------
@@ -484,8 +395,8 @@ void ofApp::setupGui() {
 	// Display of time consumption for puppeteering.
 	gui0->addSpacer();
 	gui0->addLabelToggle("Do Puppet",					&bComputeAndDisplayPuppet);
-	gui0->addValuePlotter("Puppet: Micros", 256, 0, 300000, &elapsedPuppetMicros);
-	gui0->addIntSlider("Puppet: Micros", 0, 300000, &elapsedPuppetMicrosInt);
+	gui0->addValuePlotter("Puppet: Micros", 256, 0, 300000, &(myPuppetManager.elapsedPuppetMicros));
+	gui0->addIntSlider("Puppet: Micros", 0, 300000, &(myPuppetManager.elapsedPuppetMicrosInt));
 	
 	gui0->autoSizeToFitWidgets();
 	ofAddListener(gui0->newGUIEvent,this,&ofApp::guiEvent);
@@ -565,41 +476,6 @@ void ofApp::setupGui() {
 
 }
 
-//--------------------------------------------------------------
-void ofApp::setupPuppetGui(){
-	
-	// set up the guis for each scene
-	for (int i=0; i < scenes.size(); i++) {
-		sceneNames.push_back(scenes[i]->getName());
-		sceneWithSkeletonNames.push_back(scenes[i]->getNameWithSkeleton());
-		scenes[i]->setupGui();
-		scenes[i]->setupMouseGui();
-	}
-    
-	// create the main gui
-	puppetGui = new ofxUICanvas();
-	puppetGui->addLabel("Puppet");
-	puppetGui->addSpacer();
-	puppetGui->addFPS();
-	puppetGui->addSpacer();
-	sceneRadio = puppetGui->addRadio("Scene", sceneNames);
-	//sceneRadio = gui->addRadio("Scene", sceneWithSkeletonNames);
-	
-	puppetGui->addSpacer();
-	puppetGui->addLabelToggle("Show Image",			&bShowPuppetTexture);
-	puppetGui->addLabelToggle("Show Wireframe",		&bShowPuppetWireframe);
-	puppetGui->addLabelToggle("Show Control Pts",	&bShowPuppetControlPoints);
-	puppetGui->addLabelToggle("Show Skeleton",		&bShowPuppetSkeleton);
-	puppetGui->addLabelToggle("Show Mesh Points",	&bShowPuppetMeshPoints);
-	puppetGui->addLabelToggle("Mouse Control",		&bPuppetMouseControl);
-	// puppetGui->addLabelToggle("FrameBasedAnim",	&frameBasedAnimation); // Currently not hooked up.
-	
-	puppetGui->autoSizeToFitWidgets();
-	puppetGui->setPosition(256, 10);
-	
-	// set the initial scene
-    sceneRadio->getToggles()[0]->setValue(true);
-}
 
 //--------------------------------------------------------------
 void ofApp::guiEvent(ofxUIEventArgs &e) {
@@ -651,7 +527,8 @@ void ofApp::update(){
 	lastFrameTimeMicros = now;
 	
 	// Update all aspects of the puppet geometry
-	updatePuppeteer();
+	///// updatePuppeteer();
+	myPuppetManager.updatePuppeteer( bComputeAndDisplayPuppet, myHandMeshBuilder);
 
 }
 
@@ -663,124 +540,6 @@ void ofApp::updateHandMesh(){
 	ofVec3f theHandCentroid = myHandContourAnalyzer.handCentroidLeap;
 	myHandMeshBuilder.buildMesh (theHandContour, theHandCentroid, theHandmarks);
 }
-
-
-//--------------------------------------------------------------
-void ofApp::updatePuppeteer(){
-	
-	long long prePuppetMicros = ofGetElapsedTimeMicros();
-	
-	if (bComputeAndDisplayPuppet){
-	
-		// Ask the HandMeshBuilder whether it built the mesh without errors.
-		bool bCalculatedMesh = myHandMeshBuilder.bCalculatedMesh;
-		if (bCalculatedMesh){
-			
-			// If so, get the mesh, and set up the puppet with it.
-			ofMesh &mesh = myHandMeshBuilder.getMesh();
-			puppet.setup (mesh);
-		   
-			// Provide that mesh to the various skeletons.
-			// This informs each skeleton about the baseline (untransformed) location of
-			// certain landmarks on the hand, such as the puppet's control points.
-			// For example, this tells the skeleton that the pinky-tip is located at (x,y).
-			// (The skeleton then pushes these points around.)
-			handWithFingertipsSkeleton.setup (mesh);
-			immutableHandWithFingertipsSkeleton.setup (mesh);
-			handSkeleton.setup (mesh);
-			immutableHandSkeleton.setup (mesh);
-			threePointSkeleton.setup (mesh);
-			immutableThreePointSkeleton.setup (mesh);
-			palmSkeleton.setup (mesh);
-			immutablePalmSkeleton.setup (mesh);
-			wristSpineSkeleton.setup (mesh);
-			immutableWristSpineSkeleton.setup (mesh);
-			
-			// Get the current scene; turn off all other scenes.
-			int scene = getSelection(sceneRadio);
-			scenes[scene]->turnOn();
-			for (int i=0; i < scenes.size(); i++) {
-				if (i != scene){ scenes[i]->turnOff(); }
-			}
-			
-			if (bPuppetMouseControl) {
-				// turn on mouse gui for current scene
-				if (!scenes[scene]->mouseGuiIsOn()) scenes[scene]->turnOnMouse();
-				// update the mouse
-				scenes[scene]->updateMouse(mouseX, mouseY);
-			} else {
-				scenes[scene]->turnOffMouse();
-			}
-			
-
-			// Update the skeleton, which scaffolds the puppet's deformation,
-			// by animating the displacements of the puppet's control points.
-			scenes[scene]->update();
-			setSkeleton(scenes[scene]->getSkeleton());
-			
-			// Update the puppet using the current scene's skeleton.
-			// The (animating) skeleton sets displacements of the control points.
-			for (int i = 0; i<currentSkeleton->size(); i++) {
-				puppet.setControlPoint(currentSkeleton->getControlIndex(i),
-									   currentSkeleton->getPositionAbsolute(i));
-			}
-			
-			// The moment of truth: when the puppet is asked to update itself.
-			// This involves SVD with Accelerate, etc. and is very computationally expensive.
-			puppet.update();
-
-		} else {
-
-			// In updatePuppeteer(), when bCalculatedMesh is false but a hand is still present,
-			// we should show the undistorted video hand instead.
-			printf("HandMeshBuilder unsuccessful.\n");
-		}
-		
-		puppetGui->setVisible(showPuppetGuis);
-		
-    } else {
-		// Puppeteering is disabled, so turn off GUI's etc.
-		// Currently this is not yet turning off the sub-GUI for the scene.
-		puppetGui->setVisible(false);
-		if (!showPuppetGuis) {
-			for (int i=0; i < scenes.size(); i++) {
-				scenes[i]->turnOff();
-				scenes[i]->turnOffGui();
-				scenes[i]->turnOffMouse();
-			}
-		}
-
-	}
-	
-	// Update measurement of CPU time consumption for Puppet.
-	long long postPuppetMicros = ofGetElapsedTimeMicros();
-	elapsedPuppetMicros = 0.8*elapsedPuppetMicros + 0.2*(float)(postPuppetMicros - prePuppetMicros);
-	elapsedPuppetMicrosInt = (int) elapsedPuppetMicros;
-}
-
-
-
-
-
-
-/*
- // turn on the gui for the current scene
- if (!scenes[scene]->guiIsOn()) {
- scenes[scene]->turnOn();
- bShowPuppetTexture = scenes[scene]->isStartShowImage();
- bShowWireframe = scenes[scene]->isStartShowWireframe();
- bShowSkeleton = scenes[scene]->isStartShowSkeleton();
- bPuppetMouseControl = scenes[scene]->isStartMouseControl();
- }
- 
- if (!showPuppetGuis) {
- this->puppetGui->setVisible(false);
- for(int i=0; i < scenes.size(); i++) {
- scenes[i]->turnOffGui();
- scenes[i]->turnOffMouse();
- }
- }
- */
 
 
 
@@ -1429,63 +1188,14 @@ void ofApp::draw(){
 	
 	// COMPUTE AND DISPLAY PUPPET
 	if (bComputeAndDisplayPuppet){
-		ofPushMatrix();
-		ofScale (2,2);
-		drawPuppet();
-		ofPopMatrix();
+
+		ofTexture &handImageTexture = (bInPlaybackMode)? (video.getTextureReference()) : (processFrameImg.getTextureReference()) ;
+		myPuppetManager.drawPuppet(bComputeAndDisplayPuppet, handImageTexture);
 	}
 
 		
 }
 
-//--------------------------------------------------------------
-void ofApp::drawPuppet(){
-	
-	if (bComputeAndDisplayPuppet){
-		ofPushStyle();
-		{
-			
-			
-			if (bShowPuppetTexture){
-				// Draw the main puppet texture (the image of the user's hand)
-				if (bInPlaybackMode ){	video.getTextureReference().bind(); }
-				else { processFrameImg.getTextureReference().bind(); }
-				
-				ofSetColor(255);
-				puppet.drawFaces();
-				
-				if(bInPlaybackMode ){ video.getTextureReference().unbind(); }
-				else { processFrameImg.getTextureReference().unbind(); }
-			}
-			
-			if (bShowPuppetWireframe) {
-				ofSetColor(255,255,255, 180);
-				puppet.drawWireframe();
-			}
-			if (bShowPuppetSkeleton) {
-				currentSkeleton->draw();
-			}
-			if (bShowPuppetControlPoints){
-				puppet.drawControlPoints();
-			}
-			if (bShowPuppetMeshPoints){
-				ofPushMatrix();
-				ofMesh cur = puppet.getDeformedMesh();
-				cur.setMode(OF_PRIMITIVE_POINTS);
-				ofSetColor(255);
-				glPointSize(3);
-				cur.clearIndices();
-				cur.draw();
-				ofPopMatrix();
-			}
-			
-			
-			int scene = getSelection(sceneRadio);
-			scenes[scene]->draw();
-		}
-		ofPopStyle();
-	}
-}
 
 
 //--------------------------------------------------------------
@@ -1988,7 +1698,7 @@ void ofApp::keyPressed(int key){
         case 'g':
 		case 'G':
 			guiTabBar->toggleVisible();
-			showPuppetGuis = !showPuppetGuis;
+			myPuppetManager.showPuppetGuis = !(myPuppetManager.showPuppetGuis);
 			break;
         case 'l':
             if(bInPlaybackMode) bInPlaybackMode = false;
