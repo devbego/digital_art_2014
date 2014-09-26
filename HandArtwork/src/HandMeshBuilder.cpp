@@ -77,6 +77,8 @@ ofMesh& HandMeshBuilder::getMesh(){
 void HandMeshBuilder::buildMesh (ofPolyline &handContour, ofVec3f &handCentroid, Handmark *hmarks){
 	bool bDraw = false;
 	bCalculatedMesh = false;
+	int nTriangles = 0;
+
 	
 	// Check to make sure the contour contains data
 	int nContourPoints = handContour.size();
@@ -277,22 +279,22 @@ void HandMeshBuilder::buildMesh (ofPolyline &handContour, ofVec3f &handCentroid,
 								
 								if ((i==0) && (j==0)){
 									int screwCase = row - (11*5 + 3 - 5);
-									handMesh.addTriangle(screwCase, row+j+1,  row+j+NW);
-									handMesh.addTriangle(row+j+1, row+j+1+NW, row+j+NW);
+									handMesh.addTriangle(screwCase, row+j+1,  row+j+NW);	nTriangles++;
+									handMesh.addTriangle(row+j+1, row+j+1+NW, row+j+NW);	nTriangles++;
 								} else {
-									handMesh.addTriangle(row+j  , row+j+1,    row+j+NW);
-									handMesh.addTriangle(row+j+1, row+j+1+NW, row+j+NW);
+									handMesh.addTriangle(row+j  , row+j+1,    row+j+NW);	nTriangles++;
+									handMesh.addTriangle(row+j+1, row+j+1+NW, row+j+NW);	nTriangles++;
 								}
 							}
 						}
 						// add triangles at fingertip.
 						int row = vertexIndex + (N_FINGER_LENGTH_SAMPLES-1)*N_FINGER_WIDTH_SAMPLES;
-						handMesh.addTriangle(row+0, row+1, row+NW);
-						handMesh.addTriangle(row+1, row+2, row+NW);
-						handMesh.addTriangle(row+2, row+6, row+NW);
-						handMesh.addTriangle(row+2, row+7, row+1+NW);
-						handMesh.addTriangle(row+2, row+3, row+2+NW);
-						handMesh.addTriangle(row+3, row+4, row+2+NW);
+						handMesh.addTriangle(row+0, row+1, row+NW);		nTriangles++;
+						handMesh.addTriangle(row+1, row+2, row+NW);		nTriangles++;
+						handMesh.addTriangle(row+2, row+6, row+NW);		nTriangles++;
+						handMesh.addTriangle(row+2, row+7, row+1+NW);	nTriangles++;
+						handMesh.addTriangle(row+2, row+3, row+2+NW);	nTriangles++;
+						handMesh.addTriangle(row+3, row+4, row+2+NW);	nTriangles++;
 						
 						
 					} else {
@@ -300,18 +302,18 @@ void HandMeshBuilder::buildMesh (ofPolyline &handContour, ofVec3f &handCentroid,
 						for (int i=0; i<(N_FINGER_LENGTH_SAMPLES-1); i++){
 							int row = vertexIndex + i*N_FINGER_WIDTH_SAMPLES;
 							for (int j=0; j<(N_FINGER_WIDTH_SAMPLES-1); j++){
-								handMesh.addTriangle(row+j  , row+j+1,    row+j+NW);
-								handMesh.addTriangle(row+j+1, row+j+1+NW, row+j+NW);
+								handMesh.addTriangle(row+j  , row+j+1,    row+j+NW);	nTriangles++;
+								handMesh.addTriangle(row+j+1, row+j+1+NW, row+j+NW);	nTriangles++;
 							}
 						}
 						// add triangles at fingertip.
 						int row = vertexIndex + (N_FINGER_LENGTH_SAMPLES-1)*N_FINGER_WIDTH_SAMPLES;
-						handMesh.addTriangle(row+0, row+1, row+NW);
-						handMesh.addTriangle(row+1, row+2, row+NW);
-						handMesh.addTriangle(row+2, row+6, row+NW);
-						handMesh.addTriangle(row+2, row+7, row+1+NW);
-						handMesh.addTriangle(row+2, row+3, row+2+NW);
-						handMesh.addTriangle(row+3, row+4, row+2+NW);
+						handMesh.addTriangle(row+0, row+1, row+NW);		nTriangles++;
+						handMesh.addTriangle(row+1, row+2, row+NW);		nTriangles++;
+						handMesh.addTriangle(row+2, row+6, row+NW);		nTriangles++;
+						handMesh.addTriangle(row+2, row+7, row+1+NW);	nTriangles++;
+						handMesh.addTriangle(row+2, row+3, row+2+NW);	nTriangles++;
+						handMesh.addTriangle(row+3, row+4, row+2+NW);	nTriangles++;
 					}
 				}
 			}
@@ -341,12 +343,12 @@ void HandMeshBuilder::buildMesh (ofPolyline &handContour, ofVec3f &handCentroid,
 					if (i==0){
 						int fi0 = fingerBaseMiddle0 + j - 2;
 						int fi1 = fingerBaseMiddle0 + j - 1;
-						handMesh.addTriangle(nv-1, fi1, fi0);
+						handMesh.addTriangle(nv-1, fi1, fi0);	nTriangles++;
 					} else {
 						int fi0 = fingerBaseMiddle0 + j - 2;
 						if (j == 0) { fi0 = fingerBaseMiddleIndices[i-1] + 2; }
 						int fi1 = fingerBaseMiddle0 + j - 1;
-						handMesh.addTriangle(nv-1, fi1, fi0);
+						handMesh.addTriangle(nv-1, fi1, fi0);	nTriangles++;
 					}
 				}
 			}
@@ -406,8 +408,8 @@ void HandMeshBuilder::buildMesh (ofPolyline &handContour, ofVec3f &handCentroid,
 			int nvb = nvBeforeWrist;
 			for (int wy=0; wy<4; wy++){
 				for (int wx=0; wx<4; wx++){
-					handMesh.addTriangle(nvb+wx,   nvb+wx+5, nvb+wx+1);
-					handMesh.addTriangle(nvb+wx+1, nvb+wx+5, nvb+wx+6);
+					handMesh.addTriangle(nvb+wx,   nvb+wx+5, nvb+wx+1);		nTriangles++;
+					handMesh.addTriangle(nvb+wx+1, nvb+wx+5, nvb+wx+6);		nTriangles++;
 				}
 				nvb += 5;
 			}
@@ -472,10 +474,10 @@ void HandMeshBuilder::buildMesh (ofPolyline &handContour, ofVec3f &handCentroid,
 				int topx = 4-y;
 				for (int x=0; x<topx; x++){
 					if (x == 0){
-						handMesh.addTriangle(x, ti+x, x+1);
+						handMesh.addTriangle(x, ti+x, x+1);			nTriangles++;
 					} else {
-						handMesh.addTriangle(x, ti+(x-1), ti+x);
-						handMesh.addTriangle(x, ti+x, x+1);
+						handMesh.addTriangle(x, ti+(x-1), ti+x);	nTriangles++;
+						handMesh.addTriangle(x, ti+x, x+1);			nTriangles++;
 					}
 				}
 			}
@@ -487,10 +489,10 @@ void HandMeshBuilder::buildMesh (ofPolyline &handContour, ofVec3f &handCentroid,
 					if (x == 0){
 						int tj = ti+x+topx+1;
 						if (y == 3){ tj = thumbBaseVertexIndex; }
-						handMesh.addTriangle(ti+x,   tj, ti+x+1);
+						handMesh.addTriangle(ti+x,   tj, ti+x+1);							nTriangles++;
 					} else {
-						handMesh.addTriangle(ti+x,   ti+x+topx+1,     ti+x+1);
-						handMesh.addTriangle(ti+x,   ti+x+topx  ,     ti+x+topx+1 );
+						handMesh.addTriangle(ti+x,   ti+x+topx+1,     ti+x+1);				nTriangles++;
+						handMesh.addTriangle(ti+x,   ti+x+topx  ,     ti+x+topx+1 );		nTriangles++;
 					}	
 				}
 				ti += topx+1;
@@ -560,32 +562,32 @@ void HandMeshBuilder::buildMesh (ofPolyline &handContour, ofVec3f &handCentroid,
 			
 			int wi = nvBeforeThumbWeb;
 			// handMesh.addTriangle(thumbWebSideIndices[4-0], thumbWebSideIndices[4-1], wi+0); // replace with 2 triangles
-			handMesh.addTriangle(thumbWebSideIndices[4-0],    thumbWebSideIndices[4-1], wi+9);
-			handMesh.addTriangle(thumbWebSideIndices[4-1],    wi+0, wi+9);
-			handMesh.addTriangle(thumbWebSideIndices[4-1], thumbWebSideIndices[4-2], wi+0);
-			handMesh.addTriangle(thumbWebSideIndices[4-2], wi+1, wi+0);
-			handMesh.addTriangle(thumbWebSideIndices[4-2], thumbWebSideIndices[4-3], wi+1);
-			handMesh.addTriangle(thumbWebSideIndices[4-3], wi+2, wi+1);
-			handMesh.addTriangle(thumbWebSideIndices[4-3], thumbWebSideIndices[4-4], wi+2);
-			handMesh.addTriangle(thumbWebSideIndices[4-4], wi+3, wi+2);
+			handMesh.addTriangle(thumbWebSideIndices[4-0], thumbWebSideIndices[4-1], wi+9);		nTriangles++;
+			handMesh.addTriangle(thumbWebSideIndices[4-1], wi+0, wi+9);							nTriangles++;
+			handMesh.addTriangle(thumbWebSideIndices[4-1], thumbWebSideIndices[4-2], wi+0);		nTriangles++;
+			handMesh.addTriangle(thumbWebSideIndices[4-2], wi+1, wi+0);							nTriangles++;
+			handMesh.addTriangle(thumbWebSideIndices[4-2], thumbWebSideIndices[4-3], wi+1);		nTriangles++;
+			handMesh.addTriangle(thumbWebSideIndices[4-3], wi+2, wi+1);							nTriangles++;
+			handMesh.addTriangle(thumbWebSideIndices[4-3], thumbWebSideIndices[4-4], wi+2);		nTriangles++;
+			handMesh.addTriangle(thumbWebSideIndices[4-4], wi+3, wi+2);							nTriangles++;
 			
 			// handMesh.addTriangle(wi+0, wi+1, wi+4); // replace with 2 triangles, as follows:
-			handMesh.addTriangle(wi+0, wi+1, wi+10);
-			handMesh.addTriangle(wi+1, wi+4, wi+10);
-			handMesh.addTriangle(wi+1, wi+2, wi+4);
-			handMesh.addTriangle(wi+2, wi+5, wi+4);
-			handMesh.addTriangle(wi+2, wi+3, wi+5);
-			handMesh.addTriangle(wi+3, wi+6, wi+5);
+			handMesh.addTriangle(wi+0, wi+1, wi+10);											nTriangles++;
+			handMesh.addTriangle(wi+1, wi+4, wi+10);											nTriangles++;
+			handMesh.addTriangle(wi+1, wi+2, wi+4);												nTriangles++;
+			handMesh.addTriangle(wi+2, wi+5, wi+4);												nTriangles++;
+			handMesh.addTriangle(wi+2, wi+3, wi+5);												nTriangles++;
+			handMesh.addTriangle(wi+3, wi+6, wi+5);												nTriangles++;
 			
 			// handMesh.addTriangle(wi+4, wi+5, wi+7); // replace with 2 triangles, as follows:
-			handMesh.addTriangle(wi+4, wi+5, wi+11);
-			handMesh.addTriangle(wi+5, wi+7, wi+11);
-			handMesh.addTriangle(wi+5, wi+6, wi+7);
-			handMesh.addTriangle(wi+6, wi+8, wi+7);
+			handMesh.addTriangle(wi+4, wi+5, wi+11);											nTriangles++;
+			handMesh.addTriangle(wi+5, wi+7, wi+11);											nTriangles++;
+			handMesh.addTriangle(wi+5, wi+6, wi+7);												nTriangles++;
+			handMesh.addTriangle(wi+6, wi+8, wi+7);												nTriangles++;
 			
 			// handMesh.addTriangle(wi+7, wi+8, 233 ); // replace with 2 triangles, as follows:
-			handMesh.addTriangle(wi+7, wi+8, wi+12 );
-			handMesh.addTriangle(wi+8, 233,  wi+12 );
+			handMesh.addTriangle(wi+7, wi+8, wi+12 );											nTriangles++;
+			handMesh.addTriangle(wi+8, 233,  wi+12 );											nTriangles++;
 			
 			//----------------------------------------------------
 			// Mesh the palm.
@@ -636,11 +638,11 @@ void HandMeshBuilder::buildMesh (ofPolyline &handContour, ofVec3f &handCentroid,
 					if (bDraw){ ofEllipse(cpt.x, cpt.y, 2,2);}
 				}
 				
-				handMesh.addTriangle (344, 287, 58);
-				handMesh.addTriangle (287, 288, 62);
-				handMesh.addTriangle (288, 289, 119);
-				handMesh.addTriangle (289, 290, 176);
-				handMesh.addTriangle (290, 337, 233);
+				handMesh.addTriangle (344, 287, 58);	nTriangles++;
+				handMesh.addTriangle (287, 288, 62);	nTriangles++;
+				handMesh.addTriangle (288, 289, 119);	nTriangles++;
+				handMesh.addTriangle (289, 290, 176);	nTriangles++;
+				handMesh.addTriangle (290, 337, 233);	nTriangles++;
 				
 				int wristPointMeshIndex = 293;
 				int wristPointMeshIndices[]    = {292, 293,293,293,293, 294};
@@ -679,10 +681,10 @@ void HandMeshBuilder::buildMesh (ofPolyline &handContour, ofVec3f &handCentroid,
 							
 							if (i==5){
 								c = 337;
-								handMesh.addTriangle (a, b, c);
+								handMesh.addTriangle (a, b, c);			nTriangles++;
 							} else {
-								handMesh.addTriangle (a, b, c);
-								handMesh.addTriangle (c, b, d);
+								handMesh.addTriangle (a, b, c);			nTriangles++;
+								handMesh.addTriangle (c, b, d);			nTriangles++;
 							}
 						}
 						
@@ -691,7 +693,7 @@ void HandMeshBuilder::buildMesh (ofPolyline &handContour, ofVec3f &handCentroid,
 							int a = starti;
 							int b = wristPointMeshIndex;
 							int c = starti + dn;
-							handMesh.addTriangle (a, b, c);
+							handMesh.addTriangle (a, b, c);				nTriangles++;
 						}
 						
 						for (int i=0; i<=5; i++){
@@ -704,12 +706,12 @@ void HandMeshBuilder::buildMesh (ofPolyline &handContour, ofVec3f &handCentroid,
 								if (j > 0){
 									c = knuckleMeshIndices[j-1];
 									d = knuckleMeshIndices[j  ];
-									handMesh.addTriangle (a, b, c);
-									handMesh.addTriangle (c, b, d);
+									handMesh.addTriangle (a, b, c);		nTriangles++;
+									handMesh.addTriangle (c, b, d);		nTriangles++;
 								}
 							} else {
-								handMesh.addTriangle (a, b, c);
-								handMesh.addTriangle (c, b, d);
+								handMesh.addTriangle (a, b, c);			nTriangles++;
+								handMesh.addTriangle (c, b, d);			nTriangles++;
 							}
 						}
 					}
@@ -718,15 +720,17 @@ void HandMeshBuilder::buildMesh (ofPolyline &handContour, ofVec3f &handCentroid,
 				}
 				
 				
-				handMesh.addTriangle (344, 343, 350);
-				handMesh.addTriangle (291, 292, 338);
-				handMesh.addTriangle (292, 345, 338);
-				handMesh.addTriangle (292, 293, 345);
-				handMesh.addTriangle (293, 294, 369);
-				handMesh.addTriangle (294, 375, 369);
-				handMesh.addTriangle (294, 295, 375);
-				handMesh.addTriangle (295, 334, 375);
+				handMesh.addTriangle (344, 343, 350);					nTriangles++;
+				handMesh.addTriangle (291, 292, 338);					nTriangles++;
+				handMesh.addTriangle (292, 345, 338);					nTriangles++;
+				handMesh.addTriangle (292, 293, 345);					nTriangles++;
+				handMesh.addTriangle (293, 294, 369);					nTriangles++;
+				handMesh.addTriangle (294, 375, 369);					nTriangles++;
+				handMesh.addTriangle (294, 295, 375);					nTriangles++;
+				handMesh.addTriangle (295, 334, 375);					nTriangles++;
                 
+				// This is NOT the right place to compute the butterfly subdivided mesh,
+				// because the subdivision should be done *after* the puppet, not before.
                 bool bComputeRefinedMesh = false;
                 if (bComputeRefinedMesh){
                     long t0 = ofGetElapsedTimeMicros();
@@ -735,6 +739,7 @@ void HandMeshBuilder::buildMesh (ofPolyline &handContour, ofVec3f &handCentroid,
                     printf("Butterfly = %d\n", (int)(t1-t0));
                 }
 				
+				// printf("nTriangles = %d\n", nTriangles);
 				
 				// Add texture coordinates to meshes;
 				// Be cognizant of half-scale stuff.
@@ -742,6 +747,7 @@ void HandMeshBuilder::buildMesh (ofPolyline &handContour, ofVec3f &handCentroid,
 				for (int i = 0; i < handMesh.getNumVertices(); i++) {
 					handMesh.addTexCoord( vertexScale*(handMesh.getVertex(i)));
 				}
+				
 
 				bCalculatedMesh = true;
 			}

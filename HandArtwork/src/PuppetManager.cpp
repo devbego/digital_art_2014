@@ -251,6 +251,17 @@ void PuppetManager::updatePuppeteer (bool bComputeAndDisplayPuppet, HandMeshBuil
 }
 
 
+/*
+ // I believe the puppet should own the butterfly subdivided mesh,
+ // because the subdivision should be done *after* the puppet, not before.
+ bool bComputeRefinedMesh = false;
+ if (bComputeRefinedMesh){
+ long t0 = ofGetElapsedTimeMicros();
+ refinedHandMesh = butterflyMeshSubdivider.subdivideBoundary(handMesh, 1.7);
+ long t1 = ofGetElapsedTimeMicros();
+ printf("Butterfly = %d\n", (int)(t1-t0));
+ }
+ */
 
 //--------------------------------------------------------------
 void PuppetManager::drawPuppet (bool bComputeAndDisplayPuppet, ofTexture &handImageTexture ){

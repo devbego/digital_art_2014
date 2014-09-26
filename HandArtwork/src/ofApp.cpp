@@ -23,7 +23,6 @@ cp -f ../../../addons/ofxLeapMotion/libs/lib/osx/libLeap.dylib "$TARGET_BUILD_DI
  TODO
  
  Refactor ofApp.cpp/h to have a CameraAndLeapRecorder.
- Refactor ofApp.cpp/h to have a PuppetManager.
  Enable saving of the various GUIs into XML files.
  Hide/reveal the cursor when we are in play/diagnostic modes.
  
