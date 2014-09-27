@@ -140,7 +140,8 @@ void ofApp::setup(){
     bShowText					= true;
     bShowLargeCamImageOnTop		= false;    // temp for quickly showing on hand video only
 	bDrawContourAnalyzer		= true;
-	bComputeAndDisplayPuppet	= true; 
+	bComputeAndDisplayPuppet	= true;
+	bFullscreen					= true;
 	bComputePixelBasedFrameDifferencing = false;
 	bDoCompositeThresholdedImageWithLeapFboPixels = true;
 	
@@ -272,7 +273,6 @@ void ofApp::setup(){
 	
 	elapsedMicros = 0;
 	elapsedMicrosInt = 0;
-	lastFrameTimeMicros = 0; 
 	
 	int morph_size = 1;
 	int morph_type = cv::MORPH_ELLIPSE;
@@ -379,20 +379,21 @@ void ofApp::setupGui() {
 	gui0->setName("GUI0");
 	gui0->addLabel("GUI0");
 	
+	// Camera controls.
+	gui0->addSlider("LibDC Camera Shutter",		32.0, 100.0,	&cameraLibdcShutterInv);
+	gui0->addSlider("LibDC Camera Brightness",	0.0, 1.0,		&cameraLibdcBrightness);
+	gui0->addSlider("LibDC Camera Gain",		0.00, 1.0,		&cameraLibdcGain);
+	gui0->addSlider("LibDC Camera Gamma",		0.00, 3.0,		&cameraLibdcGamma);
+	
 	// Display of time consumption for vision & meshing.
 	gui0->addSpacer();
 	gui0->addFPS();
 	gui0->addValuePlotter("Vision: Micros", 256, 0, 50000, &elapsedMicros);
 	gui0->addIntSlider("Vision: Micros", 0, 50000, &elapsedMicrosInt);
 	
-	// Camera controls.
-	gui0->addSlider("Shutter",			32.0, 100.0,	&cameraLibdcShutterInv);
-	gui0->addSlider("Brightness",		0.0, 1.0,		&cameraLibdcBrightness);
-	gui0->addSlider("Gain",				0.00, 1.0,		&cameraLibdcGain);
-	gui0->addSlider("Gamma",			0.00, 3.0,		&cameraLibdcGamma);
-	
 	// Display of time consumption for puppeteering.
 	gui0->addSpacer();
+	gui0->addLabelToggle("Fullscreen",					&bFullscreen);
 	gui0->addLabelToggle("Do Puppet",					&bComputeAndDisplayPuppet);
 	gui0->addValuePlotter("Puppet: Micros", 256, 0, 300000, &(myPuppetManager.elapsedPuppetMicros));
 	gui0->addIntSlider("Puppet: Micros", 0, 300000, &(myPuppetManager.elapsedPuppetMicrosInt));
@@ -498,7 +499,8 @@ int getSelection(ofxUIRadio* radio) {
 
 //--------------------------------------------------------------
 void ofApp::update(){
-	long long then = ofGetElapsedTimeMicros();
+	
+	long long computerVisionStartTime = ofGetElapsedTimeMicros();
 	
 	updateBufferedVideoPlaybackIfUsingStoredVideo();
 	updateLiveVideoIfUsingCameraSource();
@@ -520,10 +522,11 @@ void ofApp::update(){
 	applicationStateMachine();
 
 	// Update our measurement of NON-PUPPET cpu consumption:
-	long long now = ofGetElapsedTimeMicros();
-	elapsedMicros = 0.8*elapsedMicros + 0.2*(float)(now - then);
+	long long computerVisionEndTime = ofGetElapsedTimeMicros();
+	float elapsedMicrosThisFrame = (float)(computerVisionEndTime - computerVisionStartTime);
+	elapsedMicros = 0.8*elapsedMicros + 0.2*elapsedMicrosThisFrame;
 	elapsedMicrosInt = (int) elapsedMicros;
-	lastFrameTimeMicros = now;
+	
 	
 	// Update all aspects of the puppet geometry
 	///// updatePuppeteer();
@@ -668,7 +671,7 @@ void ofApp::updateComputerVision(){
 	}
 
 	extractLuminanceChannelFromSourceVideoMat(); 
-	computeFrameDifferencing();								// not done presently
+	computeFrameDifferencing();							// not used presently
 	thresholdLuminanceImage();
 	applyMorphologicalOps();
 	applyEdgeAmplification();
@@ -1020,8 +1023,8 @@ void ofApp::compositeThresholdedImageWithLeapFboPixels(){
 //--------------------------------------------------------------
 void ofApp::draw(){
 
+	ofSetFullscreen(bFullscreen);
     ofBackground(20);
-	/*gui->setPosition(20,20);*/
 	guiTabBar->setPosition(20,20);
 	
     
@@ -1185,11 +1188,23 @@ void ofApp::draw(){
 		}
 	}
 	
+	//---------------------------
 	// COMPUTE AND DISPLAY PUPPET
 	if (bComputeAndDisplayPuppet){
 
-		ofTexture &handImageTexture = (bInPlaybackMode)? (video.getTextureReference()) : (processFrameImg.getTextureReference()) ;
+		// Get the texture from the camera or the stored video, depending on the playback mode.
+		ofTexture &handImageTexture = (bInPlaybackMode)? (video.getTextureReference()) : (processFrameImg.getTextureReference());
+		ofPushMatrix();
+
+		// Position the right edge of the puppet at the right edge of the window.
+		if (bWorkAtHalfScale){
+			ofTranslate( ofGetWindowWidth() - imgW*2.0, 0, 0);
+			ofScale (2.0,2.0);
+		}
+		
+		// Draw the puppet.
 		myPuppetManager.drawPuppet(bComputeAndDisplayPuppet, handImageTexture);
+		ofPopMatrix();
 	}
 
 		
@@ -1692,7 +1707,7 @@ void ofApp::keyPressed(int key){
             calibrateFromXML(folderName);
             break;
         case 'F':
-            bUseFbo = !bUseFbo;
+            bFullscreen = !bFullscreen;
             break;
         case 'g':
 		case 'G':

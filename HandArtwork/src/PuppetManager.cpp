@@ -269,8 +269,6 @@ void PuppetManager::drawPuppet (bool bComputeAndDisplayPuppet, ofTexture &handIm
 	if (bComputeAndDisplayPuppet){
 		
 		ofPushStyle();
-		ofPushMatrix();
-		ofScale (2,2);
 		{
 			
 			if (bShowPuppetTexture){
@@ -308,7 +306,6 @@ void PuppetManager::drawPuppet (bool bComputeAndDisplayPuppet, ofTexture &handIm
 			scenes[scene]->draw();
 		}
 		
-		ofPopMatrix();
 		ofPopStyle();
 	}
 }

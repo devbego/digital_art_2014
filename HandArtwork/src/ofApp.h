@@ -175,6 +175,7 @@ class ofApp : public ofBaseApp{
 	bool	bShowOffsetByNFrames;
 	bool	bDoCompositeThresholdedImageWithLeapFboPixels;
 	bool	bComputeAndDisplayPuppet;
+	bool	bFullscreen;
 	
     int		framesBackToPlay;
 	int		playingFrame;
@@ -306,7 +307,6 @@ class ofApp : public ofBaseApp{
 	
 	float elapsedMicros;
 	int	  elapsedMicrosInt;
-	long long  lastFrameTimeMicros;
 	
 	
 	//-------------------------------
