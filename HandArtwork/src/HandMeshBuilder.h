@@ -59,7 +59,8 @@ public:
 	void	buildMesh (ofPolyline &handContour, ofVec3f &handCentroid, Handmark *hmarks);
 	int		getMeshVertexIndexOfControlPoint (int which);
 
-	bool	isHandMeshProblematic();
+	bool	isHandMeshFaulty();
+	bool	areContourAndHandmarksFaulty();
 	bool 	checkForDuplicatedVertices();
 	
 	void	addFingersToHandMesh();

@@ -108,6 +108,16 @@ void HandMeshBuilder::buildMesh (ofPolyline &handContour, ofVec3f &handCentroid,
 			createLocalCopyOfContourAndHandmarks (handContour, hmarks, bContourNeedsToBeReversed );
 			bWindingCCW = !bContourNeedsToBeReversed;
 			
+			// Catch problems with the contour and handmarks before they are passed to meshing.
+			bool contourAndHandmarksAreFaulty = areContourAndHandmarksFaulty();
+			if (contourAndHandmarksAreFaulty){
+				bCalculatedMesh = false;
+				return;
+			}
+			
+			//-------------------------------------
+			// MESHING HAPPENS HERE.
+			
 			// Clear our product, the handMesh
 			handMesh.clear();
 			handMesh.setupIndicesAuto();
@@ -124,10 +134,11 @@ void HandMeshBuilder::buildMesh (ofPolyline &handContour, ofVec3f &handCentroid,
 			
 			// Add thumb webbing to handMesh
 			addThumbWebbingToHandMesh();
-			
-			
-			bool problem = isHandMeshProblematic();
-			if (!problem){
+		
+			//-------------------------------------
+			// Catch fatal problems with the mesh before it is passed to the puppet.
+			bool meshIsFaulty = isHandMeshFaulty();
+			if (!meshIsFaulty){
 			
 				// Add texture coordinates to meshes; be cognizant of half-scale.
 				float vertexScale = (bWorkAtHalfScale) ? 2.0 : 1.0;
@@ -146,33 +157,86 @@ void HandMeshBuilder::buildMesh (ofPolyline &handContour, ofVec3f &handCentroid,
 	}
 }
 
+//--------------------------------------------------------------
+bool HandMeshBuilder::areContourAndHandmarksFaulty(){
+	// CONTOUR/HANDMARK DEGENERACY TESTER.
+	// Catch fatal problems with the contour before it is passed to the mesher.
+	// Returns TRUE if something is faulty.
+	//
+
+	// TEST 1. Are the handmark indices valid?
+	bool bHasInvalidHandmarkIndices = false;
+	for (int i=0; i<N_HANDMARKS; i++){
+		int index = myHandmarks[i].index;
+		if ((index < 0) || (index >= DESIRED_N_CONTOUR_POINTS)){
+			bHasInvalidHandmarkIndices = true;
+			return true;
+			//printf("%d: --------Problem with handmark! %d is invalid.\n", (int)ofGetElapsedTimeMillis(), i);
+		}
+	}
+	
+	// TEST 2. Are the indices stored in the Handmarks, monotonically increasing?
+	bool bHasHandmarksOutOfSequence = false;
+	int prevIndex = 0;
+	for (int i=0; i<12; i++){ // only up to 12, for now.
+		int currIndex = myHandmarks[i].index;
+		if (currIndex < prevIndex){
+			bHasHandmarksOutOfSequence = true;
+			return true;
+			//printf("%d: --------Problem with handmark order! %d is out of sequence.\n", (int)ofGetElapsedTimeMillis(), i);
+		}
+		prevIndex = currIndex;
+	}
+	
+	
+	return false;
+}
 
 //--------------------------------------------------------------
-bool HandMeshBuilder::isHandMeshProblematic(){
+bool HandMeshBuilder::isHandMeshFaulty(){
+	// MESH DEGENERACY TESTER.
+	// Catch fatal problems with the mesh before it is passed to the puppet.
+	// Returns TRUE if the mesh is faulty.
+	//
 	bool bIsProblematic = false;
 	
 	// TEST 1. Does the mesh have the right number of vertices?
 	bool bHasIncorrectNumVertices = false;
-	int nVertices = handMesh.getNumVertices();
-	int nVerticesThereShouldBe = 151;
-	if ((nVertices != nVerticesThereShouldBe) && (nVertices > 0)){
+	int numVertices = handMesh.getNumVertices();
+	int numVerticesThereShouldBe = 151;
+	if ((numVertices != numVerticesThereShouldBe) && (numVertices > 0)){
 		bHasIncorrectNumVertices = true;
-		// printf("%d: --------Problem with NumVertices: %d\n", (int)ofGetElapsedTimeMillis(), nVertices);
+		return true;
+		// printf("%d: --------Problem with numVertices: %d\n", (int)ofGetElapsedTimeMillis(), numVertices);
 	}
 	
-	// TEST 2: Check for degenerate vertex coord values, such as zeroes.
+	// TEST 2. Does the mesh have the right number of faces?
+	bool bHasIncorrectNumFaces = false;
+	int numFaces = handMesh.getUniqueFaces().size();
+	int numFacesThereShouldBe = 205;
+	if ((numFaces != numFacesThereShouldBe) && (numFaces > 0)){
+		bHasIncorrectNumFaces = true;
+		return true;
+		// printf("%d: --------Problem with numFaces: %d\n", (int)ofGetElapsedTimeMillis(), numFaces);
+	}
+	
+	// TEST 3: Check for degenerate vertex coord values, such as zeroes.
 	bool bFoundBadValues = false;
 	for (int i = 0; i < handMesh.getNumVertices(); i++) {
 		float px = handMesh.getVertex(i).x;
 		float py = handMesh.getVertex(i).y;
 		if ((px <= 0.0001) || (py <= 0.0001) || (px > imgW) || (py > imgH)){
 			bFoundBadValues = true;
+			return true;
 			// printf("%d: --------Problem with vertex %d:	%f	%f\n", (int)ofGetElapsedTimeMillis(), i, px,py);
 		}
 	}
 	
-	// TEST 3. Check for vertices that have become overlapped.
+	// TEST 4. Check for vertices that have become overlapped.
 	bool bFoundDuplicatedVertices = checkForDuplicatedVertices();
+	if (bFoundDuplicatedVertices){
+		return true;
+	}
 			
 	// Other possible tests:
 	// Are all faces oriented the correct direction?
@@ -1664,14 +1728,6 @@ void HandMeshBuilder::drawRefinedMeshWireframe(){
         refinedHandMesh.drawWireframe();
     }
 }
-
-
-//ofSetColor(255,100,100, 70);
-//handMesh.draw();
-
-
-
-
 
 
 

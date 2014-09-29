@@ -3128,6 +3128,7 @@
 					../../../addons/ofxLeapMotion/libs/lib/winvs,
 					../../../addons/ofxLibdc/libs/osx/lib,
 				);
+				MACOSX_DEPLOYMENT_TARGET = 10.8;
 				PRODUCT_NAME = "$(TARGET_NAME)Debug";
 				SDKROOT = macosx10.8;
 				USER_HEADER_SEARCH_PATHS = ../../../addons/ofxLibdc/libs/osx/include/;
@@ -3219,6 +3220,7 @@
 					../../../addons/ofxLeapMotion/libs/lib/winvs,
 					../../../addons/ofxLibdc/libs/osx/lib,
 				);
+				MACOSX_DEPLOYMENT_TARGET = 10.8;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx10.8;
 				USER_HEADER_SEARCH_PATHS = ../../../addons/ofxLibdc/libs/osx/include/;

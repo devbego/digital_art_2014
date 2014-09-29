@@ -395,8 +395,8 @@ void ofApp::setupGui() {
 	gui0->addSpacer();
 	gui0->addLabelToggle("Fullscreen",					&bFullscreen);
 	gui0->addLabelToggle("Do Puppet",					&bComputeAndDisplayPuppet);
-	gui0->addValuePlotter("Puppet: Micros", 256, 0, 300000, &(myPuppetManager.elapsedPuppetMicros));
-	gui0->addIntSlider("Puppet: Micros", 0, 300000, &(myPuppetManager.elapsedPuppetMicrosInt));
+	gui0->addValuePlotter("Puppet: Micros", 256, 0, 50000, &(myPuppetManager.elapsedPuppetMicros));
+	gui0->addIntSlider("Puppet: Micros", 0, 50000, &(myPuppetManager.elapsedPuppetMicrosInt));
 	
 	gui0->autoSizeToFitWidgets();
 	ofAddListener(gui0->newGUIEvent,this,&ofApp::guiEvent);
@@ -1162,12 +1162,16 @@ void ofApp::draw(){
 	ofPopStyle();
 	ofPopMatrix();
     
-    ofPushMatrix()  ;
-    ofScale (2,2);
-    ofTranslate(mouseX,-50);
-    //myHandMeshBuilder.drawRefinedMesh();
-    myHandMeshBuilder.drawMeshWireframe();
-    ofPopMatrix();
+	
+	bool bDrawMeshBuilderWireframe = false;
+	if (bDrawMeshBuilderWireframe){
+		ofPushMatrix()  ;
+		ofScale (2,2);
+		ofTranslate(mouseX,-50);
+		//myHandMeshBuilder.drawRefinedMesh();
+		myHandMeshBuilder.drawMeshWireframe();
+		ofPopMatrix();
+	}
 	
 	
 	//-----------------------------------
