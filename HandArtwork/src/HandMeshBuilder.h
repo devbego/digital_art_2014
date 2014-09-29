@@ -34,6 +34,9 @@ public:
 	void			informThereIsNoHandPresent();
 	ofMesh			&getMesh();
 	
+	void			buildMesh2014 (ofPolyline &handContour, ofVec3f &handCentroid, Handmark *hmarks);
+	void			drawMesh2014();
+	
 	ofMesh			handMesh;
     ofMesh          refinedHandMesh;
     ofxButterfly    butterflyMeshSubdivider;

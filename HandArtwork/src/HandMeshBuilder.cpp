@@ -72,9 +72,18 @@ ofMesh& HandMeshBuilder::getMesh(){
 }
 
 
+//============================================================
+void HandMeshBuilder::buildMesh2014 (ofPolyline &handContour, ofVec3f &handCentroid, Handmark *hmarks){
+	
+	
+}
+
+
 
 //============================================================
 void HandMeshBuilder::buildMesh (ofPolyline &handContour, ofVec3f &handCentroid, Handmark *hmarks){
+	// This function builds a mesh matching the 2013 "handmarksNew.ply",
+	// with 381 vertices and 612 (triangle) faces.
 	bool bDraw = false;
 	bCalculatedMesh = false;
 	int nTriangles = 0;

@@ -1158,7 +1158,7 @@ void HandContourAnalyzer::computePinkySideHandmark(){
 					}
 					// FWIW, this would be the intersection point:
 					// float interx = x1 + ua*(x2-x1);
-					// float intery = y1 + ua*(x2-x1);
+					// float intery = y1 + ua*(y2-y1);
 				}
 			}
 			x3 = x4;
