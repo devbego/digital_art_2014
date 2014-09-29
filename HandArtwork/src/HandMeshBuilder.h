@@ -24,9 +24,9 @@ enum HandType {
 class HandMeshBuilder {
 public:
 	
-	void			initialize();
+	void			initialize(int w, int h);
 	void			setWorkAtHalfScale(bool bwork);
-	void			buildMesh (ofPolyline &handContour, ofVec3f &handCentroid, Handmark *hmarks);
+	
 	void			loadDefaultMesh();
 	void			drawMesh();
 	void			drawMeshWireframe();
@@ -34,8 +34,7 @@ public:
 	void			informThereIsNoHandPresent();
 	ofMesh			&getMesh();
 	
-	void			buildMesh2014 (ofPolyline &handContour, ofVec3f &handCentroid, Handmark *hmarks);
-	void			drawMesh2014();
+	void			buildMesh2013 (ofPolyline &handContour, ofVec3f &handCentroid, Handmark *hmarks);
 	
 	ofMesh			handMesh;
     ofMesh          refinedHandMesh;
@@ -45,7 +44,6 @@ public:
 	Handmark		Handmarks[N_HANDMARKS];
 	int				fingerTipIndices[5];
 	
-	bool			bCalculatedMesh;
 	bool			bWorkAtHalfScale;
 	
 	void			drawJoints();
@@ -54,5 +52,38 @@ public:
 	HandType		getHandType();
 	HandType		currentHandType;
 	int				currentHandExistsFrameCount;
+	
+	//-----------------------------
+	// 2014 Mesher
+	
+	void	buildMesh (ofPolyline &handContour, ofVec3f &handCentroid, Handmark *hmarks);
+	int		getMeshVertexIndexOfControlPoint (int which);
+
+	bool	isHandMeshProblematic();
+	bool 	checkForDuplicatedVertices();
+	
+	void	addFingersToHandMesh();
+	void	addWristToHandMesh();
+	void	addPalmToHandMesh();
+	void	addThumbWebbingToHandMesh();
+	bool	bCalculatedMesh;
+	bool	bRenderIntermediate;
+	bool	bWindingCCW;
+	int		nTrianglesAccum;
+	int		verticesPerFinger;
+	int		handMeshWristVertexIndex;
+	
+	// The MeshBuilder's local copies
+	Handmark myHandmarks[N_HANDMARKS];
+	ofPolyline myContour;
+	int thumbsidePalmVertexIndices[6];
+	
+	// Utils
+	bool doesContourNeedToBeReversed (ofPolyline &handContour, Handmark *hmarks);
+	void createLocalCopyOfContourAndHandmarks (ofPolyline &handContour, Handmark *hmarks, bool bReverse);
+	int  getIndexOfClosestPointOnContour(ofPolyline& aPolyline, float qx, float qy);
+	
+	int imgW;
+	int imgH; 
 	
 };

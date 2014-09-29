@@ -24,11 +24,19 @@ public:
 		};
 		*/
 		
-		// NEW (actual)
+		/*
+		// 2013
 		int controlIndicesRaw[] = {
 			293, 367, 289,
 			325, 326, 336,
 			345, 348, 356 
+		};
+		*/
+		
+		int controlIndicesRaw[] = {
+			115, 134, 141,
+			126, 148, 150,
+			118, 123, 133
 		};
 		
 		

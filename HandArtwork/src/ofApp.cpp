@@ -140,8 +140,8 @@ void ofApp::setup(){
     bShowText					= true;
     bShowLargeCamImageOnTop		= false;    // temp for quickly showing on hand video only
 	bDrawContourAnalyzer		= true;
-	bComputeAndDisplayPuppet	= true;
-	bFullscreen					= true;
+	bComputeAndDisplayPuppet	= false;
+	bFullscreen					= false;
 	bComputePixelBasedFrameDifferencing = false;
 	bDoCompositeThresholdedImageWithLeapFboPixels = true;
 	
@@ -281,7 +281,7 @@ void ofApp::setup(){
 												cv::Point(  morph_size,       morph_size ) );
 	
 	myHandContourAnalyzer.setup(imgW, imgH);
-	myHandMeshBuilder.initialize();
+	myHandMeshBuilder.initialize(imgW, imgH);
 	myHandMeshBuilder.setWorkAtHalfScale(bWorkAtHalfScale);
 	
 	minHandInsertionPercent = 0.29;
@@ -528,8 +528,16 @@ void ofApp::update(){
 	elapsedMicrosInt = (int) elapsedMicros;
 	
 	
+	
+	/*
+	printf("%d: currentFrameNumber %d\n", (int) ofGetElapsedTimeMillis(), playingFrame);
+	if (playingFrame == 99){
+		myHandMeshBuilder.handMesh.save("roxy-99.ply");
+		printf("Saved Roxy99\n"); 
+	}
+	*/
+	
 	// Update all aspects of the puppet geometry
-	///// updatePuppeteer();
 	myPuppetManager.updatePuppeteer( bComputeAndDisplayPuppet, myHandMeshBuilder);
 
 }
@@ -1707,9 +1715,7 @@ void ofApp::keyPressed(int key){
         case 'C':
             calibrateFromXML(folderName);
             break;
-        case 'F':
-            bFullscreen = !bFullscreen;
-            break;
+
         case 'g':
 		case 'G':
 			guiTabBar->toggleVisible();
@@ -1759,9 +1765,12 @@ void ofApp::keyPressed(int key){
         case '0':
             bShowLargeCamImageOnTop = !bShowLargeCamImageOnTop;
             break;
+			
+		//case 'F':
         case 'f':
-            ofToggleFullscreen();
+            bFullscreen = !bFullscreen;
             break;
+			
         case '9':
             if(drawW == 640){
                 drawW = 1024;

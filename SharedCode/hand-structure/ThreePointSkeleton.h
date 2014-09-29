@@ -20,9 +20,15 @@ public:
 		};
 		*/
 	
-		// NEW (Actual)
+		/*
+		// 2013
 		int controlIndicesRaw[] = {
 			293, 366, 289
+		};
+		*/
+		
+		int controlIndicesRaw[] = {
+			115, 129, 141
 		};
 		
 		int parentsRaw[] = {

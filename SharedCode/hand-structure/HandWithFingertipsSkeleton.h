@@ -29,7 +29,8 @@ public:
 		};
 		*/
 		
-		// These are for the new (Generated!) hand
+		/*
+		// 2013
 		int controlIndicesRaw[] = {
 			293, 366,
 			287, 80,  100, 110,
@@ -38,6 +39,18 @@ public:
 			290, 251, 271, 281,
 			320, 2,   27,  47
 		};
+		*/
+		
+		
+		int controlIndicesRaw[] = {
+			115, 129,
+			137,  28,  34,  37,
+			139,  49,  55,  58,
+			141,  70,  76,  79,
+			143,  91,  97, 100,
+			148,   1,  10,  16
+		};
+		
 		
 		
 		int parentsRaw[] = {

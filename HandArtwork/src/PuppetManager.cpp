@@ -167,8 +167,11 @@ void PuppetManager::updatePuppeteer (bool bComputeAndDisplayPuppet, HandMeshBuil
 		if (bCalculatedMesh){
 			
 			// If so, get the mesh, and set up the puppet with it.
+			printf("%d: PuppetManager getting mesh from myHandMeshBuilder\n", (int) ofGetElapsedTimeMillis());
 			ofMesh &mesh = myHandMeshBuilder.getMesh();
+			printf("%d: PuppetManager setting up mesh in Puppet\n", (int) ofGetElapsedTimeMillis());
 			puppet.setup (mesh);
+			printf("%d: PuppetManager set it up!\n", (int) ofGetElapsedTimeMillis());
 			
 			// Provide that mesh to the various skeletons.
 			// This informs each skeleton about the baseline (untransformed) location of
@@ -220,6 +223,7 @@ void PuppetManager::updatePuppeteer (bool bComputeAndDisplayPuppet, HandMeshBuil
 			// The moment of truth: when the puppet is asked to update itself.
 			// This involves SVD with Accelerate, etc. and is very computationally expensive.
 			puppet.update();
+			printf("%d: Puppet successfully updated with new mesh\n", (int) ofGetElapsedTimeMillis());
 			
 		} else {
 			
