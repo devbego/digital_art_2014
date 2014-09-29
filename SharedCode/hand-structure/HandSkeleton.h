@@ -2,6 +2,8 @@
 
 #include "Skeleton.h"
 
+/*yo */
+
 class HandSkeleton : public Skeleton {
 public:
 	enum Label {
