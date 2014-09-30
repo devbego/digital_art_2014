@@ -172,6 +172,8 @@ class ofApp : public ofBaseApp{
     bool	bShowLargeCamImageOnTop;
 	bool	bUseRGBLeapFbo;
     bool	bShowText;
+    bool    bDrawMiniImages;
+    bool    bDrawSmallCameraView;
 	bool	bShowOffsetByNFrames;
 	bool	bDoCompositeThresholdedImageWithLeapFboPixels;
 	bool	bComputeAndDisplayPuppet;
@@ -211,6 +213,10 @@ class ofApp : public ofBaseApp{
     void drawLiveForRecording();
     void drawPlayback();
     void drawLeapWorld();
+    void drawCrosshairMouseCursor();
+    void drawDiagnosticMiniImages();
+    void drawContourAnalyzer();
+    void drawMeshBuilderWireframe();
     
     bool useCorrectedCam();
 	
@@ -223,15 +229,12 @@ class ofApp : public ofBaseApp{
 	
 	void setupGui();
 	ofxUITabBar *guiTabBar;
+    ofxUIRadio  *contourAnalyzerUnderlayRadio;
     vector<ofxUICanvas *> guis;
 	/* ofxUICanvas* gui; */
 	void guiEvent(ofxUIEventArgs &e);
 	std::string originalAppDataPath;
 	
-	
-	
-	
-	int	 whichImageToDraw;
 	
 	void updateComputerVision();
 	void extractVideoMatFromLiveVideo();
@@ -252,7 +255,9 @@ class ofApp : public ofBaseApp{
 	bool bComputePixelBasedFrameDifferencing;
 	bool bDoLaplacianEdgeDetect;
 	bool bDrawContourAnalyzer;
-	
+    bool bDrawMeshBuilderWireframe;
+    bool bDrawLeapWorld;
+    
 	ofxCvColorImage colorVideo;
 	ofxCvColorImage colorVideoHalfScale;
 	
@@ -327,7 +332,8 @@ class ofApp : public ofBaseApp{
     
 	//-------------------------------
 	// PUPPETEER!
-	PuppetManager myPuppetManager; 
+	PuppetManager myPuppetManager;
+    float puppetDisplayScale;
 	
 	
 };

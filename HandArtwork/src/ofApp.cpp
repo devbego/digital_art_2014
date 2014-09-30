@@ -3,43 +3,51 @@
 /*
 // OPENFRAMEWORKS + LEAP MOTION SDK 2.0 HAND SKELETON DEMO 
 // By Golan Levin (@golan), http://github.com/golanlevin
-// Uses ofxLeapMotion addon by Theo Watson, with assistance from Dan Wilcox
-// Supported in part by the Frank-Ratchye STUDIO for Creative Inquiry at CMU
+
+ // Supported in part by the Frank-Ratchye STUDIO for Creative Inquiry at CMU
+ // and a commission from the Cinekid Festival, Amsterdam
+ // Concept and development: Golan Levin, Chris Sugrue, Kyle McDonald
+ // Software assistance: Dan Wilcox, Bryce Summers, Erica Lazrus
+ //
+ // Uses ofxCv, ofxLibdc, ofxTiming by Kyle McDonald
+ // Uses ofxButterfly addon by Bryce Summers, with assistance from Kyle McDonald
+ // Uses ofxLeapMotion addon by Theo Watson, with assistance from Dan Wilcox
+ // Uses ofxPuppet addon by Zach Lieberman, based on RigidAsPossible meshing by ...
+ // Assistance with Leap-to-camera calibration: Elliot Woods, Simon Sarginson
+ // Assistance with Accelerate Framework: Adam Carlucci
+ 
 */
 
 
-
-/* Note on OS X, you must have this in the Run Script Build Phase of your project. 
-where the first path ../../../addons/ofxLeapMotion/ is the path to the ofxLeapMotion addon. 
+//=============================================================================
+/*  IMPORTANT NOTE FOR COMPILING WITH LEAP on OSX:
+    In OS X, you must have this in the Run Script Build Phase of your project.
+    where the first path ../../../addons/ofxLeapMotion/ is the path to the ofxLeapMotion addon.
 
 cp -f ../../../addons/ofxLeapMotion/libs/lib/osx/libLeap.dylib "$TARGET_BUILD_DIR/$PRODUCT_NAME.app/Contents/MacOS/libLeap.dylib"; install_name_tool -change ./libLeap.dylib @executable_path/libLeap.dylib "$TARGET_BUILD_DIR/$PRODUCT_NAME.app/Contents/MacOS/$PRODUCT_NAME";
 
-   If you don't have this you'll see an error in the console: dyld: Library not loaded: @loader_path/libLeap.dylib
+    If you don't have this you'll see an error like this in the console:
+    dyld: Library not loaded: @loader_path/libLeap.dylib
 */
 
 
+//=============================================================================
 /*
- 
  TODO
  
- Refactor ofApp.cpp/h to have a CameraAndLeapRecorder.
+
  Enable saving of the various GUIs into XML files.
  Hide/reveal the cursor when we are in play/diagnostic modes.
+  Refactor ofApp.cpp/h to have a CameraAndLeapRecorder.
  
  Scenes: 
  -- completely disable display of sub-GUI
  -- ensure display of Puppet is flush to the right edge of the canvas.
  -- fix "North" scene to correct for 90 rotation. 
- -- In updatePuppeteer(), when bCalculatedMesh is false but a hand is still present, we should show the undistorted video hand instead.
- 
- Meshing: 
- -- Count triangles. Deal with missing triangles. (e.g. frame 21)
- 
- 
- composite laplacian edges.
- 
- redesign (simplified) mesh for hands.
+ -- In updatePuppeteer(), when bCalculatedMesh is false but a hand is 
+     still present, we should show the undistorted video hand instead.
 
+ composite laplacian edges.
  use ROI
 
  Improve detection of HANDMARK_PINKY_SIDE in HandContourAnalyzer::computePinkySide() with local curvature search. 
@@ -47,7 +55,7 @@ cp -f ../../../addons/ofxLeapMotion/libs/lib/osx/libLeap.dylib "$TARGET_BUILD_DI
  
 
 deal with dark skin thresholding
- == base on map from liz to miranda
+ == base on ofMap from the colors of liz to miranda's hands
  
  White out the wrist before contour detection.
 
@@ -75,8 +83,7 @@ deal with dark skin thresholding
  -- Collect those points, somehow add them to the contour
  
  Use direction-extremality * fingernailfit to compute tip quality
- make it work with left hands
- 
+
  */
 
 
@@ -102,13 +109,12 @@ void ofApp::setup(){
 	imgW			= cameraWidth;
     imgH			= cameraHeight;
 	
-	bWorkAtHalfScale = true; // HAS to be true, cuz something no longer works otherwise.
+	bWorkAtHalfScale = true; // HAS to be true, 'cuz something no longer works elsewise.
 	if (bWorkAtHalfScale){
 		imgW		= cameraWidth/2;
 		imgH		= cameraHeight/2;
 	}
 	
-    
     initializeCamera();
 	initializeCameraCalibration();
 	
@@ -137,7 +143,10 @@ void ofApp::setup(){
     bRecordingForCalibration	= false;
     bRecordThisCalibFrame		= false;
     bUseCorrectedCamera			= true;
+    bDrawLeapWorld              = true;
     bShowText					= true;
+    bDrawMiniImages             = true;
+    bDrawSmallCameraView        = true;
     bShowLargeCamImageOnTop		= false;    // temp for quickly showing on hand video only
 	bDrawContourAnalyzer		= true;
 	bComputeAndDisplayPuppet	= false;
@@ -147,7 +156,7 @@ void ofApp::setup(){
 	
 	
 	
-	//--------------- Setup leap
+	//--------------- Setup LEAP
 	leap.open();
     leapVisualizer.setup();
 	leapVisualizer.enableVoronoiRendering (imgW, imgH, bWorkAtHalfScale);
@@ -251,9 +260,6 @@ void ofApp::setup(){
 	//------------------------
 	
 	
-	whichImageToDraw = 5;
-	
-	
 	// Get us ready to demo in a hurry
 	string filePathCalib = "sep15_CALIBRATION"; //"calib_chris_corrected_4";
 	calibrateFromXML(filePathCalib);
@@ -292,6 +298,7 @@ void ofApp::setup(){
 	
 	myPuppetManager.setupPuppeteer (myHandMeshBuilder);
 	myPuppetManager.setupPuppetGui ();
+    puppetDisplayScale = 1.25;
 	
 	// must be last
 	setupGui();
@@ -403,6 +410,7 @@ void ofApp::setupGui() {
 	gui0->addSpacer();
 	gui0->addLabelToggle("Fullscreen",					&bFullscreen);
 	gui0->addLabelToggle("Do Puppet",					&bComputeAndDisplayPuppet);
+    
 	gui0->addValuePlotter("Puppet: Micros", 256, 0, 50000, &(myPuppetManager.elapsedPuppetMicros));
 	gui0->addIntSlider("Puppet: Micros", 0, 50000, &(myPuppetManager.elapsedPuppetMicrosInt));
 	
@@ -410,6 +418,7 @@ void ofApp::setupGui() {
 	ofAddListener(gui0->newGUIEvent,this,&ofApp::guiEvent);
 	guiTabBar->addCanvas(gui0);
 	guis.push_back(gui0);
+
 	
 	//------------------------------------
 	ofxUICanvas* gui1 = new ofxUICanvas();
@@ -475,12 +484,45 @@ void ofApp::setupGui() {
 	gui3->addSlider("zHandExtent",						0.00, 2.00, &zHandExtent );
 	gui3->addSlider("maxAllowableExtentZ",				0.00, 2.00, &maxAllowableExtentZ );
 
-	
 	gui3->autoSizeToFitWidgets();
 	ofAddListener(gui3->newGUIEvent,this,&ofApp::guiEvent);
 	guiTabBar->addCanvas(gui3);
 	guis.push_back(gui3);
-	
+    
+    //------------------------------------
+    // GUI for WHAT TO DRAW & HOW TO DRAW IT
+    ofxUICanvas* gui4 = new ofxUICanvas();
+    gui4->setName("GUI4");
+    gui4->addLabel("GUI4");
+    
+    gui4->addSlider("puppetDisplayScale", 0.5, 2.0,     &puppetDisplayScale,            false, true);
+    gui4->addLabelToggle("bDrawLeapWorld",              &bDrawLeapWorld,                false, true);
+    gui4->addLabelToggle("bDrawSmallCameraView",        &bDrawSmallCameraView,          false, true);
+    gui4->addLabelToggle("bDrawMeshBuilderWireframe",   &bDrawMeshBuilderWireframe,     false, true);
+    gui4->addLabelToggle("bDrawMiniImages",             &bDrawMiniImages,               false, true);
+    gui4->addLabelToggle("bShowText",                   &bShowText,                     false, true);
+    
+    gui4->addSpacer();
+    gui4->addLabelToggle("bDrawContourAnalyzer",        &bDrawContourAnalyzer,          false, true);
+
+    vector<string> vnames;
+    vnames.push_back("grayMat");
+    vnames.push_back("thresholded");
+    vnames.push_back("adaptiveThreshImg");
+    vnames.push_back("thresholdedFinal");
+    vnames.push_back("edgesMat1");
+    vnames.push_back("leapDiagnosticFboMat");
+    vnames.push_back("coloredBinarizedImg");
+    vnames.push_back("processFrameImg");
+    gui4->addLabel("Contour Analyzer Underlay", OFX_UI_FONT_SMALL);
+    contourAnalyzerUnderlayRadio = gui4->addRadio("VR", vnames, OFX_UI_ORIENTATION_VERTICAL);
+    contourAnalyzerUnderlayRadio->activateToggle("grayMat");
+
+    //----
+    gui4->autoSizeToFitWidgets();
+    ofAddListener(gui4->newGUIEvent,this,&ofApp::guiEvent);
+    guiTabBar->addCanvas(gui4);
+    guis.push_back(gui4);
 
 }
 
@@ -523,7 +565,7 @@ void ofApp::update(){
 	renderDiagnosticLeapFboAndExtractItsPixelData();
 
 	updateComputerVision();
-	updateHandMesh();
+    updateHandMesh();
 	updateLeapHistoryRecorder();
 	
 	// Update the app's main state machine, including feedback to the user.
@@ -534,19 +576,11 @@ void ofApp::update(){
 	float elapsedMicrosThisFrame = (float)(computerVisionEndTime - computerVisionStartTime);
 	elapsedMicros = 0.8*elapsedMicros + 0.2*elapsedMicrosThisFrame;
 	elapsedMicrosInt = (int) elapsedMicros;
-	
-	
-	
-	/*
-	printf("%d: currentFrameNumber %d\n", (int) ofGetElapsedTimeMillis(), playingFrame);
-	if (playingFrame == 99){
-		myHandMeshBuilder.handMesh.save("roxy-99.ply");
-		printf("Saved Roxy99\n"); 
-	}
-	*/
+
 	
 	// Update all aspects of the puppet geometry
-	myPuppetManager.updatePuppeteer( bComputeAndDisplayPuppet, myHandMeshBuilder);
+    myPuppetManager.updatePuppeteer( bComputeAndDisplayPuppet, myHandMeshBuilder);
+    
 
 }
 
@@ -928,6 +962,7 @@ void ofApp::renderDiagnosticLeapFboAndExtractItsPixelData(){
 	// This is for the purposes of computer vision -- not display:
 	// Render the Leap into leapDiagnosticFbo using diagnostic colors:
 	// Colors which encode the orientation and identity of the fingers, etc.
+    ofPushStyle();
 	{
 		leapDiagnosticFbo.begin();
 		ofClear(0,0,0,0);
@@ -1006,6 +1041,7 @@ void ofApp::renderDiagnosticLeapFboAndExtractItsPixelData(){
 		glDisable(GL_DEPTH_TEST);
 		leapDiagnosticFbo.end();
 	}
+    ofPopStyle();
 }
 
 //--------------------------------------------------------------
@@ -1033,205 +1069,215 @@ void ofApp::compositeThresholdedImageWithLeapFboPixels(){
 
 
 
-
-
-
 //--------------------------------------------------------------
 void ofApp::draw(){
 
 	ofSetFullscreen(bFullscreen);
     ofBackground(20);
 	guiTabBar->setPosition(20,20);
-	
     
-    if (!bInPlaybackMode){
-        drawLiveForRecording();
-    } else {
-        drawPlayback();
-        
-        // draw mouse cursor for calibration input
-        if(bInPlaybackMode && bInputMousePoints){
-            ofPushStyle();
-            ofNoFill();
-            ofSetColor(0,255,0);
-            ofEllipse(mouseX, mouseY-20, 16, 16);
-            ofLine(mouseX,mouseY,mouseX,mouseY-12);
-            ofLine(mouseX,mouseY-28,mouseX,mouseY-40);
-            ofLine(mouseX-8,mouseY-20,mouseX-20,mouseY-20);
-            ofLine(mouseX+8,mouseY-20,mouseX+20,mouseY-20);
-            ofPopStyle();
-        }
+    if (bDrawLeapWorld){
+        drawLeapWorld();
     }
 	
-	
+    if (bDrawSmallCameraView){
+        if (!bInPlaybackMode){
+            drawLiveForRecording();
+        } else {
+            drawPlayback();
+            
+            // draw mouse cursor for calibration input
+            if(bInPlaybackMode && bInputMousePoints){
+                drawCrosshairMouseCursor();
+            }
+        }
+    }
+    
+    if (bDrawMeshBuilderWireframe){
+        drawMeshBuilderWireframe();
+    }
 	
     if (bShowText){
        drawText();
+    }
+    
+    if (bDrawMiniImages) {
+        drawDiagnosticMiniImages();
+    }
+    
+    if (bDrawContourAnalyzer){
+        drawContourAnalyzer();
     }
     
     if (bShowLargeCamImageOnTop){
         ofSetColor(255);
         processFrameImg.draw(0,0,1024,768);
     }
-	
-	//ofSetColor(255);
-	//drawMat(leapFboMat, mouseX, mouseY, 320,240);
-	
-	bool bDrawMiniImages = true;
-	if (bDrawMiniImages) {
-		
-		ofPushMatrix();
-		float miniScale = 0.15;
-		ofTranslate(0, ofGetHeight() - (miniScale * imgH));
-		ofScale(miniScale, miniScale);
-		
-		int xItem = 0;
-		ofSetColor(ofColor::white);
-		drawMat(grayMat,				imgW * xItem, 0); xItem++;
-		drawMat(thresholded,			imgW * xItem, 0); xItem++;
-		drawMat(adaptiveThreshImg,		imgW * xItem, 0); xItem++;
-		drawMat(thresholdedFinal,		imgW * xItem, 0); xItem++;
-		drawMat(edgesMat1,				imgW * xItem, 0); xItem++;
-		drawMat(leapDiagnosticFboMat,	imgW * xItem, 0); xItem++;
-		drawMat(coloredBinarizedImg,	imgW * xItem, 0); xItem++;
-		
-		ofSetColor(ofColor::orange);
-		for (int i=0; i<6; i++){
-			ofDrawBitmapString( ofToString(i+1), imgW*i +5, 15/miniScale);
-		}
-		
-		ofPopMatrix();
-	}
-	
-	
+
+    
 
 	//-----------------------------------
-	float sca = (bShowAnalysisBig) ? 2.0 : 1.0;
-	float insetX = (ofGetWidth() - sca*imgW);
-	float insetY = (ofGetHeight()- sca*imgH);
-	ofPushMatrix();
-	ofPushStyle();
-	{
-		ofTranslate (insetX, insetY);
-		ofScale(sca, sca);
-		
-		// Draw the contour analyzer and associated CV images.
-		if (bDrawContourAnalyzer){
-			ofSetColor(ofColor::white);
-			switch(whichImageToDraw){
-				default:
-				case 1:		drawMat(grayMat,				0,0, imgW,imgH);	break;
-				case 2:		drawMat(thresholded,			0,0, imgW,imgH);	break;
-				case 3:		drawMat(adaptiveThreshImg,		0,0, imgW,imgH);	break;
-				case 4:		drawMat(thresholdedFinal,		0,0, imgW,imgH);	break;
-				case 5:		drawMat(edgesMat1,				0,0, imgW,imgH);	break;
-				case 6:		drawMat(leapDiagnosticFboMat,	0,0, imgW,imgH);	break;
-				case 7:		drawMat(coloredBinarizedImg,	0,0, imgW,imgH);	break;
-				case 8:		if(bInPlaybackMode ){
-								video.draw(0, 0, imgW,imgH);
-							} else {
-								processFrameImg.draw(0,0,imgW,imgH);
-							}
-							break;
-			}
-			myHandContourAnalyzer.draw();
-		}
-		
-		/*
-		// Draw the actual puppet mesh.
-		ofPushStyle();
-		{
-			// Bind the texture
-			if(bInPlaybackMode ){
-				video.getTextureReference().bind();
-			} else {
-				processFrameImg.getTextureReference().bind();
-			}
-			
-			// DRAW THE MESH
-			myHandMeshBuilder.drawMesh();
-			//ofSetColor(ofColor::white);
-			//puppet.drawFaces();
-			
-			// Unbind the texture
-			if(bInPlaybackMode ){
-				video.getTextureReference().unbind();
-			} else {
-				processFrameImg.getTextureReference().unbind();
-			}
-			
-			// DRAW THE MESH WIREFRAME
-			// myHandMeshBuilder.drawMeshWireframe();
-		}
-		ofPopStyle();
-		*/
+	
+	
+    
+    
+    
 
-	}
-	ofPopStyle();
-	ofPopMatrix();
     
 	
-	bool bDrawMeshBuilderWireframe = false;
-	if (bDrawMeshBuilderWireframe){
-		ofPushMatrix()  ;
-		ofScale (2,2);
-		ofTranslate(mouseX,-50);
-		//myHandMeshBuilder.drawRefinedMesh();
-		myHandMeshBuilder.drawMeshWireframe();
-		ofPopMatrix();
-	}
 	
-	
-	//-----------------------------------
-	bool bDrawMouseOrientationProbe = false;
-	if (bDrawMouseOrientationProbe){
-		int px = mouseX - insetX;
-		int py = mouseY - insetY;
-		if ((px > 0) && (px < imgW) &&
-			(py > 0) && (py < imgH)){
-			
-			int index1 = py * imgW + px;
-			int index3 = index1 * 3;
-			
-			unsigned char *pixels = leapDiagnosticFboMat.data;
-			float pr = (float) pixels[index3+0];
-			float pg = (float) pixels[index3+1];
-			float pb = (float) pixels[index3+2];
-			
-			float orientation = leapVisualizer.getDiagnosticOrientationFromColor(pr,pg,pb);
-			
-			float angX = 60.0 * cos(orientation);
-			float angY = 60.0 * sin(orientation);
-			
-			ofSetColor(255);
-			ofLine (mouseX, mouseY, mouseX+angX, mouseY+angY);
-			ofDrawBitmapString( ofToString( RAD_TO_DEG*orientation), mouseX, mouseY-10);
-		}
-	}
+
 	
 	//---------------------------
 	// COMPUTE AND DISPLAY PUPPET
 	if (bComputeAndDisplayPuppet){
 
-		// Get the texture from the camera or the stored video, depending on the playback mode.
-		ofTexture &handImageTexture = (bInPlaybackMode)? (video.getTextureReference()) : (processFrameImg.getTextureReference());
+        ofPushStyle();
 		ofPushMatrix();
-
+        
+        // Get the texture from the camera or the stored video, depending on the playback mode.
+        ofTexture &handImageTexture = (bInPlaybackMode) ?
+            (video.getTextureReference()) :
+            (processFrameImg.getTextureReference());
+        
 		// Position the right edge of the puppet at the right edge of the window.
-		if (bWorkAtHalfScale){
-			ofTranslate( ofGetWindowWidth() - imgW*2.0, 0, 0);
-			ofScale (2.0,2.0);
-		}
+        // We also scale up the puppet image to the optimal display size here.
+        float renderScale = puppetDisplayScale * ((bWorkAtHalfScale) ? 2 : 1);
+        float puppetOffsetX = ofGetWindowWidth() - imgW*renderScale;
+        float puppetOffsetY = ofGetWindowHeight()/2.0 - imgH*renderScale/2.0;
+        ofTranslate( puppetOffsetX, puppetOffsetY, 0);
+        ofScale (renderScale,renderScale);
 		
 		// Draw the puppet.
 		myPuppetManager.drawPuppet(bComputeAndDisplayPuppet, handImageTexture);
 		ofPopMatrix();
+        ofPopStyle();
 	}
 
 		
 }
 
 
+
+
+//--------------------------------------------------------------
+void ofApp::drawCrosshairMouseCursor(){
+    ofPushStyle();
+    ofNoFill();
+    ofSetColor(0,255,0);
+    ofEllipse(mouseX, mouseY-20, 16, 16);
+    ofLine(mouseX,mouseY,mouseX,mouseY-12);
+    ofLine(mouseX,mouseY-28,mouseX,mouseY-40);
+    ofLine(mouseX-8,mouseY-20,mouseX-20,mouseY-20);
+    ofLine(mouseX+8,mouseY-20,mouseX+20,mouseY-20);
+    ofPopStyle();
+}
+
+
+//--------------------------------------------------------------
+void ofApp::drawDiagnosticMiniImages(){
+    
+    ofPushMatrix();
+    float miniScale = 0.15;
+    ofTranslate(0, ofGetHeight() - (miniScale * imgH));
+    ofScale(miniScale, miniScale);
+    
+    int xItem = 0;
+    ofSetColor(ofColor::white);
+    drawMat(grayMat,				imgW * xItem, 0); xItem++;
+    drawMat(thresholded,			imgW * xItem, 0); xItem++;
+    drawMat(adaptiveThreshImg,		imgW * xItem, 0); xItem++;
+    drawMat(thresholdedFinal,		imgW * xItem, 0); xItem++;
+    drawMat(edgesMat1,				imgW * xItem, 0); xItem++;
+    drawMat(leapDiagnosticFboMat,	imgW * xItem, 0); xItem++;
+    drawMat(coloredBinarizedImg,	imgW * xItem, 0); xItem++;
+    
+    ofSetColor(ofColor::orange);
+    for (int i=0; i<6; i++){
+        ofDrawBitmapString( ofToString(i+1), imgW*i +5, 15/miniScale);
+    }
+    
+    ofPopMatrix();
+}
+
+
+//--------------------------------------------------------------
+void ofApp::drawContourAnalyzer(){
+    
+    // Draw the contour analyzer and associated CV images.
+
+    float sca = (bShowAnalysisBig) ? 2.0 : 1.0;
+    float insetX = (ofGetWidth() - sca*imgW);
+    float insetY = (ofGetHeight()- sca*imgH);
+    
+    ofPushMatrix();
+    ofPushStyle();
+    ofTranslate (insetX, insetY);
+    ofScale (sca, sca);
+    
+    int whichCAU = getSelection (contourAnalyzerUnderlayRadio);
+    
+    ofSetColor(127);
+    switch (whichCAU){
+        default:
+        case 0:		drawMat(grayMat,				0,0, imgW,imgH);	break;
+        case 1:		drawMat(thresholded,			0,0, imgW,imgH);	break;
+        case 2:		drawMat(adaptiveThreshImg,		0,0, imgW,imgH);	break;
+        case 3:		drawMat(thresholdedFinal,		0,0, imgW,imgH);	break;
+        case 4:		drawMat(edgesMat1,				0,0, imgW,imgH);	break;
+        case 5:		drawMat(leapDiagnosticFboMat,	0,0, imgW,imgH);	break;
+        case 6:		drawMat(coloredBinarizedImg,	0,0, imgW,imgH);	break;
+        case 7:		if(bInPlaybackMode ){
+                        video.draw(0, 0, imgW,imgH);
+                    } else {
+                        processFrameImg.draw(0,0,imgW,imgH);
+                    }
+                    break;
+    }
+    
+    myHandContourAnalyzer.draw();
+    
+   
+    //-----------------------------------
+    bool bDrawMouseOrientationProbe = false;
+    if (bDrawMouseOrientationProbe){
+        int px = mouseX - insetX;
+        int py = mouseY - insetY;
+        if ((px > 0) && (px < imgW) &&
+            (py > 0) && (py < imgH)){
+
+            int index1 = py * imgW + px;
+            int index3 = index1 * 3;
+
+            unsigned char *pixels = leapDiagnosticFboMat.data;
+            float pr = (float) pixels[index3+0];
+            float pg = (float) pixels[index3+1];
+            float pb = (float) pixels[index3+2];
+
+            float orientation = leapVisualizer.getDiagnosticOrientationFromColor(pr,pg,pb);
+
+            float angX = 60.0 * cos(orientation);
+            float angY = 60.0 * sin(orientation);
+
+            ofSetColor(255);
+            ofLine (mouseX, mouseY, mouseX+angX, mouseY+angY);
+            ofDrawBitmapString( ofToString( RAD_TO_DEG*orientation), mouseX, mouseY-10);
+        }
+    }
+    
+    ofPopStyle();
+    ofPopMatrix();
+}
+
+//--------------------------------------------------------------
+void ofApp::drawMeshBuilderWireframe(){
+    
+    ofPushMatrix();
+    ofTranslate(drawW, 0);
+    //myHandMeshBuilder.drawRefinedMesh();
+    myHandMeshBuilder.drawMeshWireframe();
+    ofPopMatrix();
+}
 
 //--------------------------------------------------------------
 void ofApp::applicationStateMachine(){
@@ -1349,15 +1395,10 @@ void ofApp::drawLiveForRecording(){
 	#else
 		processFrameImg.draw(drawW,0,drawW,drawH);
 	#endif
-    
-    // Draw the Leap CGI visualization over top.
-    drawLeapWorld();
 }
 
 //--------------------------------------------------------------
 void ofApp::drawPlayback(){
-    
-    drawLeapWorld();
     
     // if calibrated and want to see view from projector
     if (leapToCameraCalibrator.calibrated && bShowCalibPoints && bUseVirtualProjector){
@@ -1372,7 +1413,7 @@ void ofApp::drawPlayback(){
         ofSetColor(255);
         video.draw(drawW, 0,drawW,drawH);
         
-        if(bInputMousePoints){
+        if (bInputMousePoints){
             indexRecorder.drawPointHistory(video.getCurrentFrameID() );
         }
 
@@ -1382,11 +1423,12 @@ void ofApp::drawPlayback(){
 
 //--------------------------------------------------------------
 void ofApp::drawLeapWorld(){
+    ofPushStyle();
     
     // draw video underneath calibration to see alignment
     if (leapToCameraCalibrator.calibrated && bUseVirtualProjector){
         ofSetColor(255);
-        if(bInPlaybackMode ){
+        if (bInPlaybackMode){
             video.draw(0, 0, drawW,drawH);
         } else{
             #ifdef _USE_LIBDC_GRABBER
@@ -1497,6 +1539,7 @@ void ofApp::drawLeapWorld(){
 	}
 	ofPopMatrix();
 
+    ofPopStyle();
 }
 
 //--------------------------------------------------------------
@@ -1734,7 +1777,7 @@ void ofApp::keyPressed(int key){
 			myPuppetManager.showPuppetGuis = !(myPuppetManager.showPuppetGuis);
 			break;
         case 'l':
-            if(bInPlaybackMode) bInPlaybackMode = false;
+            bInPlaybackMode = !bInPlaybackMode;
             break;
         case 'm':
             bInputMousePoints = !bInputMousePoints;
@@ -1782,28 +1825,6 @@ void ofApp::keyPressed(int key){
         case 'f':
             bFullscreen = !bFullscreen;
             break;
-			
-        case '9':
-            if(drawW == 640){
-                drawW = 1024;
-                drawH = 768;
-                bShowText = false;
-                
-            } else {
-                drawW = 640;
-                drawH = 480;
-                bShowText = true;
-            }
-            break;
-		
-		case '!':	whichImageToDraw = 1; break;
-		case '@':	whichImageToDraw = 2; break;
-		case '#':	whichImageToDraw = 3; break;
-		case '$':	whichImageToDraw = 4; break;
-		case '%':	whichImageToDraw = 5; break;
-		case '^':	whichImageToDraw = 6; break;
-		case '&':	whichImageToDraw = 7; break;
-		case '*':	whichImageToDraw = 8; break;
 		
 		case 'o':
             bShowOffsetByNFrames= !bShowOffsetByNFrames;

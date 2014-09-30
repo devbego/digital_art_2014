@@ -617,6 +617,7 @@ void LeapVisualizer::drawVoronoiFrame (ofxLeapMotion & leap){
 
 //--------------------------------------------------------------
 void LeapVisualizer::drawFrame (ofxLeapMotion & leap){
+    ofPushStyle();
 	// updateHandPointVectors();
 	
 	// If hand(s) exist in the frame,
@@ -634,6 +635,7 @@ void LeapVisualizer::drawFrame (ofxLeapMotion & leap){
 			drawHand (hand,leap);
 		}
 	}
+    ofPopStyle();
 }
 
 //--------------------------------------------------------------

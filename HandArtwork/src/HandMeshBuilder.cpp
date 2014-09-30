@@ -23,7 +23,7 @@ void HandMeshBuilder::initialize(int w, int h){
 	fingerTipIndices[4] = HANDMARK_POINTER_TIP;
 	
 	informThereIsNoHandPresent();
-	bWorkAtHalfScale = true; // most likely
+	bWorkAtHalfScale = true; // almost certainly
 }
 
 //============================================================
@@ -458,9 +458,6 @@ void HandMeshBuilder::addPalmToHandMesh(){
 	int NC = 4;
 	float x1,x2,x3,x4;
 	float y1,y2,y3,y4;
-	
-	ofSetColor(0,255,0);
-	ofNoFill();
 	
 	int vertexStartIndex = handMesh.getNumVertices();
 	thumbsidePalmVertexIndices[0] = vertexStartIndex - 1;
