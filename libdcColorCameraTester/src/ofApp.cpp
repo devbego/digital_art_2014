@@ -128,7 +128,7 @@ void ofApp::update(){
 			int then = ofGetElapsedTimeMicros();
 			myCalibration.undistort(toCv(currFrame), toCv(undistortedFrame), INTER_LINEAR); // INTER_NEAREST, INTER_CUBIC
 			int now = ofGetElapsedTimeMicros();
-			printf("Elapsed = %d\n", (now-then));
+			// printf("Elapsed = %d\n", (now-then));
 			undistortedFrame.update();
 		}
 	}

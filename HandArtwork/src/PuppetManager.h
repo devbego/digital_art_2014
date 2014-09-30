@@ -63,6 +63,9 @@ public:
 	ofxPuppet puppet;
 	void setSkeleton(Skeleton* skeleton);
 	vector<Scene*> scenes;
+    
+    ofxButterfly    butterflySubdivider;
+    ofMesh          refinedMesh;
 	
 	PalmSkeleton		palmSkeleton, immutablePalmSkeleton;
 	HandSkeleton		handSkeleton, immutableHandSkeleton;

@@ -41,6 +41,28 @@ void PuppetManager::setupPuppeteer (HandMeshBuilder &myHandMeshBuilder){
 	// Set up the puppet.
 	ofMesh &mesh = myHandMeshBuilder.getMesh();
 	puppet.setup (mesh);
+    
+    // Cache the topology subdivision.
+    butterflySubdivider.topology_start(mesh);
+    butterflySubdivider.topology_subdivide_boundary();
+    butterflySubdivider.topology_subdivide_boundary();
+    refinedMesh = butterflySubdivider.topology_end();
+    
+    // Add texture coordinates to meshes; be cognizant of half-scale.
+    float vertexScale = 2.0; // now the case
+    
+    for (int i = 0; i < mesh.getNumVertices(); i++) {
+        
+        ofVec2f handMeshVertex;
+        handMeshVertex.x =  (refinedMesh.getVertex(i).y);// + 200;
+        handMeshVertex.y =  /*2**/(/*-300*/ + 768 - refinedMesh.getVertex(i).x);//768/2 -
+        refinedMesh.addTexCoord( handMeshVertex );
+        
+        // you would think this would work, but sideways camera
+        //refinedMesh.addTexCoord( vertexScale*(refinedMesh.getVertex(i)));
+    }
+
+    
 	
 	//--------------------
 	// Set up all of the skeletons.
@@ -277,12 +299,39 @@ void PuppetManager::drawPuppet (bool bComputeAndDisplayPuppet, ofTexture &handIm
 			
 			if (bShowPuppetTexture){
 				// Draw the main puppet texture (the image of the user's hand)
+                
+                // This works for non subdivided meshes.
+                
+                
+                // Working but pre-subdiviing
 				handImageTexture.bind();
 				
 				ofSetColor(255);
-				puppet.drawFaces();
+				puppet.drawFaces(); // original
 				
 				handImageTexture.unbind();
+                
+                
+                /*
+                ofMesh texMesh = puppet.getOriginalMesh();
+                int len = texMesh.getNumTexCoords();
+                for (int i = 0; i < len; i++)
+                {
+                    
+                    //ofVec2f handMeshVertex = texMesh.getTexCoord(i);
+                    //refinedMesh.setTexCoord(i, handMeshVertex);
+                }
+                 */
+                
+                
+                /*
+                handImageTexture.bind();
+                ofSetColor(255);
+                refinedMesh.drawFaces();
+                handImageTexture.unbind();
+                */
+                
+                
 			}
 			
 			if (bShowPuppetWireframe) {

@@ -32,6 +32,7 @@ void HandMeshBuilder::loadDefaultMesh(){
 	for (int i = 0; i < handMesh.getNumVertices(); i++) {
 		// handMesh.addTexCoord(handMesh.getVertex(i));
 		
+        // This is important
 		ofVec2f handMeshVertex;
 		handMeshVertex.x =  handMesh.getVertex(i).y;
 		handMeshVertex.y =  768 - handMesh.getVertex(i).x;

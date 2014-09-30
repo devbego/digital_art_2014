@@ -308,21 +308,29 @@ void ofApp::initializeCamera(){
 		// For the ofxLibdc::PointGrey cameraLibdc;
 		cout << "libdc cameras found: " << cameraLibdc.getCameraCount() << endl;
 		
+        ofSetVerticalSync(false);
 		cameraLibdc.setImageType(OF_IMAGE_COLOR);
 		cameraLibdc.setSize (cameraWidth, cameraHeight);
-		//cameraLibdc.setBayerMode(DC1394_COLOR_FILTER_GRBG); // why turns camera video grayscale???
-	
-		cameraLibdcShutterInv = 31.0;
+        cameraLibdc.setImageType(OF_IMAGE_COLOR);
+        cameraLibdc.setBayerMode(DC1394_COLOR_FILTER_GRBG); // why turns camera video grayscale???
+    
+        cameraLibdc.setBlocking(true);
+        cameraLibdc.setFrameRate(30);
+    
+        cameraLibdc.setExposure(1.0);
+        cameraLibdc.setup();
+    
+		cameraLibdcShutterInv = 40.0;
 		cameraLibdcBrightness = 0;
 		cameraLibdcGain = 0.0;
 		cameraLibdcGamma = 1.0;
-	
-		cameraLibdc.setup();
+    
+        cameraLibdc.setBrightness(cameraLibdcBrightness);
+        cameraLibdc.setGain(cameraLibdcGain);
+        cameraLibdc.setGammaAbs(cameraLibdcGamma);
 		cameraLibdc.setShutterAbs(1.0 / cameraLibdcShutterInv);
-		cameraLibdc.setBrightness(cameraLibdcBrightness);
-		cameraLibdc.setGain(cameraLibdcGain);
-		cameraLibdc.setGammaAbs(cameraLibdcGamma);
-		//cameraLibdc.setBlocking(true);
+		
+		
 	
 	#else
 		cameraVidGrabber.setVerbose(true);
