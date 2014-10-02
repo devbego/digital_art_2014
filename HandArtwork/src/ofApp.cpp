@@ -291,7 +291,7 @@ void ofApp::setup(){
 	myHandMeshBuilder.initialize(imgW, imgH);
 	myHandMeshBuilder.setWorkAtHalfScale(bWorkAtHalfScale);
 	
-    myAppFaultManager.setup();
+    appFaultManager.setup();
 	minHandInsertionPercent = 0.29;
 	maxAllowableMotion		= 15.0;
 	maxAllowableFingerCurl	= 0.3;

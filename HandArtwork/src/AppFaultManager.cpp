@@ -10,7 +10,8 @@
 
 
 void AppFaultManager::setup(){
-
+    
+    
     timeHasFault[FAULT_NOTHING_WRONG] = 0;
     timeHasFault[FAULT_NO_USER_PRESENT_BRIEF] = 0;
     timeHasFault[FAULT_NO_USER_PRESENT_LONG] = 0;
