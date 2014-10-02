@@ -31,7 +31,7 @@ public:
     
     void setup();
     
-    // updates total time this fault continously present
+    // updates total time this fault continuously present
     void updateHasFault( ApplicationFault fault, float dt);
     
     // resets time to 0
@@ -50,7 +50,7 @@ public:
     vector<ApplicationFault> getAllFaults();
     
     
-    map<ApplicationFault, float> timeHasFault; // total seconds fault recorded continuosly, if fault not found reset to 0
+    map<ApplicationFault, float> timeHasFault; // total seconds fault recorded continuously, if fault not found reset to 0
     map<ApplicationFault, float> timeLimit; // total seconds needed to be considered active fault
     
     ofTrueTypeFont font;
