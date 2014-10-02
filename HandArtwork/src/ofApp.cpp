@@ -47,6 +47,7 @@ cp -f ../../../addons/ofxLeapMotion/libs/lib/osx/libLeap.dylib "$TARGET_BUILD_DI
  -- In updatePuppeteer(), when bCalculatedMesh is false but a hand is 
      still present, we should show the undistorted video hand instead.
 
+ the closer they Z value are to the camera (BAD), the darker their camera image gets
  composite laplacian edges.
  use ROI
 
@@ -122,7 +123,7 @@ void ofApp::setup(){
     //--------------- Setup video saver
 	bRecording = false;
 	currentFrameNumber = 0;
-	imageSequence.resize(500);
+	imageSequence.resize(300);
 	
 	// currentFrameImg and processFrameImg are both at the camera resolution.
     currentFrameImg.allocate (cameraWidth, cameraHeight, OF_IMAGE_COLOR);
@@ -495,7 +496,7 @@ void ofApp::setupGui() {
     gui4->setName("GUI4");
     gui4->addLabel("GUI4");
     
-    gui4->addSlider("puppetDisplayScale", 0.5, 2.0,     &puppetDisplayScale,            false, true);
+    gui4->addSlider("puppetDisplayScale", 0.5, 2.0,     &puppetDisplayScale); // slider
     gui4->addLabelToggle("bDrawLeapWorld",              &bDrawLeapWorld,                false, true);
     gui4->addLabelToggle("bDrawSmallCameraView",        &bDrawSmallCameraView,          false, true);
     gui4->addLabelToggle("bDrawMeshBuilderWireframe",   &bDrawMeshBuilderWireframe,     false, true);

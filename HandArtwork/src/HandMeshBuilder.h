@@ -85,6 +85,24 @@ public:
 	int  getIndexOfClosestPointOnContour(ofPolyline& aPolyline, float qx, float qy);
 	
 	int imgW;
-	int imgH; 
+	int imgH;
+    
+    
+private:
+    // Returns true iff the mesh contains two index defined traingles that intersect.
+    bool check_triangle_intersections(ofMesh &mesh);
+    
+    int Intersecting(ofVec3f &p0, ofVec3f &p1, ofVec3f &t0, ofVec3f &t1, ofVec3f &t2);
+    
+    
+    bool point_triangle_intersection(ofVec3f &t1, ofVec3f &t2, ofVec3f &t3, ofVec3f &point);
+    
+    void BarycentricCoords(const ofVec3f & vTriVtx1,
+                           const ofVec3f & vTriVtx2,
+                           const ofVec3f & vTriVtx3,
+                           const ofVec3f & vVertex,
+                           float & fBary1, float & fBary2, float & fBary3 );
+    
+    float Side(ofVec3f &p, ofVec3f &q, ofVec3f &a, ofVec3f b);
 	
 };
