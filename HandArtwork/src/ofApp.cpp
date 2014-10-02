@@ -1155,6 +1155,11 @@ void ofApp::draw(){
         ofPopStyle();
 	}
 
+    
+    
+    // application state helper text
+    // appFaultManager.drawDebug(ofGetWidth()-200,20); // shows all active faults as debug text
+    appFaultManager.drawFaultHelpScreen();
 		
 }
 
@@ -1283,6 +1288,8 @@ void ofApp::drawMeshBuilderWireframe(){
 //--------------------------------------------------------------
 void ofApp::applicationStateMachine(){
 	
+    float dt = ofGetElapsedTimef()-prevTime;
+    
 	bool bHandJustInserted	= false;
 	bool bHandJustDeparted	= false;
 	long currentHandStartTime = 0;
@@ -1294,52 +1301,114 @@ void ofApp::applicationStateMachine(){
 	int		STATE_SHOWING_ERROR;			// Sustained faulty conditions: show the video, plus a message
 	
 	/*
-	int		FAULT_NOTHING_WRONG;			// Everything appears to be working normally
-	int		FAULT_NO_USER_PRESENT_BRIEF;	// Hand may have been momentarily withdrawn, not present for ~1 second
-	int		FAULT_NO_USER_PRESENT_LONG;		// Nobody is present in the camera nor leap, for more than ~10 seconds
-	int		FAULT_LEAP_DROPPED_FRAME;		// There was a hand in the camera (as recently as a second ago), but there's a leap dropout.
-	int		FAULT_NO_LEAP_HAND_TOO_SMALL;	// There's a handlike object in the camera, but it may be too small for the leap to work
-	int		FAULT_NO_LEAP_OBJECT_PRESENT;	// Some bastard put something in the box
-	int		FAULT_TOO_MANY_HANDS;			// There's more than one hand in view
-	int		FAULT_HAND_TOO_FAST;			// The hand is moving too quickly
-	int		FAULT_HAND_TOO_HIGH;			// The hand is physically too close to the cameras
-	int		FAULT_HAND_TOO_CURLED;			// The hand is a fist or curled up, or has a curled finger
-	int		FAULT_HAND_TOO_VERTICAL;		// The hand is turned away from the camera
-	int		FAULT_HAND_NOT_DEEP_ENOUGH;		// THe hand needs to be inserted deeper into the box. 
-	*/
+     int		FAULT_NOTHING_WRONG;			// Everything appears to be working normally
+     int		FAULT_NO_USER_PRESENT_BRIEF;	// Hand may have been momentarily withdrawn, not present for ~1 second
+     int		FAULT_NO_USER_PRESENT_LONG;		// Nobody is present in the camera nor leap, for more than ~10 seconds
+     int		FAULT_LEAP_DROPPED_FRAME;		// There was a hand in the camera (as recently as a second ago), but there's a leap dropout.
+     int		FAULT_NO_LEAP_HAND_TOO_SMALL;	// There's a handlike object in the camera, but it may be too small for the leap to work
+     int		FAULT_NO_LEAP_OBJECT_PRESENT;	// Some bastard put something in the box
+     int		FAULT_TOO_MANY_HANDS;			// There's more than one hand in view
+     int		FAULT_HAND_TOO_FAST;			// The hand is moving too quickly
+     int		FAULT_HAND_TOO_HIGH;			// The hand is physically too close to the cameras
+     int		FAULT_HAND_TOO_CURLED;			// The hand is a fist or curled up, or has a curled finger
+     int		FAULT_HAND_TOO_VERTICAL;		// The hand is turned away from the camera
+     int		FAULT_HAND_NOT_DEEP_ENOUGH;		// THe hand needs to be inserted deeper into the box.
+     */
 	
 	ApplicationFault theApplicationFault = FAULT_NOTHING_WRONG;
-	
 	
 	float	insertionPercentage		= myHandContourAnalyzer.getInsertionPercentageOfHand(); // gets percentage of left side of blob.
 	float	distanceOfBlobFromEntry	= myHandContourAnalyzer.getDistanceOfBlobFromEntry();	// gets percentage of right side of blob.
 	int		nBlobsInScene			= myHandContourAnalyzer.getNumberOfBlobs();
-	
 	bool	bLeapIsConnected		= leap.isConnected();
 	int		nLeapHandsInScene		= leapVisualizer.nLeapHandsInScene;
 	
-	//256, 0.00, 20.0, &amountOfLeapMotion01);
-	//gui1->addValuePlotter("zHandExtent", 256, 0.00, 1.50, &zHandExtent);
-	//gui1->addValuePlotter("amountOfFingerCurl01", 256, 0.00, 1.00, &amountOfFingerCurl01);
-	
-	
-	
-	
-	//printf ("amountOfLeapMotion01 = %f\n", amountOfLeapMotion01);
-	
-	
-	// int nBlobs = contourFinder.size()
-	// things we need to know:
+    //------- update time each fault has occurred
+    
+    // no user present
+    if(nBlobsInScene == 0){
+        appFaultManager.updateHasFault(FAULT_NO_USER_PRESENT_BRIEF,dt);
+        appFaultManager.updateHasFault(FAULT_NO_USER_PRESENT_LONG,dt);
+    }else{
+        appFaultManager.updateResetFault(FAULT_NO_USER_PRESENT_BRIEF);
+        appFaultManager.updateResetFault(FAULT_NO_USER_PRESENT_LONG);
+    }
+    
+    // things we need to know:
 	bool bSomethingIsPresentInCamera;
-	
 	// high values of distanceOfBlobFromEntry indicate either (A) bad thresholding or (B) object in scene.
-	
 	// An object is in the scene:
 	// -- does not move (is stationary)
 	// -- no hand in leap
 	// -- area is larger than minRecognizeableObject area
 	// -- nBlobsInScene is > 0
+    
+    // TODO: put this distanceOfBlobFromEntry threshold in gui
+    if( nBlobsInScene > 0 &&
+       nLeapHandsInScene == 0 &&
+       distanceOfBlobFromEntry > 100 &&
+       amountOfLeapMotion01 < .5*maxAllowableMotion ){
+        
+        appFaultManager.updateHasFault(FAULT_NO_LEAP_OBJECT_PRESENT,dt);
+        
+    }else{
+        
+        appFaultManager.updateResetFault(FAULT_NO_LEAP_OBJECT_PRESENT);
+    }
+    
+    // no leap hands
+    if( nLeapHandsInScene == 0 && nBlobsInScene > 0){
+        appFaultManager.updateHasFault(FAULT_LEAP_DROPPED_FRAME,dt);
+    }else{
+        appFaultManager.updateResetFault(FAULT_LEAP_DROPPED_FRAME);
+    }
+    
+    // too many hands
+    if(nLeapHandsInScene > 1){
+        appFaultManager.updateHasFault(FAULT_TOO_MANY_HANDS,dt);
+    }else{
+        appFaultManager.updateResetFault(FAULT_TOO_MANY_HANDS);
+    }
+    
+    // hands too fast
+    if(amountOfLeapMotion01 > maxAllowableMotion){
+        appFaultManager.updateHasFault(FAULT_HAND_TOO_FAST,dt);
+    }else{
+        appFaultManager.updateResetFault(FAULT_HAND_TOO_FAST);
+    }
+    
+    // hand too high
+    if(amountOfFingerCurl01 > maxAllowableFingerCurl){
+        appFaultManager.updateHasFault(FAULT_HAND_TOO_CURLED,dt);
+    }else{
+        appFaultManager.updateResetFault(FAULT_HAND_TOO_CURLED);
+    }
+    
+    // vertical
+    if(zHandExtent > maxAllowableExtentZ){
+        appFaultManager.updateHasFault(FAULT_HAND_TOO_VERTICAL,dt);
+    }else{
+        appFaultManager.updateResetFault(FAULT_HAND_TOO_VERTICAL);
+    }
+    
+    // not deep enough
+    if(insertionPercentage < minHandInsertionPercent && nBlobsInScene > 0){
+        appFaultManager.updateHasFault(FAULT_HAND_NOT_DEEP_ENOUGH,dt);
+    }else{
+        appFaultManager.updateResetFault(FAULT_HAND_NOT_DEEP_ENOUGH);
+    }
+    
+    
+    // get all detected faults
+    vector<ApplicationFault> faults = appFaultManager.getAllFaults();
+    
+    // get longest fault detected
+    ApplicationFault longFault = appFaultManager.getLongestFault();
+    
 	
+	prevTime = ofGetElapsedTimef();
+    
+
 	
 }
 

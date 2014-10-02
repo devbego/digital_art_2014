@@ -49,6 +49,7 @@
 #include "HandWithFingertipsSkeleton.h"
 #include "PalmSkeleton.h"
 #include "WristSpineSkeleton.h"
+#include "AppFaultManager.h"
 
 
 /* 
@@ -67,19 +68,19 @@ using namespace cv;
 
 
 
-enum ApplicationFault {
-	FAULT_NOTHING_WRONG				= 0,	/* Everything appears to be working normally */
-	FAULT_NO_USER_PRESENT_BRIEF		= 1,	/* Hand may have been momentarily withdrawn, not present for ~1 second */
-	FAULT_NO_USER_PRESENT_LONG		= 2,	/* Nobody is present in the camera nor leap, for more than ~10 seconds */
-	FAULT_LEAP_DROPPED_FRAME		= 4,	/* There was a hand in the camera (as recently as a second ago), but there's a leap dropout */
-	FAULT_NO_LEAP_HAND_TOO_SMALL	= 8,	/* There's a handlike object in the camera, but it may be too small for the leap to work */
-	FAULT_NO_LEAP_OBJECT_PRESENT	= 16,	/* Some bastard put something in the box */
-	FAULT_TOO_MANY_HANDS			= 32,	/* There's more than one hand in view */
-	FAULT_HAND_TOO_FAST				= 64,	/* The hand is moving too quickly */
-	FAULT_HAND_TOO_HIGH				= 128,	/* The hand is physically too close to the cameras */
-	FAULT_HAND_TOO_CURLED			= 256,	/* The hand is a fist or curled up, or has a curled finger */
-	FAULT_HAND_TOO_VERTICAL			= 512	/* The hand is turned away from the camera */
-};
+//enum ApplicationFault {
+//	FAULT_NOTHING_WRONG				= 0,	/* Everything appears to be working normally */
+//	FAULT_NO_USER_PRESENT_BRIEF		= 1,	/* Hand may have been momentarily withdrawn, not present for ~1 second */
+//	FAULT_NO_USER_PRESENT_LONG		= 2,	/* Nobody is present in the camera nor leap, for more than ~10 seconds */
+//	FAULT_LEAP_DROPPED_FRAME		= 4,	/* There was a hand in the camera (as recently as a second ago), but there's a leap dropout */
+//	FAULT_NO_LEAP_HAND_TOO_SMALL	= 8,	/* There's a handlike object in the camera, but it may be too small for the leap to work */
+//	FAULT_NO_LEAP_OBJECT_PRESENT	= 16,	/* Some bastard put something in the box */
+//	FAULT_TOO_MANY_HANDS			= 32,	/* There's more than one hand in view */
+//	FAULT_HAND_TOO_FAST				= 64,	/* The hand is moving too quickly */
+//	FAULT_HAND_TOO_HIGH				= 128,	/* The hand is physically too close to the cameras */
+//	FAULT_HAND_TOO_CURLED			= 256,	/* The hand is a fist or curled up, or has a curled finger */
+//	FAULT_HAND_TOO_VERTICAL			= 512	/* The hand is turned away from the camera */
+//};
 
 
 
@@ -325,6 +326,9 @@ class ofApp : public ofBaseApp{
 	float maxAllowableFingerCurl;
 	float maxAllowableExtentZ;
 	
+    AppFaultManager appFaultManager;
+    float prevTime;
+    
     //-------------------------------
 	// MESH BUILDER!
 	HandMeshBuilder myHandMeshBuilder;
