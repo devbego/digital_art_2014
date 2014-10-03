@@ -37,8 +37,10 @@ cp -f ../../../addons/ofxLeapMotion/libs/lib/osx/libLeap.dylib "$TARGET_BUILD_DI
  
 
  Enable saving of the various GUIs into XML files.
+  make all settings savable to XML (they are not currently!)
  Hide/reveal the cursor when we are in play/diagnostic modes.
   Refactor ofApp.cpp/h to have a CameraAndLeapRecorder.
+
  
  Scenes: 
  -- completely disable display of sub-GUI
@@ -106,6 +108,7 @@ void ofApp::setup(){
     cameraHeight	= 768;
 	drawW			= cameraWidth/2;
     drawH			= cameraHeight/2;
+    backgroundGray  = 10;
 	
 	imgW			= cameraWidth;
     imgH			= cameraHeight;
@@ -287,24 +290,28 @@ void ofApp::setup(){
 												cv::Size( 2*morph_size + 1, 2*morph_size+1 ),
 												cv::Point(  morph_size,       morph_size ) );
 	
+    
+    //----------------------------------
+    // CONTOUR ANALYZER AND MESH BUILDER
 	myHandContourAnalyzer.setup(imgW, imgH);
 	myHandMeshBuilder.initialize(imgW, imgH);
 	myHandMeshBuilder.setWorkAtHalfScale(bWorkAtHalfScale);
 	
-    appFaultManager.setup();
-	minHandInsertionPercent = 0.29;
-	maxAllowableMotion		= 15.0;
-	maxAllowableFingerCurl	= 0.3;
-	maxAllowableExtentZ		= 0.5;
-	
-	
+	// PUPPET MANAGER & PUPPET
 	myPuppetManager.setupPuppeteer (myHandMeshBuilder);
 	myPuppetManager.setupPuppetGui ();
-    puppetDisplayScale = 1.25;
+    puppetDisplayScale = 1.20;
+    
+    // APPLICATION FAULT MANAGER
+    appFaultManager.setup();
+    minHandInsertionPercent = 0.29;
+    maxAllowableMotion		= 15.0;
+    maxAllowableFingerCurl	= 0.3;
+    maxAllowableExtentZ		= 0.5;
 	
-	// must be last
+    //--------------
+	// MUST BE LAST IN SETUP()
 	setupGui();
-	
 }
 
 
@@ -497,7 +504,10 @@ void ofApp::setupGui() {
     gui4->setName("GUI4");
     gui4->addLabel("GUI4");
     
+    gui4->addSlider("backgroundGray", 0,255,            &backgroundGray); // slider
     gui4->addSlider("puppetDisplayScale", 0.5, 2.0,     &puppetDisplayScale); // slider
+    
+    gui4->addSpacer();
     gui4->addLabelToggle("bDrawLeapWorld",              &bDrawLeapWorld,                false, true);
     gui4->addLabelToggle("bDrawSmallCameraView",        &bDrawSmallCameraView,          false, true);
     gui4->addLabelToggle("bDrawMeshBuilderWireframe",   &bDrawMeshBuilderWireframe,     false, true);
@@ -1075,13 +1085,15 @@ void ofApp::compositeThresholdedImageWithLeapFboPixels(){
 void ofApp::draw(){
 
 	ofSetFullscreen(bFullscreen);
-    ofBackground(20);
-	guiTabBar->setPosition(20,20);
+    ofBackground(backgroundGray);
     
+    //-----------------------------------
+    // 1. DEBUGVIEW: DIAGNOSTICS & CONTROLS FOR DEVS
+	guiTabBar->setPosition(20,20);
+
     if (bDrawLeapWorld){
         drawLeapWorld();
     }
-	
     if (bDrawSmallCameraView){
         if (!bInPlaybackMode){
             drawLiveForRecording();
@@ -1094,44 +1106,23 @@ void ofApp::draw(){
             }
         }
     }
-    
     if (bDrawMeshBuilderWireframe){
         drawMeshBuilderWireframe();
     }
-	
     if (bShowText){
        drawText();
     }
-    
     if (bDrawMiniImages) {
         drawDiagnosticMiniImages();
     }
-    
     if (bDrawContourAnalyzer){
         drawContourAnalyzer();
     }
     
-    if (bShowLargeCamImageOnTop){
-        ofSetColor(255);
-        processFrameImg.draw(0,0,1024,768);
-    }
 
-    
 
-	//-----------------------------------
-	
-	
-    
-    
-    
-
-    
-	
-	
-
-	
-	//---------------------------
-	// COMPUTE AND DISPLAY PUPPET
+	//------------------------------
+	// 2. COMPUTE AND DISPLAY PUPPET
 	if (bComputeAndDisplayPuppet){
 
         ofPushStyle();
@@ -1158,7 +1149,16 @@ void ofApp::draw(){
 
     
     
-    // application state helper text
+    //-----------------------------------
+    // 3. DISPLAY FEEDBACK TO USER:
+    // APPLICATION STATE, INSTRUCTIONS,
+    // AND DIAGNOSTIC INSET VIEW
+    
+    // Display diagnostic inset view here:
+    // Some combo of meshBuilderWireframe, Leap view, and contourAnalyzer
+    // rotated for the user's perspective
+    
+    // Application state manager feedbacK:
     appFaultManager.drawDebug(ofGetWidth()-200,20); // shows all active faults as debug text
     appFaultManager.drawFaultHelpScreen();
 		
@@ -1888,10 +1888,7 @@ void ofApp::keyPressed(int key){
         case 'u':
             bUseCorrectedCamera = !bUseCorrectedCamera;
             break;
-        case '0':
-            bShowLargeCamImageOnTop = !bShowLargeCamImageOnTop;
-            break;
-			
+
 		//case 'F':
         case 'f':
             bFullscreen = !bFullscreen;

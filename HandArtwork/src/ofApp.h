@@ -166,6 +166,7 @@ class ofApp : public ofBaseApp{
 	
     int		framesBackToPlay;
 	int		playingFrame;
+    float   backgroundGray;
     string	folderName;
 	
 
