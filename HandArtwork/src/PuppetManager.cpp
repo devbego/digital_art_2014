@@ -44,24 +44,8 @@ void PuppetManager::setupPuppeteer (HandMeshBuilder &myHandMeshBuilder){
     
     // Cache the topology subdivision.
     butterflySubdivider.topology_start(mesh);
-    butterflySubdivider.topology_subdivide_boundary();
-    butterflySubdivider.topology_subdivide_boundary();
+    butterflySubdivider.topology_subdivide_boundary(4);
     refinedMesh = butterflySubdivider.topology_end();
-    
-    // Add texture coordinates to meshes; be cognizant of half-scale.
-    float vertexScale = 2.0; // now the case
-    
-    for (int i = 0; i < mesh.getNumVertices(); i++) {
-        
-        ofVec2f handMeshVertex;
-        handMeshVertex.x =  (refinedMesh.getVertex(i).y);// + 200;
-        handMeshVertex.y =  /*2**/(/*-300*/ + 768 - refinedMesh.getVertex(i).x);//768/2 -
-        refinedMesh.addTexCoord( handMeshVertex );
-        
-        // you would think this would work, but sideways camera
-        //refinedMesh.addTexCoord( vertexScale*(refinedMesh.getVertex(i)));
-    }
-
     
 	
 	//--------------------
@@ -307,42 +291,34 @@ void PuppetManager::drawPuppet (bool bComputeAndDisplayPuppet, ofTexture &handIm
 				handImageTexture.bind();
 				
 				ofSetColor(255);
-				puppet.drawFaces(); // original
+				//puppet.drawFaces(); // original
 				
 				handImageTexture.unbind();
                 
                 
-                /*
-                ofMesh texMesh = puppet.getOriginalMesh();
-                int len = texMesh.getNumTexCoords();
-                for (int i = 0; i < len; i++)
-                {
-                    
-                    //ofVec2f handMeshVertex = texMesh.getTexCoord(i);
-                    //refinedMesh.setTexCoord(i, handMeshVertex);
-                }
-                 */
                 
+                butterflySubdivider.fixMesh(puppet.getDeformedMesh(), refinedMesh);
                 
-                /*
                 handImageTexture.bind();
                 ofSetColor(255);
                 refinedMesh.drawFaces();
                 handImageTexture.unbind();
-                */
+                
                 
                 
 			}
 			
 			if (bShowPuppetWireframe) {
 				ofSetColor(255,255,255, 180);
-				puppet.drawWireframe();
+                // puppet.drawWireframe();
+                refinedMesh.drawWireframe();
 			}
 			if (bShowPuppetSkeleton) {
 				currentSkeleton->draw();
 			}
 			if (bShowPuppetControlPoints){
 				puppet.drawControlPoints();
+                //refinedMesh.drawCotrolPoints();
 			}
 			if (bShowPuppetMeshPoints){
 				ofPushMatrix();

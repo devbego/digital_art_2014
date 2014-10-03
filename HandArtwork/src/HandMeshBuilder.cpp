@@ -38,8 +38,8 @@ void HandMeshBuilder::loadDefaultMesh(){
 		handMeshVertex.y =  768 - handMesh.getVertex(i).x;
 		handMesh.addTexCoord( handMeshVertex );
 	}
-    
-    refinedHandMesh = handMesh; /*
+
+    /*
                                  //.load("models/handmarksNew.ply");
     for (int i = 0; i < refinedHandMesh.getNumVertices(); i++) {
         ofVec2f handMeshVertex;
@@ -71,8 +71,9 @@ void HandMeshBuilder::informThereIsNoHandPresent(){
 
 //============================================================
 ofMesh& HandMeshBuilder::getMesh(){
-	return handMesh;
-    //return refinedHandMesh;
+	
+    return handMesh;
+       
 }
 
 

@@ -1159,7 +1159,7 @@ void ofApp::draw(){
     
     
     // application state helper text
-    // appFaultManager.drawDebug(ofGetWidth()-200,20); // shows all active faults as debug text
+    appFaultManager.drawDebug(ofGetWidth()-200,20); // shows all active faults as debug text
     appFaultManager.drawFaultHelpScreen();
 		
 }
