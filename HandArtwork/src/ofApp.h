@@ -312,6 +312,7 @@ class ofApp : public ofBaseApp{
 	float maxAllowableMotion;
 	float maxAllowableFingerCurl;
 	float maxAllowableExtentZ;
+    float maxAllowableHeightZ;
 	
     AppFaultManager appFaultManager;
     float prevTime;

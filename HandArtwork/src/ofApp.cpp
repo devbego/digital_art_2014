@@ -308,6 +308,7 @@ void ofApp::setup(){
     maxAllowableMotion		= 15.0;
     maxAllowableFingerCurl	= 0.3;
     maxAllowableExtentZ		= 0.5;
+    maxAllowableHeightZ     = 1.75;
 	
     //--------------
 	// MUST BE LAST IN SETUP()
@@ -493,6 +494,11 @@ void ofApp::setupGui() {
 	gui3->addSlider("zHandExtent",						0.00, 2.00, &zHandExtent );
 	gui3->addSlider("maxAllowableExtentZ",				0.00, 2.00, &maxAllowableExtentZ );
 
+    gui3->addSpacer();
+    gui3->addValuePlotter("zHandHeight",		  256,	0.00, 5.00, &zHandHeight, 32);
+    gui3->addSlider("zHandHeight",						0.00, 5.00, &zHandHeight );
+    gui3->addSlider("maxAllowableHeightZ",				0.00, 5.00, &maxAllowableHeightZ );
+    
 	gui3->autoSizeToFitWidgets();
 	ofAddListener(gui3->newGUIEvent,this,&ofApp::guiEvent);
 	guiTabBar->addCanvas(gui3);
@@ -1361,50 +1367,57 @@ void ofApp::applicationStateMachine(){
         
         appFaultManager.updateHasFault(FAULT_NO_LEAP_OBJECT_PRESENT,dt);
         
-    }else{
-        
+    } else{
         appFaultManager.updateResetFault(FAULT_NO_LEAP_OBJECT_PRESENT);
     }
     
+    
     // no leap hands
-    if( nLeapHandsInScene == 0 && nBlobsInScene > 0){
-        appFaultManager.updateHasFault(FAULT_LEAP_DROPPED_FRAME,dt);
-    }else{
+    if (nLeapHandsInScene == 0 && nBlobsInScene > 0){
+        appFaultManager.updateHasFault (FAULT_LEAP_DROPPED_FRAME, dt);
+    } else {
         appFaultManager.updateResetFault(FAULT_LEAP_DROPPED_FRAME);
     }
     
     // too many hands
-    if(nLeapHandsInScene > 1){
-        appFaultManager.updateHasFault(FAULT_TOO_MANY_HANDS,dt);
-    }else{
+    if (nLeapHandsInScene > 1){
+        appFaultManager.updateHasFault (FAULT_TOO_MANY_HANDS, dt);
+    } else {
         appFaultManager.updateResetFault(FAULT_TOO_MANY_HANDS);
     }
     
     // hands too fast
-    if(amountOfLeapMotion01 > maxAllowableMotion){
-        appFaultManager.updateHasFault(FAULT_HAND_TOO_FAST,dt);
-    }else{
-        appFaultManager.updateResetFault(FAULT_HAND_TOO_FAST);
+    if (amountOfLeapMotion01 > maxAllowableMotion){
+        appFaultManager.updateHasFault (FAULT_HAND_TOO_FAST, dt);
+    } else {
+        appFaultManager.updateResetFault (FAULT_HAND_TOO_FAST);
     }
     
-    // hand too high
-    if(amountOfFingerCurl01 > maxAllowableFingerCurl){
-        appFaultManager.updateHasFault(FAULT_HAND_TOO_CURLED,dt);
-    }else{
-        appFaultManager.updateResetFault(FAULT_HAND_TOO_CURLED);
+    // hand too curled
+    if (amountOfFingerCurl01 > maxAllowableFingerCurl){
+        appFaultManager.updateHasFault (FAULT_HAND_TOO_CURLED, dt);
+    } else {
+        appFaultManager.updateResetFault (FAULT_HAND_TOO_CURLED);
     }
     
-    // vertical
-    if(zHandExtent > maxAllowableExtentZ){
-        appFaultManager.updateHasFault(FAULT_HAND_TOO_VERTICAL,dt);
-    }else{
-        appFaultManager.updateResetFault(FAULT_HAND_TOO_VERTICAL);
+    // hand too vertical, e.g.: thumb above pinky
+    if (zHandExtent > maxAllowableExtentZ){
+        appFaultManager.updateHasFault (FAULT_HAND_TOO_VERTICAL, dt);
+    } else {
+        appFaultManager.updateResetFault (FAULT_HAND_TOO_VERTICAL);
+    }
+    
+    // hand too high, i.e. too close to camera
+    if (zHandHeight > maxAllowableHeightZ){
+        appFaultManager.updateHasFault (FAULT_HAND_TOO_HIGH, dt);
+    } else {
+        appFaultManager.updateResetFault (FAULT_HAND_TOO_HIGH);
     }
     
     // not deep enough
-    if(insertionPercentage < minHandInsertionPercent && nBlobsInScene > 0){
-        appFaultManager.updateHasFault(FAULT_HAND_NOT_DEEP_ENOUGH,dt);
-    }else{
+    if (insertionPercentage < minHandInsertionPercent && nBlobsInScene > 0){
+        appFaultManager.updateHasFault (FAULT_HAND_NOT_DEEP_ENOUGH, dt);
+    } else {
         appFaultManager.updateResetFault(FAULT_HAND_NOT_DEEP_ENOUGH);
     }
     
