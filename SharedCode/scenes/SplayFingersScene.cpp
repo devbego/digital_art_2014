@@ -11,7 +11,6 @@ SplayFingersScene::SplayFingersScene(ofxPuppet* puppet, HandWithFingertipsSkelet
 	this->maxBaseAngleLeft = 20;
 	this->maxBaseAngleRight = -20;
 
-	this->splayAxis = 192;
 	this->maxAngle = 50;
     this->averageAngleOffset = 0;
     this->effectStrength = 1.0;
@@ -23,8 +22,6 @@ SplayFingersScene::SplayFingersScene(ofxPuppet* puppet, HandWithFingertipsSkelet
 void SplayFingersScene::setupGui() {
 	SplayFingersScene::initializeGui();
 
-	this->gui->addSlider("Splay Axis", 0, 384, &splayAxis);
-	this->gui->addSpacer();
 	this->gui->addSlider("Max Angle", 0, 90, &maxAngle);
 	this->gui->addSpacer();
     this->gui->addSlider("Effect Strength", 0, 3, &effectStrength);
@@ -135,20 +132,7 @@ void SplayFingersScene::update() {
             }
 			dir.normalize();
             
-            
-            
-            // compute the angleOffsetToUse for this finger.
-            
-            /*
-             // Old style: the angleOffsetToUse is +/- based on the distance of the finger base to the splayaxis.
-             float absDistanceFromSplayAxis = abs(basePos.y - splayAxis);
-             float frac = ofClamp( (absDistanceFromSplayAxis / 10.0), 0, 1);
-             if (basePos.y >= splayAxis) {
-             angleOffsetToUse = -abs(averageAngleOffset) * frac;
-             } else {
-             angleOffsetToUse =  abs(averageAngleOffset) * frac;
-             }
-             */
+        
             
             
             float dx = dir.x;
