@@ -37,17 +37,19 @@ void EqualizeScene::setupMouseGui() {
 
 	this->mouseGui->autoSizeToFitWidgets();
 }
+
+//============================================================================
 void EqualizeScene::update() {
 	HandSkeleton* handSkeleton = (HandSkeleton*)this->skeleton;
 
 	int toEqualize[] = {
-	HandSkeleton::PINKY_TIP, HandSkeleton::RING_TIP, HandSkeleton::MIDDLE_TIP, HandSkeleton::INDEX_TIP,
-	HandSkeleton::PINKY_MID, HandSkeleton::RING_MID, HandSkeleton::MIDDLE_MID, HandSkeleton::INDEX_MID};
+	HandSkeleton::PINKY_TIP, HandSkeleton::RING_TIP, HandSkeleton::MIDDLE_TIP, HandSkeleton::INDEX_TIP, HandSkeleton::THUMB_TIP,
+	HandSkeleton::PINKY_MID, HandSkeleton::RING_MID, HandSkeleton::MIDDLE_MID, HandSkeleton::INDEX_MID, HandSkeleton::THUMB_MID};
 	float ratios[] = {
-		1, 1, 1, 1,
-		1.6, 1.6, 1.6, 1.6
+		1.02, 1.10, 1.00, 1.00, 1.35,
+		1.52, 1.58, 1.60, 1.53, 1.05
 	};
-	int toEqualizeCount = 8;
+	int toEqualizeCount = 10;
 	for(int i = 0; i < toEqualizeCount; i++) {
 		handSkeleton->setBoneLength(toEqualize[i], ratios[i] * equalizeLength);
 	}
@@ -56,6 +58,8 @@ void EqualizeScene::update() {
 	handSkeleton->setPosition(HandSkeleton::RING_BASE, pinkyBase.getInterpolated(indexBase, 1/3.), true);
 	handSkeleton->setPosition(HandSkeleton::MIDDLE_BASE, pinkyBase.getInterpolated(indexBase, 2/3.), true);
 }
+
+
 void EqualizeScene::updateMouse(float mx, float my) {
 ofVec2f mouse(mx, my);
 

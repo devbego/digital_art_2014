@@ -244,6 +244,7 @@ class ofApp : public ofBaseApp{
 	bool bDrawContourAnalyzer;
     bool bDrawMeshBuilderWireframe;
     bool bDrawLeapWorld;
+    bool bDrawAppFaultDebugText;
     
 	ofxCvColorImage colorVideo;
 	ofxCvColorImage colorVideoHalfScale;

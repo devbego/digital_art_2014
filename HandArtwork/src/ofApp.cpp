@@ -152,6 +152,7 @@ void ofApp::setup(){
     bDrawSmallCameraView        = true;
     bShowLargeCamImageOnTop		= false;    // temp for quickly showing on hand video only
 	bDrawContourAnalyzer		= true;
+    bDrawAppFaultDebugText      = true;
 	bComputeAndDisplayPuppet	= false;
 	bFullscreen					= false;
 	bComputePixelBasedFrameDifferencing = false;
@@ -512,6 +513,7 @@ void ofApp::setupGui() {
     gui4->addLabelToggle("bDrawMeshBuilderWireframe",   &bDrawMeshBuilderWireframe,     false, true);
     gui4->addLabelToggle("bDrawMiniImages",             &bDrawMiniImages,               false, true);
     gui4->addLabelToggle("bShowText",                   &bShowText,                     false, true);
+    gui4->addLabelToggle("bDrawAppFaultDebugText",      &bDrawAppFaultDebugText,        false, true);
     
     gui4->addSpacer();
     gui4->addLabelToggle("bDrawContourAnalyzer",        &bDrawContourAnalyzer,          false, true);
@@ -1158,7 +1160,9 @@ void ofApp::draw(){
     // rotated for the user's perspective
     
     // Application state manager feedbacK:
-    appFaultManager.drawDebug(ofGetWidth()-200,20); // shows all active faults as debug text
+    if (bDrawAppFaultDebugText){
+        appFaultManager.drawDebug(ofGetWidth()-200,20); // shows all active faults as debug text
+    }
     appFaultManager.drawFaultHelpScreen();
 		
 }
