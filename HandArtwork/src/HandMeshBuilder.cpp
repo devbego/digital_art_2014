@@ -23,7 +23,7 @@ void HandMeshBuilder::initialize(int w, int h){
 	fingerTipIndices[4] = HANDMARK_POINTER_TIP;
 	
 	informThereIsNoHandPresent();
-	bWorkAtHalfScale = true; // almost certainly
+	bWorkAtHalfScale = true; // absolutely definitely.
 }
 
 //============================================================
@@ -38,17 +38,6 @@ void HandMeshBuilder::loadDefaultMesh(){
 		handMeshVertex.y =  768 - handMesh.getVertex(i).x;
 		handMesh.addTexCoord( handMeshVertex );
 	}
-
-    /*
-                                 //.load("models/handmarksNew.ply");
-    for (int i = 0; i < refinedHandMesh.getNumVertices(); i++) {
-        ofVec2f handMeshVertex;
-        handMeshVertex.x =  refinedHandMesh.getVertex(i).y;
-        handMeshVertex.y =  768 - refinedHandMesh.getVertex(i).x;
-        refinedHandMesh.addTexCoord( handMeshVertex );
-    }
-                                 */
-    
 }
 
 //============================================================
@@ -71,9 +60,7 @@ void HandMeshBuilder::informThereIsNoHandPresent(){
 
 //============================================================
 ofMesh& HandMeshBuilder::getMesh(){
-	
     return handMesh;
-       
 }
 
 
@@ -276,12 +263,8 @@ bool HandMeshBuilder::isHandMeshFaulty(){
 	// Are all faces oriented the correct direction?
 	
 	//------------------------
-	// Return the results.
-	bIsProblematic = bFoundBadValues;
-	bIsProblematic |= bFoundDuplicatedVertices;
-	bIsProblematic |= bHasIncorrectNumVertices;
-    //bIsProblematic |= bFoundIntersectingTriangles;
-	return bIsProblematic;
+    // The mesh is fine, it's not faulty.
+    return false;
 }
 
 
@@ -507,7 +490,6 @@ void HandMeshBuilder::addPalmToHandMesh(){
 		// Add the pinky side vertex.
 		handMesh.addVertex(ofPoint(pinkySidePt.x,pinkySidePt.y, 0.0));
 		
-		
 		// Add vertices in between, which lie at intersections along rays to the crotches
 		x1 = pinkySidePt.x;
 		y1 = pinkySidePt.y;
@@ -539,7 +521,6 @@ void HandMeshBuilder::addPalmToHandMesh(){
 		thumbsidePalmVertexIndices[i] = handMesh.getNumVertices();
 		handMesh.addVertex(ofPoint(thumbSidePt.x,thumbSidePt.y, 0.0));
 	}
-	
 	
 	//----------------------------
 	// ADD TRIANGLES to handMesh.
@@ -660,8 +641,7 @@ void HandMeshBuilder::addPalmToHandMesh(){
 			handMesh.addTriangle(fingBaseIndex1, aKnuckleIndex, fingBaseIndex0); nTrianglesAccum++;
 		}
 	}
-	
-	
+
 	
 	if (bRenderIntermediate){
 		for (int i=0; i<6; i++){
@@ -673,8 +653,6 @@ void HandMeshBuilder::addPalmToHandMesh(){
 			ofEllipse(pt.x, pt.y, 9,9);
 		}
 	}
-	
-	
 	
 }
 
@@ -763,7 +741,6 @@ void HandMeshBuilder::addWristToHandMesh(){
 		}
 	}
 }
-
 
 
 //--------------------------------------------------------------
@@ -863,7 +840,6 @@ void HandMeshBuilder::addFingersToHandMesh (){
 			ofVec3f pointInterp = poly21.getPointAtPercent(frac);
 			poly21RS.addVertex(pointInterp.x, pointInterp.y, 0.0);
 		}
-		
 		
 		
 		//---------------
@@ -1021,7 +997,6 @@ void HandMeshBuilder::createLocalCopyOfContourAndHandmarks (ofPolyline &handCont
 			myHandmarks[i].valid = hmarks[i].valid;
 		}
 		
-		
 	}
 }
 
@@ -1052,6 +1027,8 @@ int HandMeshBuilder::getIndexOfClosestPointOnContour(ofPolyline& aPolyline, floa
 
 //============================================================
 void HandMeshBuilder::buildMesh2013 (ofPolyline &handContour, ofVec3f &handCentroid, Handmark *hmarks){
+    //
+    // OLD OLD OLD.
 	// This function builds a mesh matching the 2013 "handmarksNew.ply",
 	// with 381 vertices and 612 (triangle) faces.
 	bool bDraw = false;

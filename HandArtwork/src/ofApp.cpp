@@ -45,7 +45,6 @@ cp -f ../../../addons/ofxLeapMotion/libs/lib/osx/libLeap.dylib "$TARGET_BUILD_DI
  Scenes: 
  -- completely disable display of sub-GUI
  -- ensure display of Puppet is flush to the right edge of the canvas.
- -- fix "North" scene to correct for 90 rotation. 
  -- In updatePuppeteer(), when bCalculatedMesh is false but a hand is 
      still present, we should show the undistorted video hand instead.
 
