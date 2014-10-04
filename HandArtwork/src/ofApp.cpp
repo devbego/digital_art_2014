@@ -965,7 +965,13 @@ void ofApp::computeHandStatistics(){
 			zHandExtent          = (zExtentAlpha*zHandExtent)				+ (1.0-zExtentAlpha)*zextent;
 			zHandHeight          = (zExtentAlpha*zHandHeight)				+ (1.0-zExtentAlpha)*(100.0 - minZ);
 			amountOfFingerCurl01 = (fingerCurlAlpha*amountOfFingerCurl01)	+ (1.0-fingerCurlAlpha)*curl;
-		}
+        
+        } else if (bInPlaybackMode && !playing){
+            zHandExtent          = (zExtentAlpha*zHandExtent)				+ (1.0-zExtentAlpha)*zextent;
+            zHandHeight          = (zExtentAlpha*zHandHeight)				+ (1.0-zExtentAlpha)*(100.0 - minZ);
+            amountOfFingerCurl01 = (fingerCurlAlpha*amountOfFingerCurl01)	+ (1.0-fingerCurlAlpha)*curl;
+        }
+        
 	}
 }
 
