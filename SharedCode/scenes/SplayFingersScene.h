@@ -11,6 +11,12 @@ protected:
 	float splayHeight;
 	float splayAxis;
 	float maxAngle;
+    
+    float averageAngleOffset;
+    float insertionFracRunningAvg;
+    float angularSpreadRunningAvg;
+    float effectStrength; 
+    
 public:
 	SplayFingersScene(ofxPuppet* puppet, HandWithFingertipsSkeleton* handWithFingertipsSkeleton, HandWithFingertipsSkeleton* immutableHandWithFingertipsSkeleton);
 	void setupGui();

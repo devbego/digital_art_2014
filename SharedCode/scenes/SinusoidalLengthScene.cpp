@@ -13,16 +13,18 @@ SinusoidalLengthScene::SinusoidalLengthScene(ofxPuppet* puppet, HandSkeleton* ha
 	this->maxMidAngleLeft = 45;
 	this->maxMidAngleRight = -30;
 
-	this->maxLength = 15;
-	this->speedUp = 2;
-	this->phaseOffset = 0.5;
-	this->sigmoidStrengthMid = 0.90;
-	this->sigmoidStrengthTip = 0.60;
+	this->maxLength             = 14;
+	this->speedUp               = 1.60;
+	this->phaseOffset           = 0.5;
+	this->sigmoidStrengthMid    = 0.90;
+	this->sigmoidStrengthTip    = 0.60;
+    
+    this->averageWristPalmDistance = 60;
 }
 void SinusoidalLengthScene::setupGui() {
 	SinusoidalLengthScene::initializeGui();
 
-	this->gui->addSlider("Max Length", 0, 30, &maxLength);
+	this->gui->addSlider("Max Length", 0, 20, &maxLength);
 	this->gui->addSpacer();
 	this->gui->addSlider("Speed Up", 1, 5, &speedUp);
 	this->gui->addSpacer();
@@ -69,8 +71,17 @@ void SinusoidalLengthScene::update() {
 	ofVec2f parent;
 	ofVec2f position;
 	float wiggleValue;
+    
+    ofVec2f wristPt = immutableSkeleton->getPositionAbsolute (HandSkeleton::WRIST);
+    ofVec2f palmPt  = immutableSkeleton->getPositionAbsolute (HandSkeleton::PALM);
+    float distanceFromWristToPalm = wristPt.distance(palmPt);
+    distanceFromWristToPalm = ofClamp(distanceFromWristToPalm, 35, 70); // empirical
+    float A = 0.99; float B = 1.0-A;
+    averageWristPalmDistance = A*averageWristPalmDistance + B*distanceFromWristToPalm;
+    float maxLengthFrac = ofMap(averageWristPalmDistance, 35,70,  0.5,1.0);
+    // printf("averageWristPalmDistance = %f\n", averageWristPalmDistance);
 	
-	for(int i = 0; i < fingerCount; i++) {
+	for (int i=0; i<fingerCount; i++) {
 		indexMid = mid[i];
 		original = immutableSkeleton->getPositionAbsolute(indexMid);
 		parent   = immutableSkeleton->getPositionAbsolute((int) ((int)indexMid-1));
@@ -81,7 +92,7 @@ void SinusoidalLengthScene::update() {
 		wiggleValue = ofNoise(speedUp*timeVal + i*phaseOffset, i*phaseOffset);
 		wiggleValue = function_NormalizedLogisticSigmoid (wiggleValue, this->sigmoidStrengthMid);
 		wiggleValue = (wiggleValue * 2.0) - 1.0;
-		position = position * (maxLength * wiggleValue);
+		position = position * (maxLength * wiggleValue * maxLengthFrac);
 		handSkeleton->setPosition(indexMid, position, false, false);
 
 		indexTip = tip[i];
@@ -94,7 +105,7 @@ void SinusoidalLengthScene::update() {
 		wiggleValue = ofNoise(speedUp*timeVal + i*phaseOffset, i*phaseOffset);
 		wiggleValue = function_NormalizedLogisticSigmoid (wiggleValue, this->sigmoidStrengthTip);
 		wiggleValue = (wiggleValue * 2.0) - 1.0; 
-		position = position * (maxLength * wiggleValue);
+		position = position * (maxLength * wiggleValue * maxLengthFrac);
 		handSkeleton->setPosition(indexTip, position, false, false);
 	}
 }

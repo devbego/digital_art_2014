@@ -12,7 +12,11 @@ SplayFingersScene::SplayFingersScene(ofxPuppet* puppet, HandWithFingertipsSkelet
 	this->maxBaseAngleRight = -20;
 
 	this->splayAxis = 192;
-	this->maxAngle = 36;
+	this->maxAngle = 50;
+    this->averageAngleOffset = 0;
+    this->effectStrength = 1.0;
+    this->insertionFracRunningAvg = 0.5;
+    this->angularSpreadRunningAvg = 60.0;
 }
 
 //=================================================================
@@ -23,6 +27,8 @@ void SplayFingersScene::setupGui() {
 	this->gui->addSpacer();
 	this->gui->addSlider("Max Angle", 0, 90, &maxAngle);
 	this->gui->addSpacer();
+    this->gui->addSlider("Effect Strength", 0, 3, &effectStrength);
+    this->gui->addSpacer();
 
 	this->gui->autoSizeToFitWidgets();
 }
@@ -48,6 +54,33 @@ void SplayFingersScene::update() {
 
 	int palm = HandWithFingertipsSkeleton::PALM;
 	ofVec2f palmPos = handWithFingertipsSkeleton->getPositionAbsolute(palm);
+    
+    
+    
+    
+    
+    
+    // get range of finger splay: the maximum difference in angle between the thumb and pinky.
+    // The angular spread seems to range from ~30-90 degrees.
+    
+    // pinky:
+    ofVec2f pinkyPt0 = handWithFingertipsSkeleton->getPositionAbsolute(HandWithFingertipsSkeleton::PINKY_BASE);
+    ofVec2f pinkyPt1 = handWithFingertipsSkeleton->getPositionAbsolute(HandWithFingertipsSkeleton::PINKY_MID);
+    ofVec2f pinkyDir = pinkyPt1 - pinkyPt0;
+    
+    // thumb:
+    ofVec2f thumbPt1 = handWithFingertipsSkeleton->getPositionAbsolute(HandWithFingertipsSkeleton::THUMB_MID);
+    ofVec2f thumbPt2 = handWithFingertipsSkeleton->getPositionAbsolute(HandWithFingertipsSkeleton::THUMB_TOP);
+    ofVec2f thumbDir = thumbPt2 - thumbPt1;
+    
+    float pinkyAngle = RAD_TO_DEG * atan2f ( pinkyDir.y, pinkyDir.x );
+    float thumbAngle = RAD_TO_DEG * atan2f ( thumbDir.y, thumbDir.x );
+    float angularSpread = (180.0 - abs(pinkyAngle)) + (180.0 - abs(thumbAngle));
+    angularSpreadRunningAvg = 0.95*angularSpreadRunningAvg + 0.05*angularSpread;
+    // printf ("angularSpreadRunningAvg = %f \n", angularSpreadRunningAvg);
+    
+    
+    
 
 	if (true) {
 		int tip[] = {HandWithFingertipsSkeleton::PINKY_TIP, HandWithFingertipsSkeleton::RING_TIP, HandWithFingertipsSkeleton::MIDDLE_TIP, HandWithFingertipsSkeleton::INDEX_TIP, HandWithFingertipsSkeleton::THUMB_TIP};
@@ -60,37 +93,34 @@ void SplayFingersScene::update() {
             HandWithFingertipsSkeleton::INDEX_BASE,
             HandWithFingertipsSkeleton::THUMB_BASE};
 
-        
+        // have the agnel offset based on a running average, for stability
 		float angleOffset = ofMap (palmPos.x, 256,440, 1,0);
         angleOffset = ofClamp (angleOffset, 0,1);
         angleOffset = maxAngle * powf (angleOffset, 0.75);
+        averageAngleOffset = 0.94*averageAngleOffset + 0.06* angleOffset;
         
         
-        printf("x %f    angleOffset: %f\n", palmPos.x, angleOffset);
         
-		int fingerCount = 4;
+        float insertionFrac = ofMap (palmPos.x, 256,440, 1,0);
+        insertionFrac = ofClamp (insertionFrac, 0,1);
+        insertionFrac = powf (insertionFrac, 1.0); // nullop
+        insertionFracRunningAvg = 0.95*insertionFracRunningAvg + 0.05*insertionFrac; // 0...1
+        
+        
+		int fingerCount = 5;
 		for (int i=0; i < fingerCount; i++) {
 			int joints[] = {base[i], mid[i], top[i], tip[i]};
+            float angleOffsetToUse = averageAngleOffset;
 
 			ofVec2f basePos = handWithFingertipsSkeleton->getPositionAbsolute(joints[0]);
-            bool bDoThumb = false;
+            bool bDoThumb = (fingerCount > 4);
             if (bDoThumb && (i == 4)){
                basePos = handWithFingertipsSkeleton->getPositionAbsolute(joints[1]);
             }
             
-            float absDistanceFromSplayAxis = abs(basePos.y - splayAxis);
-            float frac = ofClamp( (absDistanceFromSplayAxis / 10.0), 0, 1);
-            
-            if (basePos.y >= splayAxis) {
-                angleOffset = -abs(angleOffset) * frac;
-            } else {
-                angleOffset =  abs(angleOffset) * frac;
-            }
-            
-			basePos = handWithFingertipsSkeleton->getPositionAbsolute(joints[0]);
-
+        
 			ofVec2f positions[] = {
-                basePos,
+                handWithFingertipsSkeleton->getPositionAbsolute(joints[0]),
                 handWithFingertipsSkeleton->getPositionAbsolute(joints[1]),
                 handWithFingertipsSkeleton->getPositionAbsolute(joints[2]),
                 handWithFingertipsSkeleton->getPositionAbsolute(joints[3])};
@@ -98,12 +128,52 @@ void SplayFingersScene::update() {
                 positions[0].distance(positions[1]),
                 positions[1].distance(positions[2]),
                 positions[2].distance(positions[3])};
+            
 			ofVec2f dir = positions[1] - positions[0];
+            if (bDoThumb && (i == 4)){
+                dir = positions[2] - positions[1];
+            }
 			dir.normalize();
+            
+            
+            
+            // compute the angleOffsetToUse for this finger.
+            
+            /*
+             // Old style: the angleOffsetToUse is +/- based on the distance of the finger base to the splayaxis.
+             float absDistanceFromSplayAxis = abs(basePos.y - splayAxis);
+             float frac = ofClamp( (absDistanceFromSplayAxis / 10.0), 0, 1);
+             if (basePos.y >= splayAxis) {
+             angleOffsetToUse = -abs(averageAngleOffset) * frac;
+             } else {
+             angleOffsetToUse =  abs(averageAngleOffset) * frac;
+             }
+             */
+            
+            
+            float dx = dir.x;
+            float dy = dir.y;
+            float fingerOrientationDegrees = RAD_TO_DEG * atan2f(dy,dx);
+            
+            float newFingerOrientationDegrees = fingerOrientationDegrees;
+            if (fingerOrientationDegrees > 0){  // ~135 (at extreme)...180
+                float amountToExaggerate = 180 - fingerOrientationDegrees;
+                amountToExaggerate *= (1.0 + effectStrength);//*insertionFracRunningAvg);
+                newFingerOrientationDegrees = 180 - amountToExaggerate;
+                
+            } else {                            // ~ -135 (at extreme)...-180
+                float amountToExaggerate = fingerOrientationDegrees - (-180);
+                amountToExaggerate *= (1.0 + effectStrength);//*insertionFracRunningAvg);
+                newFingerOrientationDegrees = -180 + amountToExaggerate;
+            }
+            angleOffsetToUse = newFingerOrientationDegrees - fingerOrientationDegrees;
+            if (bDoThumb && (i == 4)){
+                angleOffsetToUse *= 0.75; // just a little less so for the thumb, please....looks better
+            }
 
 			int fingerPartCount = 3;
 			for (int j=0; j<fingerPartCount; j++) {
-				dir = dir.getRotated(angleOffset);
+				dir = dir.getRotated (angleOffsetToUse);
 				dir.normalize();
 				dir = dir * lengths[j];
 

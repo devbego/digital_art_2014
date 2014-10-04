@@ -14,6 +14,9 @@ protected:
 	float phaseOffset;
 	float sigmoidStrengthMid;
 	float sigmoidStrengthTip;
+    
+    float averageWristPalmDistance;
+    
 public:
 	SinusoidalLengthScene(ofxPuppet* puppet, HandSkeleton* handSkeleton, HandSkeleton* immutableHandSkeleton);
 	void setupGui();
