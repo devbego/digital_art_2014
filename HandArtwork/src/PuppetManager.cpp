@@ -31,6 +31,7 @@ void PuppetManager::setupPuppeteer (HandMeshBuilder &myHandMeshBuilder){
 	scenes.push_back(new StartrekScene			(&puppet, &handSkeleton, &immutableHandSkeleton));
 	scenes.push_back(new StraightenFingersScene	(&puppet, &handWithFingertipsSkeleton, &immutableHandWithFingertipsSkeleton));
 	scenes.push_back(new SplayFingersScene		(&puppet, &handWithFingertipsSkeleton, &immutableHandWithFingertipsSkeleton));
+    scenes.push_back(new SplayFingers2Scene		(&puppet, &handWithFingertipsSkeleton, &immutableHandWithFingertipsSkeleton));
 	scenes.push_back(new TwitchScene			(&puppet, &handSkeleton, &immutableHandSkeleton));
 	scenes.push_back(new PinkyPuppeteerScene	(&puppet, &handWithFingertipsSkeleton, &immutableHandWithFingertipsSkeleton));
 	scenes.push_back(new FingerLengthPuppeteerScene(&puppet, &handWithFingertipsSkeleton, &immutableHandWithFingertipsSkeleton));

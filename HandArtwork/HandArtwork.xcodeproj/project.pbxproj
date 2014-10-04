@@ -125,6 +125,7 @@
 		837220E80EB56CD44AD27F2A /* ofxSlider.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 15F2C6477A769C03A56D1401 /* ofxSlider.cpp */; };
 		856AA354D08AB4B323081444 /* ofxBaseGui.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9604B925D32EE39065747725 /* ofxBaseGui.cpp */; };
 		933A2227713C720CEFF80FD9 /* tinyxml.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2B40EDA85BEB63E46785BC29 /* tinyxml.cpp */; };
+		9707D02419E0950D000C710E /* SplayFingers2Scene.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9707D02219E0950D000C710E /* SplayFingers2Scene.cpp */; };
 		97860C3819DDC6DD00D99D7A /* AppFaultManager.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 97860C3619DDC6DD00D99D7A /* AppFaultManager.cpp */; };
 		9A83D1B3FB64456BC907667F /* ofxUIMinimalSlider.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2BE7216430113F333B8351ED /* ofxUIMinimalSlider.cpp */; };
 		9ABE161F13B1E8B87B7C04F9 /* Plane.cpp in Sources */ = {isa = PBXBuildFile; fileRef = BF0F4A067A58EA2F68D32147 /* Plane.cpp */; };
@@ -666,6 +667,8 @@
 		946187321200AC04E570E6EC /* hierarchical_clustering_index.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 30; name = hierarchical_clustering_index.h; path = ../../../addons/ofxOpenCv/libs/opencv/include/opencv2/flann/hierarchical_clustering_index.h; sourceTree = SOURCE_ROOT; };
 		9604B925D32EE39065747725 /* ofxBaseGui.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 30; name = ofxBaseGui.cpp; path = ../../../addons/ofxGui/src/ofxBaseGui.cpp; sourceTree = SOURCE_ROOT; };
 		961DE8B564EF22E65C9480AE /* ofxUI2DPad.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 30; name = ofxUI2DPad.h; path = ../../../addons/ofxUI/src/ofxUI2DPad.h; sourceTree = SOURCE_ROOT; };
+		9707D02219E0950D000C710E /* SplayFingers2Scene.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = SplayFingers2Scene.cpp; sourceTree = "<group>"; };
+		9707D02319E0950D000C710E /* SplayFingers2Scene.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SplayFingers2Scene.h; sourceTree = "<group>"; };
 		974AACF856A0A1B7D8F259E0 /* result_set.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 30; name = result_set.h; path = ../../../addons/ofxOpenCv/libs/opencv/include/opencv2/flann/result_set.h; sourceTree = SOURCE_ROOT; };
 		97860C3619DDC6DD00D99D7A /* AppFaultManager.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = AppFaultManager.cpp; sourceTree = "<group>"; };
 		97860C3719DDC6DD00D99D7A /* AppFaultManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AppFaultManager.h; sourceTree = "<group>"; };
@@ -1165,6 +1168,8 @@
 				3B04CBCB19D1DE8A005E6F31 /* SinusoidalWiggleScene.h */,
 				3B04CBCC19D1DE8A005E6F31 /* SplayFingersScene.cpp */,
 				3B04CBCD19D1DE8A005E6F31 /* SplayFingersScene.h */,
+				9707D02219E0950D000C710E /* SplayFingers2Scene.cpp */,
+				9707D02319E0950D000C710E /* SplayFingers2Scene.h */,
 				3B04CBCE19D1DE8A005E6F31 /* StartrekScene.cpp */,
 				3B04CBCF19D1DE8A005E6F31 /* StartrekScene.h */,
 				3B04CBD019D1DE8A005E6F31 /* StraightenFingersScene.cpp */,
@@ -2784,6 +2789,7 @@
 				CE5D89B9893EAA12F511DCAC /* ofxUIWidgetWithLabel.cpp in Sources */,
 				3B4384E319D1BFB7001F75FE /* ofxPuppet.cpp in Sources */,
 				3B04CBF019D1DE8A005E6F31 /* WigglingWristScene.cpp in Sources */,
+				9707D02419E0950D000C710E /* SplayFingers2Scene.cpp in Sources */,
 				3BFC9F6019D175BB00284002 /* LeapFrame.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

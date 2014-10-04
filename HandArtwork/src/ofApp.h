@@ -41,6 +41,7 @@
 #include "StartrekScene.h"
 #include "StraightenFingersScene.h"
 #include "SplayFingersScene.h"
+#include "SplayFingers2Scene.h"
 #include "TwitchScene.h"
 #include "PinkyPuppeteerScene.h"
 #include "FingerLengthPuppeteerScene.h"
