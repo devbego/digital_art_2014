@@ -32,17 +32,29 @@ void NorthScene::setupMouseGui() {
 
 	this->mouseGui->autoSizeToFitWidgets();
 }
+
+//=================================================================
 void NorthScene::update() {
 	HandSkeleton* handSkeleton = (HandSkeleton*)this->skeleton;
 
-	int toRotate[] = {HandSkeleton::PINKY_BASE, HandSkeleton::RING_BASE, HandSkeleton::MIDDLE_BASE, HandSkeleton::INDEX_BASE,
-		HandSkeleton::PINKY_MID, HandSkeleton::RING_MID, HandSkeleton::MIDDLE_MID, HandSkeleton::INDEX_MID};
-	int toRotateCount = 8;
-	for(int i = 0; i < toRotateCount; i++) {
-		int index = toRotate[i];
-		handSkeleton->setRotation(index, -90, true);
+    int toRotateCount = 8;
+	int toRotate[] = {  HandSkeleton::PINKY_BASE,
+                        HandSkeleton::RING_BASE,
+                        HandSkeleton::MIDDLE_BASE,
+                        HandSkeleton::INDEX_BASE,
+                        HandSkeleton::PINKY_MID,
+                        HandSkeleton::RING_MID,
+                        HandSkeleton::MIDDLE_MID,
+                        HandSkeleton::INDEX_MID } ;
+    
+	
+	for (int i=0; i<toRotateCount; i++) {
+		int whichPartToRotate = toRotate[i];
+		handSkeleton->setRotation(whichPartToRotate, 180, true);
 	}
 }
+
+//=================================================================
 void NorthScene::updateMouse(float mx, float my) {
 	ofVec2f mouse(mx, my);
 
