@@ -10,6 +10,9 @@ protected:
 	float maxMidAngleLeft, maxMidAngleRight;
 
 	float equalizeLength;
+	
+	float averageWristPalmDistance;
+	
 public:
 	EqualizeScene(ofxPuppet* puppet, HandSkeleton* handSkeleton, HandSkeleton* immutableHandSkeleton);
 	void setupGui();

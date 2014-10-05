@@ -1893,9 +1893,8 @@ void ofApp::keyPressed(int key){
             
         case 'E': // export ply
             myHandMeshBuilder.getMesh().save("handmesh-" + ofToString(playingFrame) + ".ply");
-            img.allocate(imgW, imgH, OF_IMAGE_COLOR);
+            img.allocate(cameraWidth, cameraHeight, OF_IMAGE_COLOR);
             img.setFromPixels( video.getPixels(), cameraWidth, cameraHeight, OF_IMAGE_COLOR);
-            img.resize(imgW, imgH);
             img.saveImage( "handmesh-" + ofToString(playingFrame) + ".jpg");
             break; 
 		

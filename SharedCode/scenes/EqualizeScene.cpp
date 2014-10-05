@@ -14,7 +14,9 @@ EqualizeScene::EqualizeScene(ofxPuppet* puppet, HandSkeleton* handSkeleton, Hand
 	this->maxMidAngleRight = -30;
 
 	this->equalizeLength = 40;
+	this->averageWristPalmDistance = 60;
 }
+
 void EqualizeScene::setupGui() {
 	EqualizeScene::initializeGui();
 
@@ -41,17 +43,29 @@ void EqualizeScene::setupMouseGui() {
 //============================================================================
 void EqualizeScene::update() {
 	HandSkeleton* handSkeleton = (HandSkeleton*)this->skeleton;
+	
+	HandSkeleton* immutableHandSkeleton = (HandSkeleton*)this->immutableSkeleton;
+	ofVec2f wristPt = immutableSkeleton->getPositionAbsolute (HandSkeleton::WRIST);
+    ofVec2f palmPt  = immutableSkeleton->getPositionAbsolute (HandSkeleton::PALM);
+    float distanceFromWristToPalm = wristPt.distance(palmPt);
+    distanceFromWristToPalm = ofClamp(distanceFromWristToPalm, 32,64); // empirical
+    float A = 0.90; float B = 1.0-A;
+    averageWristPalmDistance = A*averageWristPalmDistance + B*distanceFromWristToPalm;
+    float equalizeLengthFrac = ofMap(averageWristPalmDistance, 32,64,  0.5,1.0);
+
+	
+	
 
 	int toEqualize[] = {
 	HandSkeleton::PINKY_TIP, HandSkeleton::RING_TIP, HandSkeleton::MIDDLE_TIP, HandSkeleton::INDEX_TIP, HandSkeleton::THUMB_TIP,
 	HandSkeleton::PINKY_MID, HandSkeleton::RING_MID, HandSkeleton::MIDDLE_MID, HandSkeleton::INDEX_MID, HandSkeleton::THUMB_MID};
 	float ratios[] = {
-		1.02, 1.10, 1.00, 1.00, 1.35,
+		1.02, 1.10, 1.00, 1.00, 1.45,
 		1.52, 1.58, 1.60, 1.53, 1.05
 	};
 	int toEqualizeCount = 10;
 	for(int i = 0; i < toEqualizeCount; i++) {
-		handSkeleton->setBoneLength(toEqualize[i], ratios[i] * equalizeLength);
+		handSkeleton->setBoneLength(toEqualize[i], ratios[i] * equalizeLength * equalizeLengthFrac);
 	}
 	ofVec2f pinkyBase = handSkeleton->getPositionAbsolute(HandSkeleton::PINKY_BASE);
 	ofVec2f indexBase = handSkeleton->getPositionAbsolute(HandSkeleton::INDEX_BASE);

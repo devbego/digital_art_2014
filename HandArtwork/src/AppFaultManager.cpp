@@ -86,7 +86,7 @@ float AppFaultManager::getDurationOfFault (ApplicationFault fault){
     // TODO: How do I get the duration that a certain fault has been active?
     // asking for timeHasFault[fault] always returns zero!
     
-    printf("%d  %f  ----     %d\n", fault, timeHasFault[fault], (int)ofGetElapsedTimeMillis());
+    //printf("%d  %f  ----     %d\n", fault, timeHasFault[fault], (int)ofGetElapsedTimeMillis());
     return out;
 }
 
