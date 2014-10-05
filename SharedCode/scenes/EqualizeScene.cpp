@@ -52,8 +52,6 @@ void EqualizeScene::update() {
     float A = 0.90; float B = 1.0-A;
     averageWristPalmDistance = A*averageWristPalmDistance + B*distanceFromWristToPalm;
     float equalizeLengthFrac = ofMap(averageWristPalmDistance, 32,64,  0.5,1.0);
-
-	
 	
 
 	int toEqualize[] = {

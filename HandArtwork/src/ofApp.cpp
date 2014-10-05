@@ -1882,7 +1882,7 @@ void ofApp::keyPressed(int key){
         case 'g':
 		case 'G':
 			guiTabBar->toggleVisible();
-			myPuppetManager.showPuppetGuis = !(myPuppetManager.showPuppetGuis);
+			myPuppetManager.setGuiVisibility( guiTabBar->isVisible()); 
 			break;
         case 'l':
             bInPlaybackMode = !bInPlaybackMode;

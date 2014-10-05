@@ -72,9 +72,10 @@ void PuppetManager::setupPuppeteer (HandMeshBuilder &myHandMeshBuilder){
 	bPuppetMouseControl		= false;
 	bShowPuppetTexture		= true;
 	bShowPuppetWireframe	= true;
-	bShowPuppetControlPoints= true;
+	bShowPuppetControlPoints= false;
 	bShowPuppetSkeleton		= true;
 	bShowPuppetMeshPoints	= false;
+	
 	frameBasedAnimation		= false;
 	showPuppetGuis			= true;
 	
@@ -130,12 +131,12 @@ void PuppetManager::setupPuppetGui(){
 	puppetGui->addLabelToggle("Show Wireframe",		&bShowPuppetWireframe);
 	puppetGui->addLabelToggle("Show Control Pts",	&bShowPuppetControlPoints);
 	puppetGui->addLabelToggle("Show Skeleton",		&bShowPuppetSkeleton);
-	puppetGui->addLabelToggle("Show Mesh Points",	&bShowPuppetMeshPoints);
-	puppetGui->addLabelToggle("Mouse Control",		&bPuppetMouseControl);
-	// puppetGui->addLabelToggle("FrameBasedAnim",	&frameBasedAnimation); // Currently not hooked up.
+	// puppetGui->addLabelToggle("Show Mesh Points",	&bShowPuppetMeshPoints); // Boring
+	// puppetGui->addLabelToggle("Mouse Control",		&bPuppetMouseControl); // No longer hooked up.
+	// puppetGui->addLabelToggle("FrameBasedAnim",		&frameBasedAnimation); // Currently not hooked up.
 	
 	puppetGui->autoSizeToFitWidgets();
-	puppetGui->setPosition(256, 10);
+	puppetGui->setPosition(290, 10);
 	
 	// set the initial scene
     sceneRadio->getToggles()[0]->setValue(true);
@@ -198,7 +199,14 @@ void PuppetManager::updatePuppeteer (bool bComputeAndDisplayPuppet, HandMeshBuil
 			
 			// Get the current scene; turn off all other scenes.
 			int scene = getRadioSelection(sceneRadio);
+			
 			scenes[scene]->turnOn();
+			if (showPuppetGuis){
+				scenes[scene]->turnOnGui();
+			} else {
+				scenes[scene]->turnOffGui();
+			}
+			
 			for (int i=0; i < scenes.size(); i++) {
 				if (i != scene){ scenes[i]->turnOff(); }
 			}
@@ -243,7 +251,9 @@ void PuppetManager::updatePuppeteer (bool bComputeAndDisplayPuppet, HandMeshBuil
 		
     } else {
 		// Puppeteering is disabled, so turn off GUI's etc.
-		// Currently this is not yet turning off the sub-GUI for the scene.
+		setGuiVisibility (false);
+		
+		/*
 		puppetGui->setVisible(false);
 		if (!showPuppetGuis) {
 			for (int i=0; i < scenes.size(); i++) {
@@ -252,6 +262,7 @@ void PuppetManager::updatePuppeteer (bool bComputeAndDisplayPuppet, HandMeshBuil
 				scenes[i]->turnOffMouse();
 			}
 		}
+		*/
 		
 	}
 	
@@ -262,17 +273,22 @@ void PuppetManager::updatePuppeteer (bool bComputeAndDisplayPuppet, HandMeshBuil
 }
 
 
-/*
- // I believe the puppet should own the butterfly subdivided mesh,
- // because the subdivision should be done *after* the puppet, not before.
- bool bComputeRefinedMesh = false;
- if (bComputeRefinedMesh){
- long t0 = ofGetElapsedTimeMicros();
- refinedHandMesh = butterflyMeshSubdivider.subdivideBoundary(handMesh, 1.7);
- long t1 = ofGetElapsedTimeMicros();
- printf("Butterfly = %d\n", (int)(t1-t0));
- }
- */
+
+void PuppetManager::setGuiVisibility (bool bShowGuis){
+	
+	showPuppetGuis = bShowGuis;
+	puppetGui->setVisible(showPuppetGuis);
+	
+	if (!showPuppetGuis) {
+		for (int i=0; i < scenes.size(); i++) {
+			scenes[i]->turnOff();
+			scenes[i]->turnOffGui();
+			scenes[i]->turnOffMouse();
+		}
+	} else {
+		;
+	}
+}
 
 //--------------------------------------------------------------
 void PuppetManager::drawPuppet (bool bComputeAndDisplayPuppet, ofTexture &handImageTexture ){

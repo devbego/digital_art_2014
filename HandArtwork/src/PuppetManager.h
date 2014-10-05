@@ -60,6 +60,7 @@ public:
 	void setupPuppeteer (HandMeshBuilder &myHandMeshBuilder);
 	void updatePuppeteer (bool bComputeAndDisplayPuppet, HandMeshBuilder &myHandMeshBuilder);
 	void drawPuppet (bool bComputeAndDisplayPuppet,  ofTexture &handImageTexture );
+	void setGuiVisibility (bool bShowGuis);
 	
 	ofxPuppet puppet;
 	void setSkeleton(Skeleton* skeleton);
