@@ -164,7 +164,7 @@ void ofApp::setup(){
     bRecordThisCalibFrame		= false;
     bUseCorrectedCamera			= true;
     bDrawLeapWorld              = true;
-    bShowText					= true;
+    bShowText					= false;
     bDrawMiniImages             = true;
     bDrawSmallCameraView        = true;
     bShowLargeCamImageOnTop		= false;    // temp for quickly showing on hand video only
@@ -419,27 +419,28 @@ void ofApp::setupGui() {
 	//------------------------------------
 	ofxUICanvas* gui0 = new ofxUICanvas();
 	gui0->setName("GUI0");
-	gui0->addLabel("GUI0");
-	
-	// Camera controls.
-	gui0->addSlider("LibDC Camera Shutter",		32.0, 100.0,	&cameraLibdcShutterInv);
-	gui0->addSlider("LibDC Camera Brightness",	0.0, 1.0,		&cameraLibdcBrightness);
-	gui0->addSlider("LibDC Camera Gain",		0.00, 1.0,		&cameraLibdcGain);
-	gui0->addSlider("LibDC Camera Gamma",		0.00, 3.0,		&cameraLibdcGamma);
+	gui0->addLabel("Basics");
 	
 	// Display of time consumption for vision & meshing.
 	gui0->addSpacer();
 	gui0->addFPS();
+    gui0->addIntSlider("playingFrame", 0, 1000,         &playingFrame);
+    gui0->addLabelToggle("Fullscreen",					&bFullscreen);
+    gui0->addLabelToggle("Do Puppet",					&bComputeAndDisplayPuppet);
+    
+    // Display of time consumption for puppeteering.
+    gui0->addSpacer();
 	gui0->addValuePlotter("Vision: Micros", 256, 0, 50000, &elapsedMicros);
 	gui0->addIntSlider("Vision: Micros", 0, 50000, &elapsedMicrosInt);
-	
-	// Display of time consumption for puppeteering.
-	gui0->addSpacer();
-	gui0->addLabelToggle("Fullscreen",					&bFullscreen);
-	gui0->addLabelToggle("Do Puppet",					&bComputeAndDisplayPuppet);
-    
 	gui0->addValuePlotter("Puppet: Micros", 256, 0, 50000, &(myPuppetManager.elapsedPuppetMicros));
 	gui0->addIntSlider("Puppet: Micros", 0, 50000, &(myPuppetManager.elapsedPuppetMicrosInt));
+    
+    // Camera controls.
+    gui0->addSpacer();
+    gui0->addSlider("LibDC Camera Shutter",		32.0, 100.0,	&cameraLibdcShutterInv);
+    gui0->addSlider("LibDC Camera Brightness",	0.0, 1.0,		&cameraLibdcBrightness);
+    gui0->addSlider("LibDC Camera Gain",		0.00, 1.0,		&cameraLibdcGain);
+    gui0->addSlider("LibDC Camera Gamma",		0.00, 3.0,		&cameraLibdcGamma);
 	
 	gui0->autoSizeToFitWidgets();
 	ofAddListener(gui0->newGUIEvent,this,&ofApp::guiEvent);
@@ -450,7 +451,7 @@ void ofApp::setupGui() {
 	//------------------------------------
 	ofxUICanvas* gui1 = new ofxUICanvas();
 	gui1->setName("GUI1");
-	gui1->addLabel("GUI1");
+	gui1->addLabel("Image Processing");
 	
 	gui1->loadSettings(originalAppDataPath + "HandSegmenterSettings.xml");
 	gui1->addSpacer();
@@ -478,13 +479,17 @@ void ofApp::setupGui() {
 	//------------------------------------
 	ofxUICanvas* gui2 = new ofxUICanvas();
 	gui2->setName("GUI2");
-	gui2->addLabel("GUI2");
+	gui2->addLabel("Contour Analysis");
 	
 	gui2->addIntSlider("smoothingOfLowpassContour", 1, 15,	&(myHandContourAnalyzer.smoothingOfLowpassContour));
 	gui2->addSlider("crotchCurvaturePowf",  0.0, 2.0,		&(myHandContourAnalyzer.crotchCurvaturePowf));
 	gui2->addSlider("crotchDerivativePowf", 0.0, 2.0,		&(myHandContourAnalyzer.crotchDerivativePowf));
 	gui2->addIntSlider("crotchSearchRadius", 1, 32,			&(myHandContourAnalyzer.crotchSearchRadius));
 	gui2->addSlider("crotchContourSearchMask", 0.0, 0.5,&(myHandContourAnalyzer.crotchContourSearchTukeyMaskPct));
+    
+    gui2->addSpacer();
+    gui2->addSlider("minCrotchQuality", 0.0, 0.30,              &(myHandContourAnalyzer.minCrotchQuality));
+    gui2->addSlider("malorientationSuppression", 0.0, 1.0,      &(myHandContourAnalyzer.malorientationSuppression));
 	
 	gui2->autoSizeToFitWidgets();
 	ofAddListener(gui2->newGUIEvent,this,&ofApp::guiEvent);
@@ -495,7 +500,7 @@ void ofApp::setupGui() {
 	// GUI for Application State
 	ofxUICanvas* gui3 = new ofxUICanvas();
 	gui3->setName("GUI3");
-	gui3->addLabel("GUI3");
+	gui3->addLabel("User Metrics");
 	gui3->addSlider("minHandInsertionPercent",  0.0, 1.0,	&minHandInsertionPercent);
 	
 	gui3->addSpacer();
@@ -525,7 +530,7 @@ void ofApp::setupGui() {
     // GUI for WHAT TO DRAW & HOW TO DRAW IT
     ofxUICanvas* gui4 = new ofxUICanvas();
     gui4->setName("GUI4");
-    gui4->addLabel("GUI4");
+    gui4->addLabel("What to Render");
     
     gui4->addSlider("backgroundGray", 0,255,            &backgroundGray); // slider
     gui4->addSlider("puppetDisplayScale", 0.5, 2.0,     &puppetDisplayScale); // slider
@@ -554,11 +559,13 @@ void ofApp::setupGui() {
     contourAnalyzerUnderlayRadio = gui4->addRadio("VR", vnames, OFX_UI_ORIENTATION_VERTICAL);
     contourAnalyzerUnderlayRadio->activateToggle("grayMat");
 
-    //----
     gui4->autoSizeToFitWidgets();
     ofAddListener(gui4->newGUIEvent,this,&ofApp::guiEvent);
     guiTabBar->addCanvas(gui4);
     guis.push_back(gui4);
+    
+    
+   
 
 }
 
@@ -1687,7 +1694,7 @@ void ofApp::drawText(){
     textY+=15;
     ofDrawBitmapString("Press 's' to toggle hand skeleton/cylinders", 20, textY); textY+=15;
 	ofDrawBitmapString("Press 'c' to restore easy-cam orientation", 20, textY); textY+=15;
-	ofDrawBitmapString("Press 'g' to toggle grid", 20, textY); textY+=15;
+	ofDrawBitmapString("Press 'g' to toggle GUI", 20, textY); textY+=15;
     ofDrawBitmapString("Press 'v' to toggle virtual projector", 20, textY); textY+=15;
     ofDrawBitmapString("Press 'w' to toggle calibration points draw", 20, textY); textY+=15;
     ofDrawBitmapString("Press 'C' to load current playback folder's calibration", 20, textY); textY+=15;

@@ -245,6 +245,9 @@ public:
 	bool	doesHandContourExist();
 	int		getNumberOfBlobs();
 	
-	
+    //----------------------------------
+    // data and methods for CROTCH REFINEMENT.
+    float   minCrotchQuality;
+    float   malorientationSuppression;
 
 };

@@ -44,6 +44,9 @@ void HandContourAnalyzer::setup(int w, int h){
 	for (int i=0; i<4; i++){
 		crotchQuality[i] = 0;
 	}
+    
+    minCrotchQuality = 0.15;
+    malorientationSuppression = 0.75;
 	
 }
 
@@ -196,7 +199,7 @@ void HandContourAnalyzer::draw(){
 	
 	// drawOrientations();
 	// drawCrotchCalculations (crotchSearchIndex0, crotchSearchIndex1);
-	// evaluateCrotchQuality();
+	evaluateCrotchQuality();
 	
 	
 	
@@ -2388,7 +2391,7 @@ void HandContourAnalyzer::evaluateCrotchQuality(){
 			float triangleHeightToWristFraction = triangleHeight / distanceFromBaseCenterToWrist;
 			crotchQuality[whichCrotch] = triangleHeightToWristFraction;
 			
-			bool bDoDrawCrotchQualityEvaluations = false;
+			bool bDoDrawCrotchQualityEvaluations = true;
 			if (bDoDrawCrotchQualityEvaluations){
 				ofSetColor( 50+i*50, 50+(3-i)*50, 50);
 				ofLine(pA, pB);
