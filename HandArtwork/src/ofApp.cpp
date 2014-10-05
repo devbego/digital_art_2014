@@ -12,22 +12,26 @@
  // Software assistance: Dan Wilcox, Bryce Summers, Erica Lazrus
  // Conceived 2005, Developed 2013-2014
  //
- // Special thanks to Paulien Dresscher, Eyeo Festival and Theo Watson for encouragement.
+ // Special thanks to Paulien Dresscher, Theo Watson and Eyeo Festival for encouragement.
  // Thanks to Elliot Woods and Simon Sarginson for assistance with Leap/Camera calibration.
  // Thanks to Adam Carlucci for assistance using the Accelerate Framework in openFrameworks.
  // Additional thanks to Rick Barraza and Ben Lower of Microsoft; Christian Schaller and 
  // Hannes Hofmann of Metrilus GmbH; and Doug Carmean and Chris Rojas of Intel.
  //
- // Developed in openFrameworks (OF), an open-source toolkit for arts engineering.
+ // Developed in openFrameworks (OF), a free, open-source toolkit for arts engineering.
  // This project also uses a number of open-source OF "addons" contributed by others:
  // Uses ofxPuppet addon by Zach Lieberman, based on Ryan Schmidt's As-Rigid-As-Possible code.
  // Uses ofxLeapMotion addon by Theo Watson, with assistance from Dan Wilcox.
- // Uses ofxCv, ofxLibdc, ofxTiming addons by Kyle McDonald.
+ // Uses ofxCv, ofxLibdc, and ofxTiming addons by Kyle McDonald.
+ // Uses ofxCvMin and ofxRay addons by Elliot Woods.
  // Uses ofxButterfly addon by Bryce Summers.
  
  // Links: 
  // https://github.com/Bryce-Summers/ofxButterfly
  // https://github.com/ofTheo/ofxLeapMotion
+ 
+ // Shoutouts from @golan @chrissugrue @kcimc: 
+ //
 
 */
 
