@@ -79,6 +79,18 @@ ApplicationFault AppFaultManager::getLongestFault(){
     return activeFault;
 }
 
+
+float AppFaultManager::getDurationOfFault (ApplicationFault fault){
+
+    float out = 0;
+    // TODO: How do I get the duration that a certain fault has been active?
+    // asking for timeHasFault[fault] always returns zero!
+    
+    printf("%d  %f  ----     %d\n", fault, timeHasFault[fault], (int)ofGetElapsedTimeMillis());
+    return out;
+}
+
+
 // get all detected faults
 vector<ApplicationFault> AppFaultManager::getAllFaults(){
     

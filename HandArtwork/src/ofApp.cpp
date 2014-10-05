@@ -1176,6 +1176,17 @@ void ofApp::draw(){
         appFaultManager.drawDebug(ofGetWidth()-200,20); // shows all active faults as debug text
     }
     appFaultManager.drawFaultHelpScreen();
+    
+    
+    float handTooHighDur = myAppFaultManager.getDurationOfFault (FAULT_HAND_TOO_HIGH);
+    //handTooHighDur = ofClamp(handTooHighDur, 0,3);
+    //float col = ofMap(handTooHighDur, 0,3, 0,1);
+    //col = 255.0 * powf (col, 4.0);
+    
+   // ofFill();
+   // ofSetColor(col);
+   // ofRect(mouseX, mouseY, 80,80) ;
+    // printf("handTooHighDur = %f     col = %f \n", handTooHighDur, col);
 		
 }
 
@@ -1408,7 +1419,9 @@ void ofApp::applicationStateMachine(){
     }
     
     // hand too high, i.e. too close to camera
-    if (zHandHeight > maxAllowableHeightZ){
+    float zHandHeightReportedWhenNoHandsPresent = 100.0;
+    float zCeil = zHandHeightReportedWhenNoHandsPresent/2.0;
+    if ((zHandHeight > maxAllowableHeightZ) && (zHandHeight < zCeil)){
         appFaultManager.updateHasFault (FAULT_HAND_TOO_HIGH, dt);
     } else {
         appFaultManager.updateResetFault (FAULT_HAND_TOO_HIGH);
@@ -1418,7 +1431,7 @@ void ofApp::applicationStateMachine(){
     if (insertionPercentage < minHandInsertionPercent && nBlobsInScene > 0){
         appFaultManager.updateHasFault (FAULT_HAND_NOT_DEEP_ENOUGH, dt);
     } else {
-        appFaultManager.updateResetFault(FAULT_HAND_NOT_DEEP_ENOUGH);
+        appFaultManager.updateResetFault (FAULT_HAND_NOT_DEEP_ENOUGH);
     }
     
     

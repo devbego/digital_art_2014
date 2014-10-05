@@ -46,6 +46,9 @@ public:
     // get the fault that has been detected the longest amount of time
     ApplicationFault getLongestFault();
     
+    // get the current duration of a given fault
+    float getDurationOfFault (ApplicationFault fault);
+    
     // get all detected faults
     vector<ApplicationFault> getAllFaults();
     
