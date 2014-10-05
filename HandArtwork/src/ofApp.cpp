@@ -771,6 +771,7 @@ void ofApp::updateComputerVision(){
 	compositeThresholdedImageWithLeapFboPixels();
 	
 	myHandContourAnalyzer.update (thresholdedFinal, leapDiagnosticFboMat, leapVisualizer);
+    myHandContourAnalyzer.refineCrotches (leapVisualizer, grayMat, leapDiagnosticFboMat);
 }
 
 

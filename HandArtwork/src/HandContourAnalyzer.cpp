@@ -47,6 +47,8 @@ void HandContourAnalyzer::setup(int w, int h){
     
     minCrotchQuality = 0.15;
     malorientationSuppression = 0.75;
+   
+
 	
 }
 
@@ -91,6 +93,15 @@ void HandContourAnalyzer::update (const Mat &thresholdedImageOfHandMat, const Ma
 	
 	
 	assembleHandmarksPreliminary(); // last
+}
+
+
+//--------------------------------------------------------------
+void HandContourAnalyzer::refineCrotches (LeapVisualizer &lv,
+                                          const Mat &grayMat,
+                                          const Mat &leapDiagnosticFboMat)
+{
+    
 }
 
 
@@ -2199,8 +2210,8 @@ void HandContourAnalyzer::assembleHandmarksPreliminary(){
 			Handmarks[i].point	= theHandContourResampled [ aHandMarkIndex ];
 			Handmarks[i].valid	= true;
 			
-			// Compute the running average
-			//float A = 0.8;
+			// Compute the running average (not yet implemented)
+			// float A = 0.8; float B = 1.0-A;
 			// Handmarks[i].pointAvg.x = Handmarks[i].pointAvg.x +
 			
 			// Store the history
@@ -2215,8 +2226,6 @@ void HandContourAnalyzer::assembleHandmarksPreliminary(){
 			Handmarks[i].valid	= false;
 		}
 	}
-
-	
 }
 
 

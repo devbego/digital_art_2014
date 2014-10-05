@@ -249,5 +249,8 @@ public:
     // data and methods for CROTCH REFINEMENT.
     float   minCrotchQuality;
     float   malorientationSuppression;
+    void    refineCrotches(LeapVisualizer &lv,
+                           const Mat &grayMat,
+                           const Mat &leapDiagnosticFboMat);
 
 };
