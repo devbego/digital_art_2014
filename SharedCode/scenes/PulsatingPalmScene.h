@@ -7,7 +7,9 @@ class PulsatingPalmScene : public Scene {
 protected:
 	float maxPalmAngleLeft, maxPalmAngleRight;	
 
-	float maxLength;
+	float amplitude;
+	float minLength;
+	
 	float speedUp;
 public:
 	PulsatingPalmScene(ofxPuppet* puppet, PalmSkeleton* palmSkeleton, PalmSkeleton* immutablePalmSkeleton);

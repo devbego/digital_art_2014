@@ -9,13 +9,16 @@ PulsatingPalmScene::PulsatingPalmScene(ofxPuppet* puppet, PalmSkeleton* palmSkel
 	this->maxPalmAngleLeft = 20;
 	this->maxPalmAngleRight = -20;
 
-	this->maxLength = 10;
-	this->speedUp = 1;
+	this->amplitude = 10;
+	this->minLength = 5;
+	this->speedUp = 2.0;
 }
 void PulsatingPalmScene::setupGui() {
 	PulsatingPalmScene::initializeGui();
 
-	this->gui->addSlider("Max Length", 0, 40, &maxLength);
+	this->gui->addSlider("Amplitude", 0, 40,  &amplitude);
+	this->gui->addSpacer();
+	this->gui->addSlider("Min Length", 0, 40, &minLength);
 	this->gui->addSpacer();
 	this->gui->addSlider("Speed Up", 0, 5, &speedUp);
 	this->gui->addSpacer();
@@ -51,7 +54,7 @@ int toPulsate[] = {PalmSkeleton::TOP, PalmSkeleton::RIGHT_BASE, PalmSkeleton::RI
 		ofVec2f parent = puppet->getOriginalMesh().getVertex(palmSkeleton->getControlIndex(PalmSkeleton::CENTROID));
 		ofVec2f position(original-parent);
 		position.normalize();
-		position = position * (maxLength*sin(speedUp*timeVal));
+		position = position * (minLength + amplitude*sin(speedUp*timeVal));
 		palmSkeleton->setPosition(index, position, false, false);
 	}
 }

@@ -12,7 +12,7 @@
  // Software assistance: Dan Wilcox, Bryce Summers, Erica Lazrus
  // Conceived 2005, Developed 2013-2014
  //
- // Special thanks to Paulien Dresschers, Eyeo Festival and Theo Watson for encouragement.
+ // Special thanks to Paulien Dresscher, Eyeo Festival and Theo Watson for encouragement.
  // Thanks to Elliot Woods and Simon Sarginson for assistance with Leap/Camera calibration.
  // Thanks to Adam Carlucci for assistance using the Accelerate Framework in openFrameworks.
  // Additional thanks to Rick Barraza and Ben Lower of Microsoft; Christian Schaller and 
@@ -1895,8 +1895,14 @@ void ofApp::keyPressed(int key){
         case 'g':
 		case 'G':
 			guiTabBar->toggleVisible();
-			myPuppetManager.setGuiVisibility( guiTabBar->isVisible()); 
+			myPuppetManager.setGuiVisibility( guiTabBar->isVisible());
+			if (guiTabBar->isVisible()){
+				ofShowCursor();
+			} else {
+				ofHideCursor();
+			}
 			break;
+			
         case 'l':
             bInPlaybackMode = !bInPlaybackMode;
             break;
