@@ -1,21 +1,34 @@
 #include "ofApp.h"
 
 /*
-// OPENFRAMEWORKS + LEAP MOTION SDK 2.0 HAND SKELETON DEMO 
-// By Golan Levin (@golan), http://github.com/golanlevin
+ // UNTITLED DIGITAL ART (AUGMENTED HAND SERIES)
+ // By Golan Levin, Chris Sugrue, and Kyle McDonald
+ // https://github.com/CreativeInquiry/digital_art_2014
+ // Contact: @golan or golan@flong.com
 
- // Supported in part by the Frank-Ratchye STUDIO for Creative Inquiry at CMU
- // and a commission from the Cinekid Festival, Amsterdam
+ // Commissioned by the Cinekid Festival of Children's Media, Amsterdam
+ // Developed at the Frank-Ratchye STUDIO for Creative Inquiry at CMU
  // Concept and development: Golan Levin, Chris Sugrue, Kyle McDonald
  // Software assistance: Dan Wilcox, Bryce Summers, Erica Lazrus
+ // Conceived 2005, Developed 2013-2014
  //
- // Uses ofxCv, ofxLibdc, ofxTiming by Kyle McDonald
- // Uses ofxButterfly addon by Bryce Summers, with assistance from Kyle McDonald
- // Uses ofxLeapMotion addon by Theo Watson, with assistance from Dan Wilcox
- // Uses ofxPuppet addon by Zach Lieberman, based on RigidAsPossible meshing by ...
- // Assistance with Leap-to-camera calibration: Elliot Woods, Simon Sarginson
- // Assistance with Accelerate Framework: Adam Carlucci
+ // Special thanks to Paulien Dresschers, Eyeo Festival and Theo Watson for encouragement.
+ // Thanks to Elliot Woods and Simon Sarginson for assistance with Leap/Camera calibration.
+ // Thanks to Adam Carlucci for assistance using the Accelerate Framework in openFrameworks.
+ // Additional thanks to Rick Barraza and Ben Lower of Microsoft; Christian Schaller and 
+ // Hannes Hofmann of Metrilus GmbH; and Doug Carmean and Chris Rojas of Intel.
+ //
+ // Developed in openFrameworks (OF), an open-source toolkit for arts engineering.
+ // This project also uses a number of open-source OF "addons" contributed by others:
+ // Uses ofxPuppet addon by Zach Lieberman, based on Ryan Schmidt's As-Rigid-As-Possible code.
+ // Uses ofxLeapMotion addon by Theo Watson, with assistance from Dan Wilcox.
+ // Uses ofxCv, ofxLibdc, ofxTiming addons by Kyle McDonald.
+ // Uses ofxButterfly addon by Bryce Summers.
  
+ // Links: 
+ // https://github.com/Bryce-Summers/ofxButterfly
+ // https://github.com/ofTheo/ofxLeapMotion
+
 */
 
 
