@@ -1210,42 +1210,28 @@ void ofApp::draw(){
         
         } else {
             
-            
-
-            // Composite the colored orientation image (in leapFboMat) against
-            // the thresholdedFinal (in an RGBfied version), to produce the coloredBinarizedImg
+            // ONLY SHOW THE VIDEO/CAMERA
+            //
+            // Composite the colored camera/video image (in videoMat) against
+            // the thresholdedFinal (in an RGBfied version), to produce the maskedCamVidImg
             thresholdedFinalThrice[0] = thresholdedFinal;
             thresholdedFinalThrice[1] = thresholdedFinal;
             thresholdedFinalThrice[2] = thresholdedFinal;
             cv::merge(thresholdedFinalThrice, 3, thresholdedFinal8UC3);
             
             if (bInPlaybackMode){
-                //colorVideoHalfScale.scaleIntoMe (colorVideo);
-                //videoMat = toCv(colorVideoHalfScale);
-                
+                // May want to use this if() if we switch back to 1024x768 for the video view.
                 cv::bitwise_and(videoMat, thresholdedFinal8UC3, maskedCamVidImg);
             } else {
-                // cv::bitwise_and(video, thresholdedFinal8UC3, maskedCamVidImg);
+                cv::bitwise_and(videoMat, thresholdedFinal8UC3, maskedCamVidImg);
             }
      
-            
-            
-            // ONLY SHOW THE VIDEO/CAMERA
             float renderScale = puppetDisplayScale * 2.0;
             float puppetOffsetX = ofGetWindowWidth() - imgW*renderScale;
             float puppetOffsetY = ofGetWindowHeight()/2.0 - imgH*renderScale/2.0;
             ofTranslate( puppetOffsetX, puppetOffsetY, 0);
             ofScale (renderScale,renderScale);
             ofSetColor(255,255,255);
-            
-            /*
-            // Else if myHandMeshBuilder failed to build a mesh, just show video.
-            if (bInPlaybackMode){
-                video.draw(0,0);
-            } else {
-                processFrameImg.draw(0,0);
-            }
-            */
             
             drawMat(maskedCamVidImg, 0,0);
         }
