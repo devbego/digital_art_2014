@@ -36,6 +36,19 @@
 */
 
 
+// TODO: Add +1/-1 scenes by Kyle
+// TODO: Add other scence by Chris (springy?)
+// TODO: Improve thresholding for persons with dark skin.
+// TODO: Connect application faults to show/hide Puppet (see draw()).
+// TODO: Enable saving of GUIs into XML files.
+// TODO: Implement touchscreen behavior (swipe or poke to change scenes)
+// TODO: Make sure cursor hides/shows properly.
+// TODO: Darken camera image & puppet when hand is too high.
+// TODO: Patch holes in wrist area by filling with solid color from LEAP arm.
+// TODO: Decide on final list of scenes, disable others.
+// TODO: Refactor ofApp.cpp/h to have a CameraAndLeapRecorder. (Not urgent)
+// TODO: Check whether computing amount of leap motion works with delayed data
+
 //=============================================================================
 /*  IMPORTANT NOTE FOR COMPILING WITH LEAP on OSX:
     In OS X, you must have this in the Run Script Build Phase of your project.
@@ -49,65 +62,7 @@ cp -f ../../../addons/ofxLeapMotion/libs/lib/osx/libLeap.dylib "$TARGET_BUILD_DI
 
 
 //=============================================================================
-/*
- TODO
- 
 
- Enable saving of the various GUIs into XML files.
-  make all settings savable to XML (they are not currently!)
- Hide/reveal the cursor when we are in play/diagnostic modes.
-  Refactor ofApp.cpp/h to have a CameraAndLeapRecorder.
-
- 
- Scenes: 
- -- completely disable display of sub-GUI
- -- ensure display of Puppet is flush to the right edge of the canvas.
- -- In updatePuppeteer(), when bCalculatedMesh is false but a hand is 
-     still present, we should show the undistorted video hand instead.
-
- the closer they Z value are to the camera (BAD), the darker their camera image gets
- composite laplacian edges.
- use ROI
-
- Improve detection of HANDMARK_PINKY_SIDE in HandContourAnalyzer::computePinkySide() with local curvature search. 
- Prevent darkness from climbing up the hand by placing a white stripe at base of arm
- 
-
-deal with dark skin thresholding
- == base on ofMap from the colors of liz to miranda's hands
- 
- White out the wrist before contour detection.
-
- check all ofmaps' for div-0
- 
- dist from wrist better than dist from palm for finger calcs - check thumb in frame 87, 341, 342 in csugrue
- 
-  computing amount of leap motion doesn't work with delayed data
- leapVisualizer.getMotionAmountFromHandPointVectors() fails when we are using temporally offset data from prevLeapFrameRecorder
-  
- feedback if hand is not far in enough, or in too far
- if there's two hands in the scene, use the leap hand whose centroid is closer to the blob
-
--- Do the crotch search as we already are, but search along the contour between knuckles 0 and 4
--- Sort discovered crotches by index, in the right direction
--- Fingernail-fit between crotches.
--- Compute quality of crotches
--- For crotches of sufficiently low quality, 
- -- Do a pass for edge detection, with malorientation-suppression. 
- -- Threshold to select pixels which represent sufficiently-strong edges
- -- Compute the "perfect line", from the crotch to the midpoint between knuckles
- -- For each thresholded edge pixel, classify according to which perfect ray it's closest to. 
- -- Fit a line through the classified points, creating a best-fit line. 
- -- At regular intervals, Search along the best-fit line for the darkest point of the trough
- -- Collect those points, somehow add them to the contour
- 
- Use direction-extremality * fingernailfit to compute tip quality
-
- */
-
-
-
-//--------------------------------------------------------------
 void ofApp::setup(){
 	
 	// App settings
@@ -1753,14 +1708,17 @@ void ofApp::drawLeapWorld(){
 }
 
 
+//--------------------------------------------------------------
 void ofApp::drawText(){
     float textY = 500;
     ofSetColor(ofColor::white);
     ofDrawBitmapString("YO KYLE & CHRIS",               20, textY+=15);
     ofDrawBitmapString("Press 'p' to show/hide puppet", 20, textY+=15);
     ofDrawBitmapString("Press 'g' to show/hide GUI",    20, textY+=15);
+    ofDrawBitmapString("(You may need to press 'g' twice to see puppet gui)",    20, textY+=15);
     ofDrawBitmapString("Press '2' to load calibration", 20, textY+=15);
     ofDrawBitmapString("Press '1' to load sequence",    20, textY+=15);
+    ofDrawBitmapString("TODO's at top of ofApp.cpp",    20, textY+=15);
 }
 
 //--------------------------------------------------------------
@@ -1769,9 +1727,6 @@ void ofApp::drawText2(){
 	float textY = 500;
 	
 	ofSetColor(ofColor::white);
-	//ofDrawBitmapString("Display, record & playback Leap 2.0 Controller data.", 20, textY); textY+=15;
-	//ofDrawBitmapString("Built in openFrameworks by Golan Levin, golan@flong.com", 20, textY); textY+=15;
-	//textY+=15;
 
 	ofSetColor( (leap.isConnected()) ?  ofColor::green : ofColor(255,51,51)) ;
 	ofDrawBitmapString( (leap.isConnected() ? "Leap is Connected!" : "Leap is NOT CONNECTED!"), 20, textY);
