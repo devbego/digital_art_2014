@@ -96,6 +96,7 @@ class ofApp : public ofBaseApp{
     //------------------------------
     // Management
     void drawText();
+    void drawText2();
 	void applicationStateMachine();
     
     //------------------------------
@@ -252,6 +253,11 @@ class ofApp : public ofBaseApp{
 	
 	Mat	videoMat;
 	// vector<Mat> rgbVideoChannelMats;
+    Mat videoMat1024;
+    Mat thresholdedFinal1024;
+    Mat thresholdedFinal8UC31024;
+    Mat thresholdedFinalThrice1024[3];
+    Mat maskedCamVidImg1024; 
 	
 	Mat grayMat;
 	Mat prevGrayMat;
@@ -262,6 +268,7 @@ class ofApp : public ofBaseApp{
 	Mat tempGrayscaleMat1;
 	Mat tempGrayscaleMat2;
 	Mat coloredBinarizedImg;
+    Mat maskedCamVidImg;    // The camera or video RGB image, masked to remove the background,
 	Mat handPartIDImg;		// grayscale image in which each pixel represents what part of the hand it represents
 	Mat handPartIDTmpImg;	// just used to store the information for a single finger at a time.
 	
@@ -271,7 +278,6 @@ class ofApp : public ofBaseApp{
 	Mat	thresholdedFinal8UC3;
 	Mat thresholdedFinalThrice[3];
 	Mat rgbVideoChannelMats[3];
-	Mat leapDiagnosticFboChannelMats[3]; 
 	Mat blurred;
 	Mat thresholdConstMat;
 	

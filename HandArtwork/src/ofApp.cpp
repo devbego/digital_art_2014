@@ -124,7 +124,7 @@ void ofApp::setup(){
     cameraHeight	= 768;
 	drawW			= cameraWidth/2;
     drawH			= cameraHeight/2;
-    backgroundGray  = 10;
+    backgroundGray  = 0;
 	
 	imgW			= cameraWidth;
     imgH			= cameraHeight;
@@ -164,7 +164,7 @@ void ofApp::setup(){
     bRecordThisCalibFrame		= false;
     bUseCorrectedCamera			= true;
     bDrawLeapWorld              = true;
-    bShowText					= false;
+    bShowText					= true;
     bDrawMiniImages             = true;
     bDrawSmallCameraView        = true;
     bShowLargeCamImageOnTop		= false;    // temp for quickly showing on hand video only
@@ -226,6 +226,12 @@ void ofApp::setup(){
 	laplaceSensitivity			= 0.59;
 	
 	colorVideo.allocate			(cameraWidth, cameraHeight);
+    thresholdedFinal1024.create	(cameraWidth, cameraHeight, CV_8UC1);
+    videoMat1024.create         (cameraWidth, cameraHeight, CV_8UC3);
+    thresholdedFinal8UC31024.create (cameraWidth, cameraHeight, CV_8UC3);
+    maskedCamVidImg1024.create      (cameraWidth, cameraHeight, CV_8UC3);
+    
+    maskedCamVidImg.create      (imgW, imgH, CV_8UC3);
 	
 	colorVideoHalfScale.allocate(imgW, imgH);
 	leapFboPixels.allocate		(imgW, imgH, OF_IMAGE_COLOR);
@@ -250,6 +256,7 @@ void ofApp::setup(){
 	leapDiagnosticFboMat.create	(imgH, imgW, CV_8UC3); // 3-channel
 	coloredBinarizedImg.create	(imgH, imgW, CV_8UC3); // 3-channel
 	thresholdedFinal8UC3.create (imgH, imgW, CV_8UC3);
+    
 	
 	graySmall.create			(imgH/4, imgW/4, CV_8UC1);
 	blurredSmall.create			(imgH/4, imgW/4, CV_8UC1);
@@ -258,9 +265,6 @@ void ofApp::setup(){
 	rgbVideoChannelMats[1].create (imgH, imgW, CV_8UC1);
 	rgbVideoChannelMats[2].create (imgH, imgW, CV_8UC1);
 	
-	leapDiagnosticFboChannelMats[0].create (imgH, imgW, CV_8UC1);
-	leapDiagnosticFboChannelMats[1].create (imgH, imgW, CV_8UC1);
-	leapDiagnosticFboChannelMats[2].create (imgH, imgW, CV_8UC1);
 
 	
 	//-------------------------------------
@@ -456,11 +460,12 @@ void ofApp::setupGui() {
 	gui1->loadSettings(originalAppDataPath + "HandSegmenterSettings.xml");
 	gui1->addSpacer();
 	
-	gui1->addSlider("thresholdValue", 0.0, 128.0, &thresholdValue);
-	gui1->addSlider("blurKernelSize", 1, 63, &blurKernelSize);
-	gui1->addSlider("blurredStrengthWeight", 0.0, 1.0, &blurredStrengthWeight);
-	gui1->addSlider("laplaceDelta",		0,	255, &laplaceDelta);
-	gui1->addSlider("laplaceSensitivity",0.0, 4.0, &laplaceSensitivity);
+	gui1->addSlider("HCA:thresholdValue", 0.0, 128.0,       &(myHandContourAnalyzer.thresholdValue));
+	gui1->addSlider("HCA:blurKernelSize", 1, 40,            &(myHandContourAnalyzer.blurKernelSize));
+	gui1->addSlider("HCA:blurredStrengthWeight", 0.0, 1.0,  &(myHandContourAnalyzer.blurredStrengthWeight));
+	gui1->addSlider("HCA:lineBelongingTolerance", 0, 64,	&(myHandContourAnalyzer.lineBelongingTolerance));
+	gui1->addSlider("HCA:perpendicularSearch", 0.0, 0.5,	&(myHandContourAnalyzer.perpendicularSearch));
+	
 	
 	gui1->addSpacer();
 	gui1->addLabelToggle("bUseROIForFilters",			&bUseROIForFilters);
@@ -485,7 +490,7 @@ void ofApp::setupGui() {
 	gui2->addSlider("crotchCurvaturePowf",  0.0, 2.0,		&(myHandContourAnalyzer.crotchCurvaturePowf));
 	gui2->addSlider("crotchDerivativePowf", 0.0, 2.0,		&(myHandContourAnalyzer.crotchDerivativePowf));
 	gui2->addIntSlider("crotchSearchRadius", 1, 32,			&(myHandContourAnalyzer.crotchSearchRadius));
-	gui2->addSlider("crotchContourSearchMask", 0.0, 0.5,&(myHandContourAnalyzer.crotchContourSearchTukeyMaskPct));
+	gui2->addSlider("crotchContourSearchMask", 0.0, 0.5,    &(myHandContourAnalyzer.crotchContourSearchTukeyMaskPct));
     
     gui2->addSpacer();
     gui2->addSlider("minCrotchQuality", 0.0, 0.30,              &(myHandContourAnalyzer.minCrotchQuality));
@@ -554,6 +559,7 @@ void ofApp::setupGui() {
     vnames.push_back("edgesMat1");
     vnames.push_back("leapDiagnosticFboMat");
     vnames.push_back("coloredBinarizedImg");
+    vnames.push_back("edgeMat");
     vnames.push_back("processFrameImg");
     gui4->addLabel("Contour Analyzer Underlay", OFX_UI_FONT_SMALL);
     contourAnalyzerUnderlayRadio = gui4->addRadio("VR", vnames, OFX_UI_ORIENTATION_VERTICAL);
@@ -625,15 +631,6 @@ void ofApp::update(){
     myPuppetManager.updatePuppeteer( bComputeAndDisplayPuppet, myHandMeshBuilder);
     
 
-}
-
-//--------------------------------------------------------------
-void ofApp::updateHandMesh(){
-	
-	ofPolyline &theHandContour = myHandContourAnalyzer.theHandContourResampled;
-	Handmark *theHandmarks = myHandContourAnalyzer.Handmarks;
-	ofVec3f theHandCentroid = myHandContourAnalyzer.handCentroidLeap;
-	myHandMeshBuilder.buildMesh (theHandContour, theHandCentroid, theHandmarks);
 }
 
 
@@ -771,8 +768,30 @@ void ofApp::updateComputerVision(){
 	compositeThresholdedImageWithLeapFboPixels();
 	
 	myHandContourAnalyzer.update (thresholdedFinal, leapDiagnosticFboMat, leapVisualizer);
-    myHandContourAnalyzer.refineCrotches (leapVisualizer, grayMat, leapDiagnosticFboMat);
+	
 }
+
+//--------------------------------------------------------------
+void ofApp::updateHandMesh(){
+	
+	bool bRefined = myHandContourAnalyzer.refineCrotches (leapVisualizer, grayMat, thresholdedFinal, leapDiagnosticFboMat);
+    ofVec3f& theHandCentroid     = myHandContourAnalyzer.handCentroidLeap;
+    ofVec3f& theLeapWristPoint   = myHandContourAnalyzer.wristPosition;
+    
+	if (bRefined){
+		ofPolyline &theHandContour  = myHandContourAnalyzer.theHandContourRefined;
+		Handmark *theHandmarks      = myHandContourAnalyzer.HandmarksRefined;
+		myHandMeshBuilder.buildMesh (theHandContour, theHandCentroid, theLeapWristPoint, theHandmarks);
+		
+	} else {
+		ofPolyline &theHandContour  = myHandContourAnalyzer.theHandContourResampled;
+		Handmark *theHandmarks      = myHandContourAnalyzer.Handmarks;
+		myHandMeshBuilder.buildMesh (theHandContour, theHandCentroid, theLeapWristPoint, theHandmarks);
+	}
+	
+}
+
+
 
 
 
@@ -1157,35 +1176,94 @@ void ofApp::draw(){
         drawContourAnalyzer();
     }
     
-
+    
 
 	//------------------------------
 	// 2. COMPUTE AND DISPLAY PUPPET
 	if (bComputeAndDisplayPuppet){
-
+        
         ofPushStyle();
-		ofPushMatrix();
+        ofPushMatrix();
         
-        // Get the texture from the camera or the stored video, depending on the playback mode.
-        ofTexture &handImageTexture = (bInPlaybackMode) ?
-            (video.getTextureReference()) :
-            (processFrameImg.getTextureReference());
+        bool bEverythingIsAwesome = true;
+        bool bCalculatedMesh = myHandMeshBuilder.bCalculatedMesh;
+        bEverythingIsAwesome = bCalculatedMesh; // && there's no show-stopping fault!
+        // TODO: Check here for application faults, such as too-fast, etc,
         
-		// Position the right edge of the puppet at the right edge of the window.
-        // We also scale up the puppet image to the optimal display size here.
-        float renderScale = puppetDisplayScale * ((bWorkAtHalfScale) ? 2 : 1);
-        float puppetOffsetX = ofGetWindowWidth() - imgW*renderScale;
-        float puppetOffsetY = ofGetWindowHeight()/2.0 - imgH*renderScale/2.0;
-        ofTranslate( puppetOffsetX, puppetOffsetY, 0);
-        ofScale (renderScale,renderScale);
-		
-		// Draw the puppet.
-		myPuppetManager.drawPuppet(bComputeAndDisplayPuppet, handImageTexture);
-		ofPopMatrix();
+        if (bEverythingIsAwesome){
+            
+            // ALL GOOD! SHOW THE PUPPET!
+            //
+            // Position the right edge of the puppet at the right edge of the window.
+            // We also scale up the puppet image to the optimal display size here.
+            float renderScale = puppetDisplayScale * ((bWorkAtHalfScale) ? 2 : 1);
+            float puppetOffsetX = ofGetWindowWidth() - imgW*renderScale;
+            float puppetOffsetY = ofGetWindowHeight()/2.0 - imgH*renderScale/2.0;
+            ofTranslate( puppetOffsetX, puppetOffsetY, 0);
+            ofScale (renderScale,renderScale);
+            
+            // Get the texture from the camera or the stored video, depending on the playback mode.
+            ofTexture &handImageTexture = (bInPlaybackMode) ?
+                (video.getTextureReference()) :
+                (processFrameImg.getTextureReference());
+            
+            // Draw the puppet.
+            myPuppetManager.drawPuppet(bComputeAndDisplayPuppet, handImageTexture);
+            
+        
+        } else {
+            
+            // THE PUPPET IS FAULTY :(
+            // SO ONLY SHOW THE VIDEO/CAMERA.
+            //
+            bool bUse1024Resolution = false;
+            //
+            // Seems to be having some kind of memory allocation problem.
+            // Furthermore, the 1024 isn't really worth it because the upscaled edges are still crappy.
+            if (bUse1024Resolution){
+                // version at 1024:
+                cv::resize(thresholdedFinal, thresholdedFinal1024, cv::Size(cameraWidth, cameraHeight));
+                thresholdedFinalThrice1024[0] = thresholdedFinal1024;
+                thresholdedFinalThrice1024[1] = thresholdedFinal1024;
+                thresholdedFinalThrice1024[2] = thresholdedFinal1024;
+                cv::merge(thresholdedFinalThrice1024, 3, thresholdedFinal8UC31024);
+                cv::bitwise_and( toCv(colorVideo), thresholdedFinal8UC31024, maskedCamVidImg1024);
+                
+                float renderScale = puppetDisplayScale * 1.0;
+                float puppetOffsetX = ofGetWindowWidth() - cameraWidth*renderScale;
+                float puppetOffsetY = ofGetWindowHeight()/2.0 - cameraHeight*renderScale/2.0;
+                ofTranslate( puppetOffsetX, puppetOffsetY, 0);
+                ofScale (renderScale,renderScale);
+
+                ofSetColor(255,255,255);
+                drawMat (maskedCamVidImg1024, 0,0);
+                
+            } else {
+                // Version at 512x384:
+                // Composite the colored camera/video image (in videoMat) against
+                // the thresholdedFinal (in an RGBfied version), to produce the maskedCamVidImg
+                thresholdedFinalThrice[0] = thresholdedFinal;
+                thresholdedFinalThrice[1] = thresholdedFinal;
+                thresholdedFinalThrice[2] = thresholdedFinal;
+                cv::merge(thresholdedFinalThrice, 3, thresholdedFinal8UC3);
+                cv::bitwise_and(videoMat, thresholdedFinal8UC3, maskedCamVidImg);
+                // if (bInPlaybackMode)
+                
+                float renderScale = puppetDisplayScale * 2.0;
+                float puppetOffsetX = ofGetWindowWidth() - imgW*renderScale;
+                float puppetOffsetY = ofGetWindowHeight()/2.0 - imgH*renderScale/2.0;
+                ofTranslate( puppetOffsetX, puppetOffsetY, 0);
+                ofScale (renderScale,renderScale);
+                ofSetColor(255,255,255);
+                drawMat(maskedCamVidImg, 0,0);
+            }
+        }
+        
+        ofPopMatrix();
         ofPopStyle();
+ 
 	}
 
-    
     
     //-----------------------------------
     // 3. DISPLAY FEEDBACK TO USER:
@@ -1275,7 +1353,7 @@ void ofApp::drawContourAnalyzer(){
     
     int whichCAU = getSelection (contourAnalyzerUnderlayRadio);
     
-    ofSetColor(127);
+    ofSetColor(255);
     switch (whichCAU){
         default:
         case 0:		drawMat(grayMat,				0,0, imgW,imgH);	break;
@@ -1285,7 +1363,8 @@ void ofApp::drawContourAnalyzer(){
         case 4:		drawMat(edgesMat1,				0,0, imgW,imgH);	break;
         case 5:		drawMat(leapDiagnosticFboMat,	0,0, imgW,imgH);	break;
         case 6:		drawMat(coloredBinarizedImg,	0,0, imgW,imgH);	break;
-        case 7:		if(bInPlaybackMode ){
+        case 7:     drawMat(myHandContourAnalyzer.edgeMat, 0,0, imgW,imgH);	break;
+        case 8:		if(bInPlaybackMode ){
                         video.draw(0, 0, imgW,imgH);
                     } else {
                         processFrameImg.draw(0,0,imgW,imgH);
@@ -1671,8 +1750,19 @@ void ofApp::drawLeapWorld(){
     ofPopStyle();
 }
 
-//--------------------------------------------------------------
+
 void ofApp::drawText(){
+    float textY = 500;
+    ofSetColor(ofColor::white);
+    ofDrawBitmapString("YO KYLE & CHRIS",               20, textY+=15);
+    ofDrawBitmapString("Press 'p' to show/hide puppet", 20, textY+=15);
+    ofDrawBitmapString("Press 'g' to show/hide GUI",    20, textY+=15);
+    ofDrawBitmapString("Press '2' to load calibration", 20, textY+=15);
+    ofDrawBitmapString("Press '1' to load sequence",    20, textY+=15);
+}
+
+//--------------------------------------------------------------
+void ofApp::drawText2(){
 	
 	float textY = 500;
 	
