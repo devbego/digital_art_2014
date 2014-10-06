@@ -204,6 +204,7 @@ class ofApp : public ofBaseApp{
     void drawDiagnosticMiniImages();
     void drawContourAnalyzer();
     void drawMeshBuilderWireframe();
+    void drawUserPreviewScreen(); // draws corner display for user
     
     bool useCorrectedCam();
 	

@@ -1201,7 +1201,7 @@ void ofApp::draw(){
         appFaultManager.drawDebug(ofGetWidth()-200,20); // shows all active faults as debug text
     }
     appFaultManager.drawFaultHelpScreen();
-    
+    drawUserPreviewScreen();
     
     float handTooHighDur = myAppFaultManager.getDurationOfFault (FAULT_HAND_TOO_HIGH);
     //handTooHighDur = ofClamp(handTooHighDur, 0,3);
@@ -1580,10 +1580,8 @@ void ofApp::drawLeapWorld(){
     // start camera (either calibrated projection or easy cam)
     if (leapToCameraCalibrator.calibrated && bUseVirtualProjector){
         leapToCameraCalibrator.projector.beginAsCamera();
-		
 		//glEnable(GL_DEPTH);
 		glEnable(GL_DEPTH_TEST);
-		
     } else {
 		glEnable(GL_DEPTH);
 		glEnable(GL_DEPTH_TEST);
@@ -1740,6 +1738,25 @@ void ofApp::drawText(){
     ofDrawBitmapString("Calibration file: "+leapToCameraCalibrator.dirNameLoaded,  textX, textY); textY+=15;
 
 	
+}
+
+//--------------------------------------------------------------
+void ofApp::drawUserPreviewScreen(){
+ 
+    ofPushMatrix();
+    ofTranslate(40,ofGetHeight()-40);
+    ofRotate(-90);
+    ofSetColor(255);
+    ofNoFill();
+    ofRect(0,0,drawW*.3,drawH*.3);
+    ofPushMatrix();
+    ofScale(.3,.3,1);
+    drawLeapWorld();
+    ofPopMatrix();
+    
+    ofRect(drawW*.3+20,0,drawW*.3,drawH*.3);
+    ofPopMatrix();
+    
 }
 
 //--------------------------------------------------------------
