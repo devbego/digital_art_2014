@@ -294,6 +294,8 @@ public:
     float blurredStrengthWeight;
 	float lineBelongingTolerance;
 	float perpendicularSearch;
+    bool  bWasRefinedInPreviousFrame;
+    float handmarkBlur; 
     
 
 };

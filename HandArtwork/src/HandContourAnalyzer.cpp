@@ -66,6 +66,7 @@ void HandContourAnalyzer::setup(int w, int h){
     prevThresholdValue			= 0;
 	lineBelongingTolerance		= 8.9;
 	perpendicularSearch			= 0.40;
+    handmarkBlur                = 0.5;
 	
 	
 	int morph_size = 1;
@@ -127,6 +128,7 @@ bool HandContourAnalyzer::refineCrotches (LeapVisualizer &lv,
                                           const Mat &leapDiagnosticFboMat)
 {
     // This could be moved to after (bPerformCrotchRefinement) to save cycles.
+    bWasRefinedInPreviousFrame = false;
     edgeMat.setTo(0);
 
     
@@ -670,9 +672,18 @@ bool HandContourAnalyzer::refineCrotches (LeapVisualizer &lv,
 						}
 						crotchContourIndices[whichCrotch] += (nPointsAdded/2);
 						
-                        
-                        // This will probably botch the running averages. Recompute using new locations.
-
+                        if (bWasRefinedInPreviousFrame){
+                            for (int i=0; i<N_HANDMARKS; i++){
+                                // Compute the running average
+                                int aHandMarkIndex = HandmarksRefined[i].index;
+                                float A = handmarkBlur;
+                                float B = 1.0-A;
+                                HandmarksRefined[i].pointAvg.x =    (A * HandmarksRefined[i].pointAvg.x) +
+                                                                    (B * theHandContourResampled [ aHandMarkIndex ].x);
+                                HandmarksRefined[i].pointAvg.y =    (A * HandmarksRefined[i].pointAvg.y) +
+                                                                    (B * theHandContourResampled [ aHandMarkIndex ].y);
+                            }
+                        }
                         
                         
                         
@@ -701,6 +712,7 @@ bool HandContourAnalyzer::refineCrotches (LeapVisualizer &lv,
 		}
     }
 	
+    bWasRefinedInPreviousFrame = true;
 	return true; 
 }
 
@@ -1563,8 +1575,12 @@ void HandContourAnalyzer::acquireProjectedLeapData (LeapVisualizer &lv){
 	}
 	
 	// Fetch the wrist position and its normal
-	wristPosition    = lv.getProjectedWristPosition();
-	wristPosition    *= scaleFactor;
+	// wristPosition    = lv.getProjectedWristPosition();
+	// wristPosition    *= scaleFactor;
+    ofVec3f wristPos    = lv.getProjectedWristPosition();
+    wristPos            *= scaleFactor;
+    wristPosition       = handmarkBlur*wristPosition + (1.0-handmarkBlur)*wristPos;
+    
 	wristOrientation = lv.getProjectedWristOrientation2();
 	wristOrientation *= scaleFactor;
 	handCentroidLeap = lv.getProjectedHandCentroid();
@@ -2342,6 +2358,21 @@ void HandContourAnalyzer::drawHandmarks (){
 			}
 		}
 	}
+    
+    
+    if (Handmarks[10].valid){
+        float hx = Handmarks[10].pointAvg.x;
+        float hy = Handmarks[10].pointAvg.y;
+        ofSetColor(255,200,180);
+        ofEllipse(hx, hy, 9,9);
+    }
+    if (Handmarks[11].valid){
+        float hx = Handmarks[11].pointAvg.x;
+        float hy = Handmarks[11].pointAvg.y;
+        ofSetColor(255,200,180);
+        ofEllipse(hx, hy, 9,9);
+    }
+    
 	
 
 	ofFill();
@@ -2871,7 +2902,6 @@ void HandContourAnalyzer::assembleHandmarksPreliminary(){
 	Handmarks[HANDMARK_PINKY_SIDE].index		= contourIndexOfPinkySide;
     
     
-	
     
 	for (int i=0; i<N_HANDMARKS; i++){
 		Handmarks[i].type = (HandmarkType) i;
@@ -2881,35 +2911,40 @@ void HandContourAnalyzer::assembleHandmarksPreliminary(){
 			Handmarks[i].valid	= true;
 			
 			// Compute the running average
-			float A = 0.8;
+			float A = handmarkBlur;
             float B = 1.0-A;
             Handmarks[i].pointAvg.x = (A * Handmarks[i].pointAvg.x) + (B * theHandContourResampled [ aHandMarkIndex ].x);
 			Handmarks[i].pointAvg.y = (A * Handmarks[i].pointAvg.y) + (B * theHandContourResampled [ aHandMarkIndex ].y);
-            
-            /*
-             bool bStoreHistory = false;
-			if (bStoreHistory){ // Store the history
-				Handmarks[i].pointHistory.push_back( Handmarks[i].point );
-				if (Handmarks[i].pointHistory.size() > 5){
-					Handmarks[i].pointHistory.pop_front();
-				}
-			}
-            */
         
 			
 		} else if (aHandMarkIndex <= -1){
 			Handmarks[i].valid	= false;
 		}
 	}
+    
+    bool bUseBlurredForCertainHandmarks = true;
+    if (bUseBlurredForCertainHandmarks){
+        int whichHandmarks[] = {10,11,14,15};
+        for (int i=0; i<4; i++){
+            int whichId = whichHandmarks[i];
+            ofVec3f blurredPoint = Handmarks[whichId].pointAvg;
+            int nearestIndexToBlurredPoint = getIndexOfClosestPointOnContour (blurredPoint, theHandContourResampled);
+            Handmarks[whichId].index = nearestIndexToBlurredPoint;
+        }
+    }
+
+    
 	
 	
 	for (int i=0; i<N_HANDMARKS; i++){
 		HandmarksRefined[i].type	= Handmarks[i].type;
-		HandmarksRefined[i].index	= Handmarks[i].index;
+		HandmarksRefined[i].index	= Handmarks[i].index; // prior to refinement
 		HandmarksRefined[i].valid	= Handmarks[i].valid;
         
-        HandmarksRefined[i].pointAvg.x = Handmarks[i].pointAvg.x;
-        HandmarksRefined[i].pointAvg.y = Handmarks[i].pointAvg.y;
+        if (!bWasRefinedInPreviousFrame){
+            HandmarksRefined[i].pointAvg.x = Handmarks[i].pointAvg.x;
+            HandmarksRefined[i].pointAvg.y = Handmarks[i].pointAvg.y;
+        }
         
 	}
 
