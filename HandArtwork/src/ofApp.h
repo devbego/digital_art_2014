@@ -251,6 +251,7 @@ class ofApp : public ofBaseApp{
 	
 	Mat	videoMat;
 	// vector<Mat> rgbVideoChannelMats;
+    Mat videoMatOrigSize;
 	
 	Mat grayMat;
 	Mat prevGrayMat;
@@ -261,6 +262,7 @@ class ofApp : public ofBaseApp{
 	Mat tempGrayscaleMat1;
 	Mat tempGrayscaleMat2;
 	Mat coloredBinarizedImg;
+    Mat maskedCamVidImg;    // The camera or video RGB image, masked to remove the background,
 	Mat handPartIDImg;		// grayscale image in which each pixel represents what part of the hand it represents
 	Mat handPartIDTmpImg;	// just used to store the information for a single finger at a time.
 	
