@@ -60,7 +60,7 @@ public:
 	int		getMeshVertexIndexOfControlPoint (int which);
 
 	bool	isHandMeshFaulty();
-	bool	areContourAndHandmarksFaulty();
+	bool	areContourAndHandmarksFaulty(int nContourPts);
 	bool 	checkForDuplicatedVertices();
 	
 	void	addFingersToHandMesh();

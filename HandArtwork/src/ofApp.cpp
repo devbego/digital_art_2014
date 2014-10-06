@@ -460,6 +460,8 @@ void ofApp::setupGui() {
 	gui1->addSlider("HCA:blurKernelSize", 1, 40,            &(myHandContourAnalyzer.blurKernelSize));
 	gui1->addSlider("HCA:blurredStrengthWeight", 0.0, 1.0,  &(myHandContourAnalyzer.blurredStrengthWeight));
 	gui1->addSlider("HCA:lineBelongingTolerance", 0, 64,	&(myHandContourAnalyzer.lineBelongingTolerance));
+	gui1->addSlider("HCA:perpendicularSearch", 0.0, 0.5,	&(myHandContourAnalyzer.perpendicularSearch));
+	
 	
 	gui1->addSpacer();
 	gui1->addLabelToggle("bUseROIForFilters",			&bUseROIForFilters);
@@ -627,15 +629,6 @@ void ofApp::update(){
 
 }
 
-//--------------------------------------------------------------
-void ofApp::updateHandMesh(){
-	
-	ofPolyline &theHandContour = myHandContourAnalyzer.theHandContourResampled;
-	Handmark *theHandmarks = myHandContourAnalyzer.Handmarks;
-	ofVec3f theHandCentroid = myHandContourAnalyzer.handCentroidLeap;
-	myHandMeshBuilder.buildMesh (theHandContour, theHandCentroid, theHandmarks);
-}
-
 
 
 //--------------------------------------------------------------
@@ -771,8 +764,31 @@ void ofApp::updateComputerVision(){
 	compositeThresholdedImageWithLeapFboPixels();
 	
 	myHandContourAnalyzer.update (thresholdedFinal, leapDiagnosticFboMat, leapVisualizer);
-    // myHandContourAnalyzer.refineCrotches (leapVisualizer, grayMat, thresholdedFinal, leapDiagnosticFboMat); // RESTORE THIS AFTER DEBUGGING.
+	
 }
+
+//--------------------------------------------------------------
+void ofApp::updateHandMesh(){
+	
+	bool bRefined = myHandContourAnalyzer.refineCrotches (leapVisualizer, grayMat, thresholdedFinal, leapDiagnosticFboMat);
+	
+	if (bRefined){
+		ofPolyline &theHandContour = myHandContourAnalyzer.theHandContourRefined;
+		Handmark *theHandmarks = myHandContourAnalyzer.HandmarksRefined;
+		ofVec3f theHandCentroid = myHandContourAnalyzer.handCentroidLeap;
+		myHandMeshBuilder.buildMesh (theHandContour, theHandCentroid, theHandmarks);
+		
+	} else {
+		
+		ofPolyline &theHandContour = myHandContourAnalyzer.theHandContourResampled;
+		Handmark *theHandmarks = myHandContourAnalyzer.Handmarks;
+		ofVec3f theHandCentroid = myHandContourAnalyzer.handCentroidLeap;
+		myHandMeshBuilder.buildMesh (theHandContour, theHandCentroid, theHandmarks);
+	}
+	
+}
+
+
 
 
 
@@ -1297,11 +1313,8 @@ void ofApp::drawContourAnalyzer(){
     
     myHandContourAnalyzer.draw();
     
-    // Only temporarily in draw(). Move this back to update() after it has been debugged.
-    long long t0 = ofGetElapsedTimeMicros();
-    myHandContourAnalyzer.refineCrotches (leapVisualizer, grayMat, thresholdedFinal, leapDiagnosticFboMat);
-    long long t1 = ofGetElapsedTimeMicros();
-    printf("refineCrotches took %d\n", (int)(t1-t0));
+	// REMOVE THIS AFTER DEBUGGING
+    // myHandContourAnalyzer.refineCrotches (leapVisualizer, grayMat, thresholdedFinal, leapDiagnosticFboMat);
     
    
     //-----------------------------------

@@ -56,14 +56,23 @@ void HandContourAnalyzer::setup(int w, int h){
     blurredUnthInvEdgeMat.create        (imgH, imgW, CV_8UC1);
     adaptiveThreshImg.create            (imgH, imgW, CV_8UC1);
 	pixelOwnershipMat.create            (imgH, imgW, CV_8UC1);
+	grayBlurMat.create                  (imgH, imgW, CV_8UC1);
     
     thresholdConstMat.setTo( (unsigned char) ((int)10));
     
     blurKernelSize				= 6.0;
     blurredStrengthWeight		= 0.95;
-    thresholdValue				= 30.0;
+    thresholdValue				= 40.0;
     prevThresholdValue			= 0;
-	lineBelongingTolerance		= 8.85;
+	lineBelongingTolerance		= 8.9;
+	perpendicularSearch			= 0.40;
+	
+	
+	int morph_size = 1;
+	int morph_type = cv::MORPH_ELLIPSE;
+	morphStructuringElt = getStructuringElement(morph_type,
+												cv::Size( 2*morph_size + 1, 2*morph_size+1 ),
+												cv::Point(  morph_size,       morph_size ) );
 	
 }
 
@@ -112,13 +121,14 @@ void HandContourAnalyzer::update (const Mat &thresholdedImageOfHandMat, const Ma
 
 
 //--------------------------------------------------------------
-void HandContourAnalyzer::refineCrotches (LeapVisualizer &lv,
+bool HandContourAnalyzer::refineCrotches (LeapVisualizer &lv,
                                           const Mat &grayMat,
                                           const Mat &thresholdedImageOfHandMat,
                                           const Mat &leapDiagnosticFboMat)
 {
     // This could be moved to after (bPerformCrotchRefinement) to save cycles.
     edgeMat.setTo(0);
+
     
     // It's only necessary to perform crotch refinement
     // if one or more of our crotches are of a poor quality.
@@ -129,7 +139,9 @@ void HandContourAnalyzer::refineCrotches (LeapVisualizer &lv,
             bPerformCrotchRefinement = true;
         }
     }
-    
+	if (!bPerformCrotchRefinement){
+		return false;
+	}
 
     if (bPerformCrotchRefinement){
         bool bDrawDebug = true;
@@ -161,8 +173,8 @@ void HandContourAnalyzer::refineCrotches (LeapVisualizer &lv,
                 
                 if (i == 0){
                     // Special case for the thumb!!
-                    aPerfectRay.kx = knuckles[0].x;
-                    aPerfectRay.ky = knuckles[0].y;
+                    aPerfectRay.kx = (aPerfectRay.cx + knuckles[0].x)/2.0;
+                    aPerfectRay.ky = (aPerfectRay.cy + knuckles[0].y)/2.0;
                     
                 } else {
                     // Incorporate the local orientation, from leapDiagnosticFboMat
@@ -225,18 +237,31 @@ void HandContourAnalyzer::refineCrotches (LeapVisualizer &lv,
 				aPerfectRay.dy = dy;
 				aPerfectRay.lineMag2 = dx*dx + dy*dy;
 				
-                perfectRays.push_back(aPerfectRay);
+				float aPerfectRayLength = sqrt(aPerfectRay.lineMag2);
+				bool bKosherLongEnough = (aPerfectRayLength > 30);
+				
+				// this ray is kosher if it doesn't intersect the contour anywhere (result = -1).
+				int kosherNoIntersections = getIndexWhereLineSegmentIntersectsPolyline (aPerfectRay.cx, aPerfectRay.cy,
+																						aPerfectRay.kx, aPerfectRay.ky,
+																						theHandContourResampled);
+				
+				if ((kosherNoIntersections == -1) && bKosherLongEnough){
+					perfectRays.push_back(aPerfectRay);
+				}
             }
         }
 		
 		int nPerfectRays = perfectRays.size();
-		if (nPerfectRays > 0){
+		if (nPerfectRays <= 0){
+			return false;
+		}
 		
+		if (nPerfectRays > 0){
 			if (bDrawDebug){
 				// Draw the perfect rays.
 				for (int j=0; j<nPerfectRays; j++){
 					PerfectRay& aPerfectRay = perfectRays[j];
-					ofSetColor (20,255,200);
+					ofSetColor (20,255,200, 128);
 					ofLine (aPerfectRay.cx,aPerfectRay.cy, aPerfectRay.kx,aPerfectRay.ky);
 					ofDrawBitmapString ( ofToString (aPerfectRay.whichCrotch), aPerfectRay.kx+1,aPerfectRay.ky+3);
 				}
@@ -270,7 +295,6 @@ void HandContourAnalyzer::refineCrotches (LeapVisualizer &lv,
 				topmostRayY     = MIN (topmostRayY,    aPerfectRay.cy);
 				bottommostRayY  = MAX (bottommostRayY, aPerfectRay.ky);
 				bottommostRayY  = MAX (bottommostRayY, aPerfectRay.cy);
-				
 			}
 			
 			bool bBoundsAreReasonable = false;
@@ -297,7 +321,9 @@ void HandContourAnalyzer::refineCrotches (LeapVisualizer &lv,
 				CvRect crackRectA = cvRect(leftmostRayXa,topmostRayYa, rightmostRayXa-leftmostRayXa, bottommostRayYa-topmostRayYa);
 				CvRect crackRectB = cvRect(leftmostRayXb,topmostRayYb, rightmostRayXb-leftmostRayXb, bottommostRayYb-topmostRayYb);
 				
-				Mat grayMatROI  = (bUseROI) ?  grayMat(crackRectB) : grayMat;
+				Mat grayMatROI  = (bUseROI) ?  grayMat(crackRectB)		: grayMat;
+				Mat grayBlurROI = (bUseROI) ?  grayBlurMat(crackRectB)	: grayBlurMat;
+				
 				Mat tempMat1ROI = (bUseROI) ? tempMat1(crackRectB) : tempMat1;
 				Mat tempMat2ROI = (bUseROI) ? tempMat2(crackRectA) : tempMat2;
 				Mat thresholdedImageOfHandMatROI    = (bUseROI) ? thresholdedImageOfHandMat(crackRectB)      : thresholdedImageOfHandMat;
@@ -331,6 +357,16 @@ void HandContourAnalyzer::refineCrotches (LeapVisualizer &lv,
 				cv::subtract (unthresholdedInvertedEdgeMatROIA, adaptiveThreshImgROI, tempMat2ROI);
 				int thresholdMode = cv::THRESH_BINARY;
 				cv::threshold (tempMat2ROI, edgeMatROI, 1, 255, thresholdMode);
+				
+				// Clean it up with an erode. Gets rid of spurious salt noise.
+				bool bCleanWithErode = true;
+				if (bCleanWithErode){
+					cv::erode ( edgeMatROI, edgeMatROI,	morphStructuringElt );
+				}
+				
+				// While we're here, blur grayBlurMat
+				int bk = (3*2 + 1);
+				cv::blur ( grayMatROI, grayBlurROI, cv::Size(bk,bk) );
 				
 				
 				//----------------------------------
@@ -404,6 +440,7 @@ void HandContourAnalyzer::refineCrotches (LeapVisualizer &lv,
 					}
 				} // end for all pixels
 				
+				unsigned char* grayData = grayBlurMat.data;
 				
 				// For each crotch's perfect ray,
 				// For each of the pixels which is tagged to belong to that ray,
@@ -412,16 +449,29 @@ void HandContourAnalyzer::refineCrotches (LeapVisualizer &lv,
 				//
 				for (int j=0; j<nPerfectRays; j++){
 					PerfectRay& aPerfectRay = perfectRays[j];
+					int whichCrotch = aPerfectRay.whichCrotch;
+					
 					vector<ofVec3f> &belongingPixels = aPerfectRay.belongingPixels;
 					int nBelongingPixels = belongingPixels.size();
-					int whichCrotch = perfectRays[j].whichCrotch;
 					
+					// Find max u (parameter value), currently stored in the .z's.
+					// This will become the endpoint of the line.
+					float maxu = -99999;
+					for (int p=0; p<nBelongingPixels; p++){
+						float u = belongingPixels[p].z;
+						if (u > maxu){ maxu = u; }
+					} maxu = MAX(0.05, MIN(maxu, 1.0));
+
+					// Compute a line which fits the pixels.
 					SlopeInterceptLine newFitLine = computeFitLine (belongingPixels, 0, nBelongingPixels-1);
 					float ax = aPerfectRay.cx;
 					float ay = newFitLine.slope*ax + newFitLine.yIntercept;
-					float bx = aPerfectRay.kx;
-					float by = newFitLine.slope*bx + newFitLine.yIntercept;
+					float qx = aPerfectRay.kx; // temporary
+					float qy = newFitLine.slope*qx + newFitLine.yIntercept;
+					float bx = ax + maxu*(qx-ax);
+					float by = ay + maxu*(qy-ay);
 					
+					// Store the fit line, and its endpoints.
 					aPerfectRay.ax = ax;
 					aPerfectRay.ay = ay;
 					aPerfectRay.bx = bx;
@@ -430,48 +480,292 @@ void HandContourAnalyzer::refineCrotches (LeapVisualizer &lv,
 					aPerfectRay.fitIntercept = newFitLine.yIntercept;
 					aPerfectRay.newContourPoints.clear();
 					
-					ofSetColor(255,255,0);
-					ofLine (ax,ay, bx,by);
+					if (bDrawDebug){
+						ofSetColor(255,255,0);
+						ofLine (ax,ay, bx,by);
+					}
+					
+					
+					// Sample along the fitline at intervals.
+					// Compute perpendiculars at the intervals.
+					// Search along the perpendiculars for the darkest point in the grayMat.
+					float dx = bx - ax;
+					float dy = by - ay;
+					float dh = sqrt(dx*dx + dy*dy);
+					float aPerfectRayLength = dh;
+					dx /= dh;
+					dy /= dh;
+					
+					int nFitLineSamples = MAX(2, (int)(aPerfectRayLength / 4.0));
+					float perpendicularScan = 6;
+					int nPerpSearches = 24;
+					
+					float prevFrac = 0.5;
+					for (int s=1; s<=(nFitLineSamples); s++){
+						
+						float sf = (float) s;
+						float nf = (float) nFitLineSamples;
+						float percent = (sf/nf);
+						
+						float sx = ofMap(percent,0,1, ax,bx, true); // sample x;
+						float sy = ofMap(percent,0,1, ay,by, true); // sample y;
+						
+						// compute the endpoints of the perpendicular
+						// along which we will search for the darkest pixel in grayMat
+						float scanAmount = perpendicularScan * (0.5 + 0.5*powf(1.0-percent, 0.5));
+						float perpXa = sx + scanAmount *dy;
+						float perpYa = sy - scanAmount *dx;
+						float perpXb = sx - scanAmount *dy;
+						float perpYb = sy + scanAmount *dx;
+						float bestX = sx;
+						float bestY = sy;
+						
+						float thingToOptimizeFor = -99999;
+						for (int p=0; p<nPerpSearches; p++){
+							float frac2 = ofMap(p, 0,nPerpSearches-1,  0,1);
+							float frac1 = frac2 - perpendicularSearch;
+							float frac3 = frac2 + perpendicularSearch;
+							
+							float xf1 = ofMap(frac1, 0,1, perpXa,perpXb, false);
+							float yf1 = ofMap(frac1, 0,1, perpYa,perpYb, false);
+							float xf2 = ofMap(frac2, 0,1, perpXa,perpXb, false);
+							float yf2 = ofMap(frac2, 0,1, perpYa,perpYb, false);
+							float xf3 = ofMap(frac3, 0,1, perpXa,perpXb, false);
+							float yf3 = ofMap(frac3, 0,1, perpYa,perpYb, false);
+							
+							int xi1 = (int) roundf (ofClamp(xf1, 0, imgW-1));
+							int yi1 = (int) roundf (ofClamp(yf1, 0, imgH-1));
+							int xi2 = (int) roundf (ofClamp(xf2, 0, imgW-1));
+							int yi2 = (int) roundf (ofClamp(yf2, 0, imgH-1));
+							int xi3 = (int) roundf (ofClamp(xf3, 0, imgW-1));
+							int yi3 = (int) roundf (ofClamp(yf3, 0, imgH-1));
+							
+							int index1 = (yi1 * imgW) + xi1;
+							int index2 = (yi2 * imgW) + xi2;
+							int index3 = (yi3 * imgW) + xi3;
+							index1 = MAX(0, MIN(index1, imgW*imgH -1));
+							index2 = MAX(0, MIN(index2, imgW*imgH -1));
+							index3 = MAX(0, MIN(index3, imgW*imgH -1));
+							
+							int grayVal1 = (int) grayData[index1];
+							int grayVal2 = (int) grayData[index2];
+							int grayVal3 = (int) grayData[index3];
+							
+							int deriv12 = (grayVal1 - grayVal2);
+							int deriv32 = (grayVal3 - grayVal2);
+							float thing = MAX(deriv12, deriv32) - grayVal2;
+							
+							if (thing > thingToOptimizeFor){
+								thingToOptimizeFor = thing;
+								bestX = xf2;
+								bestY = yf2;
+							}
+							
+						}
+						
+						if (bDrawDebug){
+							ofSetColor(0,255,255);
+							ofLine (perpXa,perpYa, perpXb,perpYb);
+						}
+						
+						aPerfectRay.newContourPoints.push_back( ofVec3f(bestX, bestY, 0));
+					} // end for each fitline sample
+					
+					if (bDrawDebug){
+						ofSetColor(0,255,255);
+						int nRecordedSamples = aPerfectRay.newContourPoints.size();
+						for (int p=0; p<nRecordedSamples; p++){
+							float px = aPerfectRay.newContourPoints[p].x;
+							float py = aPerfectRay.newContourPoints[p].y;
+							ofEllipse (px,py, 4,4);
+							
+							
+						}
+					}
+
+				} // end for each perfect ray, add newContourPoints.
+				
+				// copy the old polyline hand contour;
+				theHandContourRefined.clear();
+				int nContourPtsBeforeRefined = theHandContourResampled.size();
+				for (int i=0; i<nContourPtsBeforeRefined; i++){
+					float x = theHandContourResampled[i].x;
+					float y = theHandContourResampled[i].y;
+					theHandContourRefined.addVertex (x,y);
 				}
 				
+				// For each of the computed crotch rays,
+				for (int j=0; j<nPerfectRays; j++){
+					PerfectRay& aPerfectRay = perfectRays[j];
+					
+					// Don't add crotches that are too short, they're full of errors.
+					int nRecordedSamples = aPerfectRay.newContourPoints.size();
+					if (nRecordedSamples > 4){
+					
+						// Smooth em out.
+						int nPasses = 3;
+						for (int q=0; q<nPasses; q++){
+							for (int p=1; p<(nRecordedSamples-1); p++){
+								float p0x = aPerfectRay.newContourPoints[p-1].x;
+								float p0y = aPerfectRay.newContourPoints[p-1].y;
+								float p1x = aPerfectRay.newContourPoints[p  ].x;
+								float p1y = aPerfectRay.newContourPoints[p  ].y;
+								float p2x = aPerfectRay.newContourPoints[p+1].x;
+								float p2y = aPerfectRay.newContourPoints[p+1].y;
+								
+								float avgpx = (p0x + p1x + p2x)/3.0;
+								float avgpy = (p0y + p1y + p2y)/3.0;
+								aPerfectRay.newContourPoints[p  ].x = avgpx;
+								aPerfectRay.newContourPoints[p  ].y = avgpy;
+							}
+						}
+						
+						
+						int whichCrotch = aPerfectRay.whichCrotch;
+						int contourIndexOfCrotch = crotchContourIndices[whichCrotch];
+						int contourIndexAtWhichToInsert = contourIndexOfCrotch+1;
+						int nPointsAdded = 0;
+						
+						for (int k=0; k<nRecordedSamples; k++){
+							float px = aPerfectRay.newContourPoints[k].x;
+							float py = aPerfectRay.newContourPoints[k].y;
+							theHandContourRefined.insertVertex(px, py, 0.0, contourIndexAtWhichToInsert);
+							contourIndexAtWhichToInsert++;
+							nPointsAdded++;
+						}
+						for (int k=(nRecordedSamples-1); k>=0; k--){
+							float px = aPerfectRay.newContourPoints[k].x - 0.5;
+							float py = aPerfectRay.newContourPoints[k].y + 1.5;
+							theHandContourRefined.insertVertex(px, py, 0.0, contourIndexAtWhichToInsert);
+							contourIndexAtWhichToInsert++;
+							nPointsAdded++;
+						}
+						
+						// int contourIndexOfCrotch = crotchContourIndices[whichCrotch];
+						
+						for (int i=0; i<N_HANDMARKS; i++){
+							if (HandmarksRefined[i].index > contourIndexOfCrotch){
+								HandmarksRefined[i].index += nPointsAdded;
+							}
+						}
+						
+						switch (whichCrotch){
+							case 0: // HANDMARK_PR_CROTCH			= 1,
+								HandmarksRefined[HANDMARK_PR_CROTCH].index += (nPointsAdded/2);
+								break;
+							case 1: // HANDMARK_RM_CROTCH			= 3,
+								HandmarksRefined[HANDMARK_RM_CROTCH].index += (nPointsAdded/2);
+								break;
+							case 2: // HANDMARK_MI_CROTCH			= 5,
+								HandmarksRefined[HANDMARK_MI_CROTCH].index += (nPointsAdded/2);
+								break;
+							case 3: // HANDMARK_IT_CROTCH			= 8,
+								HandmarksRefined[HANDMARK_IT_CROTCH].index += (nPointsAdded/2);
+								break;
+						}
+
+						for (int k=0; k<4; k++){
+							if (crotchContourIndices[k] > crotchContourIndices[whichCrotch]){
+								crotchContourIndices[k] += nPointsAdded;
+							}
+						}
+						crotchContourIndices[whichCrotch] += (nPointsAdded/2);
+						
+						
+					}
+					
+				}
 				
+				if (bDrawDebug){
+					ofSetColor (0,255,0);
+					ofPushMatrix();
+					
+					ofTranslate( 0-ofGetMouseX(),0-ofGetMouseY());
+					ofScale(2,2);
+					theHandContourRefined.draw();
+					drawHandmarksRefined();
+					ofPopMatrix();
+				}
 				
-				
-				
-				// At regular intervals, Search along the best-fit line for the darkest point of the trough
-				// Collect those points, somehow add them to the contour
-				// Repair the indexing of handmarks.
-				
-				
-			
 			
 			} else {
 				bBoundsAreReasonable = false;
-				return;
+				return false;
 			}
 			
-		} else {
-			// nPerfectRays is zero.
-			return;
 		}
-    
-        
-        
-        
-        
-        
-	
-        
-        
-
-        
-        
-        
-    
-        
-        
     }
+	
+	return true; 
 }
+
+
+
+//--------------------------------------------------------------
+void HandContourAnalyzer::drawHandmarksRefined (){
+	
+	float markR = 7;
+	
+	int nContourPoints = theHandContourRefined.size();
+	if (nContourPoints > 0){
+		for (int i=0; i<N_HANDMARKS; i++){
+			if (HandmarksRefined[i].valid){
+				int aHandmarkIndex = (HandmarksRefined[i].index)%nContourPoints;
+				if ((aHandmarkIndex > -1) && (aHandmarkIndex < nContourPoints)){
+					ofVec3f aHandmarkPoint = theHandContourRefined [aHandmarkIndex];
+					float hx = aHandmarkPoint.x;
+					float hy = aHandmarkPoint.y;
+					
+					float del = 5;
+					float rad = markR;
+					
+					switch (i){
+						case 0:
+						case 2:
+						case 4:
+						case 6:
+						case 9:
+							ofFill();
+							ofSetColor(255,102,51);
+							rad = 5;
+							break;
+						case 1:
+						case 3:
+						case 5:
+						case 8:
+							ofFill();
+							ofSetColor(51,255,102);
+							rad = 5;
+							break;
+						default:
+							ofNoFill();
+							ofSetColor(255,0,0);
+							break;
+							
+					}
+					
+					ofEllipse (hx,hy, rad,rad);
+					
+					ofSetColor(0,0,0, 190);
+					ofDrawBitmapString( ofToString(i), hx-(del+10-1), hy-(del-1));
+					
+					ofSetColor(255,255,255, 200);
+					ofDrawBitmapString( ofToString(i), hx-(del+10), hy-del);
+					
+				}
+			} else {
+				; // what to do about invalid handmarks?
+			}
+			
+			
+		}
+	}
+	
+
+}
+
+
+
 
 
 
@@ -2584,9 +2878,12 @@ void HandContourAnalyzer::assembleHandmarksPreliminary(){
 			// Handmarks[i].pointAvg.x = Handmarks[i].pointAvg.x +
 			
 			// Store the history
-			Handmarks[i].pointHistory.push_back( Handmarks[i].point );
-			if (Handmarks[i].pointHistory.size() > 5){
-				Handmarks[i].pointHistory.pop_front();
+			bool bStoreHistory = false;
+			if (bStoreHistory){
+				Handmarks[i].pointHistory.push_back( Handmarks[i].point );
+				if (Handmarks[i].pointHistory.size() > 5){
+					Handmarks[i].pointHistory.pop_front();
+				}
 			}
 			
 			
@@ -2595,6 +2892,19 @@ void HandContourAnalyzer::assembleHandmarksPreliminary(){
 			Handmarks[i].valid	= false;
 		}
 	}
+	
+	
+	for (int i=0; i<N_HANDMARKS; i++){
+		HandmarksRefined[i].type	= Handmarks[i].type;
+		HandmarksRefined[i].index	= Handmarks[i].index;
+		HandmarksRefined[i].valid	= Handmarks[i].valid;
+	}
+
+	
+	
+	
+	
+	
 }
 
 

@@ -98,7 +98,7 @@ void HandMeshBuilder::buildMesh (ofPolyline &handContour, ofVec3f &handCentroid,
 			bWindingCCW = !bContourNeedsToBeReversed;
 			
 			// Catch problems with the contour and handmarks before they are passed to meshing.
-			bool contourAndHandmarksAreFaulty = areContourAndHandmarksFaulty();
+			bool contourAndHandmarksAreFaulty = areContourAndHandmarksFaulty (nContourPoints);
 			if (contourAndHandmarksAreFaulty){
 				bCalculatedMesh = false;
 				return;
@@ -147,7 +147,7 @@ void HandMeshBuilder::buildMesh (ofPolyline &handContour, ofVec3f &handCentroid,
 }
 
 //--------------------------------------------------------------
-bool HandMeshBuilder::areContourAndHandmarksFaulty(){
+bool HandMeshBuilder::areContourAndHandmarksFaulty (int nContourPts){
 	// CONTOUR/HANDMARK DEGENERACY TESTER.
 	// Catch fatal problems with the contour before it is passed to the mesher.
 	// Returns TRUE if something is faulty.
@@ -157,7 +157,7 @@ bool HandMeshBuilder::areContourAndHandmarksFaulty(){
 	bool bHasInvalidHandmarkIndices = false;
 	for (int i=0; i<N_HANDMARKS; i++){
 		int index = myHandmarks[i].index;
-		if ((index < 0) || (index >= DESIRED_N_CONTOUR_POINTS)){
+		if ((index < 0) || (index >= nContourPts)){
 			bHasInvalidHandmarkIndices = true;
 			return true;
 			//printf("%d: --------Problem with handmark! %d is invalid.\n", (int)ofGetElapsedTimeMillis(), i);

@@ -163,6 +163,8 @@ public:
 	ofPolyline	crotchQualityData2;
 	ofPolyline	crotchQualityData3;
 	
+	ofPolyline  theHandContourRefined;
+	
 	int			theHandContourWindingDirection;
 	int			smoothingOfLowpassContour;
 	float		theHandContourArea;
@@ -231,6 +233,7 @@ public:
 	
 	Handmark				Handmarks[N_HANDMARKS];
 	vector<Handmark>		provisionalCrotchHandmarks;
+	Handmark				HandmarksRefined[N_HANDMARKS];
 	
 	
 	void buildCurvatureAnalysis (ofPolyline& polyline);
@@ -268,24 +271,29 @@ public:
     // data and methods for CROTCH REFINEMENT.
     float   minCrotchQuality;
     float   malorientationSuppression;
-    void    refineCrotches(LeapVisualizer &lv,
+    bool    refineCrotches(LeapVisualizer &lv,
                            const Mat &grayMat,
                            const Mat &thresholdedImageOfHandMat,
                            const Mat &leapDiagnosticFboMat);
     Mat     tempMat1;
     Mat     tempMat2;
     Mat     edgeMat;
+	Mat		grayBlurMat; 
     Mat     thresholdConstMat;
     Mat     unthresholdedInvertedEdgeMat;
     Mat     blurredUnthInvEdgeMat;
     Mat     adaptiveThreshImg;
 	Mat		pixelOwnershipMat;
+	
+	Mat morphStructuringElt;
+	void drawHandmarksRefined() ;
     
     float blurKernelSize;
     float thresholdValue;
     float prevThresholdValue;
     float blurredStrengthWeight;
 	float lineBelongingTolerance;
+	float perpendicularSearch;
     
 
 };
