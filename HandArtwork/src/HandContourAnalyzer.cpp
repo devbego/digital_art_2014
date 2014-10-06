@@ -685,7 +685,7 @@ bool HandContourAnalyzer::refineCrotches (LeapVisualizer &lv,
                                 float dhmy =  curry - prevy;
                                 float dhmh =  sqrt(dhmx*dhmx + dhmy*dhmy);
                                 
-                                if (dhmh > 50){
+                                if (dhmh > 30){
                                     HandmarksRefined[i].pointAvg.x =    currx;
                                     HandmarksRefined[i].pointAvg.y =    curry;
                                     
@@ -2933,7 +2933,7 @@ void HandContourAnalyzer::assembleHandmarksPreliminary(){
             float dhmy =  curry - prevy;
             float dhmh =  sqrt(dhmx*dhmx + dhmy*dhmy);
             
-            if (dhmh > 50){
+            if (dhmh > 30){
                 Handmarks[i].pointAvg.x =    currx;
                 Handmarks[i].pointAvg.y =    curry;
                 

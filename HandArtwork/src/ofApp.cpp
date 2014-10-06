@@ -164,7 +164,7 @@ void ofApp::setup(){
     bRecordThisCalibFrame		= false;
     bUseCorrectedCamera			= true;
     bDrawLeapWorld              = true;
-    bShowText					= false;
+    bShowText					= true;
     bDrawMiniImages             = true;
     bDrawSmallCameraView        = true;
     bShowLargeCamImageOnTop		= false;    // temp for quickly showing on hand video only
@@ -226,6 +226,11 @@ void ofApp::setup(){
 	laplaceSensitivity			= 0.59;
 	
 	colorVideo.allocate			(cameraWidth, cameraHeight);
+    thresholdedFinal1024.create	(cameraWidth, cameraHeight, CV_8UC1);
+    videoMat1024.create         (cameraWidth, cameraHeight, CV_8UC3);
+    thresholdedFinal8UC31024.create (cameraWidth, cameraHeight, CV_8UC3);
+    maskedCamVidImg1024.create      (cameraWidth, cameraHeight, CV_8UC3);
+    
     maskedCamVidImg.create      (imgW, imgH, CV_8UC3);
 	
 	colorVideoHalfScale.allocate(imgW, imgH);
@@ -260,9 +265,6 @@ void ofApp::setup(){
 	rgbVideoChannelMats[1].create (imgH, imgW, CV_8UC1);
 	rgbVideoChannelMats[2].create (imgH, imgW, CV_8UC1);
 	
-	leapDiagnosticFboChannelMats[0].create (imgH, imgW, CV_8UC1);
-	leapDiagnosticFboChannelMats[1].create (imgH, imgW, CV_8UC1);
-	leapDiagnosticFboChannelMats[2].create (imgH, imgW, CV_8UC1);
 
 	
 	//-------------------------------------
@@ -1176,7 +1178,6 @@ void ofApp::draw(){
     
     
 
-
 	//------------------------------
 	// 2. COMPUTE AND DISPLAY PUPPET
 	if (bComputeAndDisplayPuppet){
@@ -1187,10 +1188,12 @@ void ofApp::draw(){
         bool bEverythingIsAwesome = true;
         bool bCalculatedMesh = myHandMeshBuilder.bCalculatedMesh;
         bEverythingIsAwesome = bCalculatedMesh; // && there's no show-stopping fault!
+        // TODO: Check here for application faults, such as too-fast, etc,
         
         if (bEverythingIsAwesome){
             
-            // SHOW THE PUPPET!
+            // ALL GOOD! SHOW THE PUPPET!
+            //
             // Position the right edge of the puppet at the right edge of the window.
             // We also scale up the puppet image to the optimal display size here.
             float renderScale = puppetDisplayScale * ((bWorkAtHalfScale) ? 2 : 1);
@@ -1210,30 +1213,50 @@ void ofApp::draw(){
         
         } else {
             
-            // ONLY SHOW THE VIDEO/CAMERA
+            // THE PUPPET IS FAULTY :(
+            // SO ONLY SHOW THE VIDEO/CAMERA.
             //
-            // Composite the colored camera/video image (in videoMat) against
-            // the thresholdedFinal (in an RGBfied version), to produce the maskedCamVidImg
-            thresholdedFinalThrice[0] = thresholdedFinal;
-            thresholdedFinalThrice[1] = thresholdedFinal;
-            thresholdedFinalThrice[2] = thresholdedFinal;
-            cv::merge(thresholdedFinalThrice, 3, thresholdedFinal8UC3);
-            
-            if (bInPlaybackMode){
-                // May want to use this if() if we switch back to 1024x768 for the video view.
-                cv::bitwise_and(videoMat, thresholdedFinal8UC3, maskedCamVidImg);
+            bool bUse1024Resolution = false;
+            //
+            // Seems to be having some kind of memory allocation problem.
+            // Furthermore, the 1024 isn't really worth it because the upscaled edges are still crappy.
+            if (bUse1024Resolution){
+                // version at 1024:
+                cv::resize(thresholdedFinal, thresholdedFinal1024, cv::Size(cameraWidth, cameraHeight));
+                thresholdedFinalThrice1024[0] = thresholdedFinal1024;
+                thresholdedFinalThrice1024[1] = thresholdedFinal1024;
+                thresholdedFinalThrice1024[2] = thresholdedFinal1024;
+                cv::merge(thresholdedFinalThrice1024, 3, thresholdedFinal8UC31024);
+                cv::bitwise_and( toCv(colorVideo), thresholdedFinal8UC31024, maskedCamVidImg1024);
+                
+                float renderScale = puppetDisplayScale * 1.0;
+                float puppetOffsetX = ofGetWindowWidth() - cameraWidth*renderScale;
+                float puppetOffsetY = ofGetWindowHeight()/2.0 - cameraHeight*renderScale/2.0;
+                ofTranslate( puppetOffsetX, puppetOffsetY, 0);
+                ofScale (renderScale,renderScale);
+
+                ofSetColor(255,255,255);
+                drawMat (maskedCamVidImg1024, 0,0);
+                
             } else {
+                // Version at 512x384:
+                // Composite the colored camera/video image (in videoMat) against
+                // the thresholdedFinal (in an RGBfied version), to produce the maskedCamVidImg
+                thresholdedFinalThrice[0] = thresholdedFinal;
+                thresholdedFinalThrice[1] = thresholdedFinal;
+                thresholdedFinalThrice[2] = thresholdedFinal;
+                cv::merge(thresholdedFinalThrice, 3, thresholdedFinal8UC3);
                 cv::bitwise_and(videoMat, thresholdedFinal8UC3, maskedCamVidImg);
+                // if (bInPlaybackMode)
+                
+                float renderScale = puppetDisplayScale * 2.0;
+                float puppetOffsetX = ofGetWindowWidth() - imgW*renderScale;
+                float puppetOffsetY = ofGetWindowHeight()/2.0 - imgH*renderScale/2.0;
+                ofTranslate( puppetOffsetX, puppetOffsetY, 0);
+                ofScale (renderScale,renderScale);
+                ofSetColor(255,255,255);
+                drawMat(maskedCamVidImg, 0,0);
             }
-     
-            float renderScale = puppetDisplayScale * 2.0;
-            float puppetOffsetX = ofGetWindowWidth() - imgW*renderScale;
-            float puppetOffsetY = ofGetWindowHeight()/2.0 - imgH*renderScale/2.0;
-            ofTranslate( puppetOffsetX, puppetOffsetY, 0);
-            ofScale (renderScale,renderScale);
-            ofSetColor(255,255,255);
-            
-            drawMat(maskedCamVidImg, 0,0);
         }
         
         ofPopMatrix();
@@ -1241,7 +1264,6 @@ void ofApp::draw(){
  
 	}
 
-    
     
     //-----------------------------------
     // 3. DISPLAY FEEDBACK TO USER:
@@ -1730,8 +1752,19 @@ void ofApp::drawLeapWorld(){
     ofPopStyle();
 }
 
-//--------------------------------------------------------------
+
 void ofApp::drawText(){
+    float textY = 500;
+    ofSetColor(ofColor::white);
+    ofDrawBitmapString("YO KYLE & CHRIS",               20, textY+=15);
+    ofDrawBitmapString("Press 'p' to show/hide puppet", 20, textY+=15);
+    ofDrawBitmapString("Press 'g' to show/hide GUI",    20, textY+=15);
+    ofDrawBitmapString("Press '2' to load calibration", 20, textY+=15);
+    ofDrawBitmapString("Press '1' to load sequence",    20, textY+=15);
+}
+
+//--------------------------------------------------------------
+void ofApp::drawText2(){
 	
 	float textY = 500;
 	
