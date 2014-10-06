@@ -48,7 +48,20 @@ void HandContourAnalyzer::setup(int w, int h){
     minCrotchQuality = 0.15;
     malorientationSuppression = 0.75;
    
-
+    edgeMat.create                      (imgH, imgW, CV_8UC1);
+    tempMat1.create                     (imgH, imgW, CV_8UC1);
+    tempMat2.create                     (imgH, imgW, CV_8UC1);
+    thresholdConstMat.create            (imgH, imgW, CV_8UC1);
+    unthresholdedInvertedEdgeMat.create	(imgH, imgW, CV_8UC1);
+    blurredUnthInvEdgeMat.create        (imgH, imgW, CV_8UC1);
+    adaptiveThreshImg.create            (imgH, imgW, CV_8UC1);
+    
+    thresholdConstMat.setTo( (unsigned char) ((int)10));
+    
+    blurKernelSize				= 6.0;
+    blurredStrengthWeight		= 1.00;
+    thresholdValue				= 36.0;
+    prevThresholdValue			= 0;
 	
 }
 
@@ -99,9 +112,248 @@ void HandContourAnalyzer::update (const Mat &thresholdedImageOfHandMat, const Ma
 //--------------------------------------------------------------
 void HandContourAnalyzer::refineCrotches (LeapVisualizer &lv,
                                           const Mat &grayMat,
+                                          const Mat &thresholdedImageOfHandMat,
                                           const Mat &leapDiagnosticFboMat)
 {
+    // This could be moved to after (bPerformCrotchRefinement) to save cycles.
+    edgeMat.setTo(0);
     
+    
+    // It's only necessary to perform crotch refinement
+    // if one or more of our crotches are of a poor quality.
+    bool bPerformCrotchRefinement = false;
+    int nCrotches = 4;
+    for (int i=0; i<nCrotches; i++){
+        if (crotchQuality[i] < minCrotchQuality){
+            bPerformCrotchRefinement = true;
+        }
+    }
+    
+    // CLOBBERED FOR DEBUGGING:
+    // Search for ///// to unclobber.
+    
+    
+    
+    if (true){ ///// bPerformCrotchRefinement){
+        bool bDrawDebug = true;
+        
+        
+        //------------------------------
+        // Compute the "perfect ray": from the crotch to the midpoint between knuckles
+        vector<PerfectRay> perfectRays;
+        perfectRays.clear();
+        for (int i=0; i<nCrotches; i++){
+            int whichCrotch = 3-i; // yeah, I know
+            if (crotchQuality[whichCrotch] < minCrotchQuality){ // true) { /////
+                
+                int contourIndexOfCrotch = crotchContourIndices[whichCrotch];
+                ofVec3f crotchVec3f = theHandContourResampled[contourIndexOfCrotch];
+                
+                float x3 = knuckles[i].x;
+                float y3 = knuckles[i].y;
+                float x4 = knuckles[i+1].x;
+                float y4 = knuckles[i+1].y;
+                float midKnuckleX = (x3+x4)/2.0;
+                float midKnuckleY = (y3+y4)/2.0;
+                
+                PerfectRay aPerfectRay;
+                aPerfectRay.cx = crotchVec3f.x;
+                aPerfectRay.cy = crotchVec3f.y;
+                aPerfectRay.kx = midKnuckleX;
+                aPerfectRay.ky = midKnuckleY;
+                
+                if (i == 0){
+                    // Special case for the thumb!!
+                    aPerfectRay.kx = knuckles[0].x;
+                    aPerfectRay.ky = knuckles[0].y;
+                    
+                } else {
+                    // Incorporate the local orientation, from leapDiagnosticFboMat
+                    bool bUseLocalOrientationToEstimateCrotchEnd = true;
+                    if (bUseLocalOrientationToEstimateCrotchEnd){
+                        
+                        // Get the corresponding pixel in the leapDiagnosticFboMat
+                        int px = (int)roundf(aPerfectRay.cx);
+                        int py = (int)roundf(aPerfectRay.cy);
+                        if ((px > 0) && (px < imgW) && (py > 0) && (py < imgH)){
+                            int index1 = py * imgW + px;
+                            int index3 = index1 * 3;
+                            
+                            // Use the colors in that pixel to fetch the local orientation.
+                            unsigned char *pixels = leapDiagnosticFboMat.data;
+                            float pr = (float) pixels[index3+0];
+                            float pg = (float) pixels[index3+1];
+                            float pb = (float) pixels[index3+2];
+                            float orientation = lv.getDiagnosticOrientationFromColor(pr,pg,pb);
+
+                            // determine if orientation-based crotch-end-estimate lies near the knuckles.
+                            // if this ray does not intersect near the knuckles, then it's a bad error.
+                            float x1 = aPerfectRay.cx;
+                            float y1 = aPerfectRay.cy;
+                            float searchRadius = 160;
+                            float x2 = x1 + searchRadius * cos(orientation);
+                            float y2 = y1 + searchRadius * sin(orientation);
+
+                            float lowerLimit = -0.1;
+                            float upperLimit =  1.1;
+                            bool bIntersectionExists = false;
+                            float denominator = ((y4-y3)*(x2-x1) - (x4-x3)*(y2-y1));
+                            if (denominator != 0.0){
+                                float ua = ((x4-x3)*(y1-y3) - (y4-y3)*(x1-x3)) / denominator;
+                                float ub = ((x2-x1)*(y1-y3) - (y2-y1)*(x1-x3)) / denominator;
+                                
+                                if ((ua > lowerLimit) && (ua < upperLimit) &&
+                                    (ub > lowerLimit) && (ub < upperLimit)){ // found it;
+                                    bIntersectionExists = true;
+                                    float intersectionX = x1 + ua*(x2-x1);
+                                    float intersectionY = y1 + ua*(y2-y1);
+                                    
+                                    // Use the point which is halfway between the mid-knuckle point,
+                                    // and the location where the local orientation vector intersects
+                                    // the the segment between the two adjacent knuckles.
+                                    aPerfectRay.kx = (midKnuckleX + intersectionX)/2.0;
+                                    aPerfectRay.ky = (midKnuckleY + intersectionY)/2.0;
+                                }
+                            }
+                        }
+                    }
+                }
+                
+                aPerfectRay.whichCrotch = whichCrotch;
+                perfectRays.push_back(aPerfectRay);
+            }
+        }
+        if (bDrawDebug){
+            // Draw the perfect rays. 
+            int nPerfectRaysToDraw = perfectRays.size();
+            for (int j=0; j<nPerfectRaysToDraw; j++){
+                PerfectRay aPerfectRay = perfectRays[j];
+                ofSetColor (20,255,200);
+                ofLine (aPerfectRay.cx,aPerfectRay.cy, aPerfectRay.kx,aPerfectRay.ky);
+                ofDrawBitmapString ( ofToString (aPerfectRay.whichCrotch), aPerfectRay.kx+1,aPerfectRay.ky+3);
+            }
+        }
+        
+        
+        //------------------------------
+        // Compute edges into the grayMat.
+        
+        // To find the dark cracks,
+        // Invert the gray image, making those cracks bright;
+        // Mask this against the thresholdedImageOfHandMat.
+        // The masked, inverted result goes in unthresholdedInvertedEdgeMat.
+        
+        // Compute ROI and assign appropriate sub-Mats.
+        bool bUseROI = true;
+        
+        // Find the leftmost and rightmost possible points containing cracks.
+        int rightmostRayX   = -99999;
+        int leftmostRayX    =  99999;
+        int bottommostRayY  = -99999;
+        int topmostRayY     =  99999;
+        for (int j=0; j<perfectRays.size(); j++){
+            PerfectRay aPerfectRay = perfectRays[j];
+            leftmostRayX = MIN (leftmostRayX,      aPerfectRay.kx);
+            leftmostRayX = MIN (leftmostRayX,      aPerfectRay.cx);
+            rightmostRayX = MAX (rightmostRayX,    aPerfectRay.kx);
+            rightmostRayX = MAX (rightmostRayX,    aPerfectRay.cx);
+            
+            topmostRayY     = MIN (topmostRayY,    aPerfectRay.ky);
+            topmostRayY     = MIN (topmostRayY,    aPerfectRay.cy);
+            bottommostRayY  = MAX (bottommostRayY, aPerfectRay.ky);
+            bottommostRayY  = MAX (bottommostRayY, aPerfectRay.cy);
+            
+        }
+        
+        bool bBoundsAreReasonable = false;
+        if ((leftmostRayX > 0) && (leftmostRayX < imgW) &&
+            (rightmostRayX > 0) && (rightmostRayX < imgW) &&
+            (topmostRayY > 0) && (topmostRayY < imgH) &&
+            (bottommostRayY > 0) && (bottommostRayY < imgH)){
+            bBoundsAreReasonable = true;
+    
+            int marginA = 10;
+            int leftmostRayXa    = MAX(0,    leftmostRayX  -marginA);
+            int rightmostRayXa   = MIN(imgW, rightmostRayX +marginA);
+            int topmostRayYa     = MAX(0,    topmostRayY   -marginA);
+            int bottommostRayYa  = MIN(imgH, bottommostRayY+marginA);
+            
+            // slightly expanded ROI, to ensure blurring doesn't creep incorrectly.
+            int marginB = 40;
+            int leftmostRayXb    = MAX(0,    leftmostRayX  -marginB);
+            int rightmostRayXb   = MIN(imgW, rightmostRayX +marginB);
+            int topmostRayYb     = MAX(0,    topmostRayY   -marginB);
+            int bottommostRayYb  = MIN(imgH, bottommostRayY+marginB);
+            
+            // Set up Mats which either use, or don't use, ROI.
+            CvRect crackRectA = cvRect(leftmostRayXa,topmostRayYa, rightmostRayXa-leftmostRayXa, bottommostRayYa-topmostRayYa);
+            CvRect crackRectB = cvRect(leftmostRayXb,topmostRayYb, rightmostRayXb-leftmostRayXb, bottommostRayYb-topmostRayYb);
+            
+            Mat grayMatROI  = (bUseROI) ?  grayMat(crackRectB) : grayMat;
+            Mat tempMat1ROI = (bUseROI) ? tempMat1(crackRectB) : tempMat1;
+            Mat tempMat2ROI = (bUseROI) ? tempMat2(crackRectA) : tempMat2;
+            Mat thresholdedImageOfHandMatROI    = (bUseROI) ? thresholdedImageOfHandMat(crackRectB)      : thresholdedImageOfHandMat;
+            Mat unthresholdedInvertedEdgeMatROIA= (bUseROI) ? unthresholdedInvertedEdgeMat(crackRectA)   : unthresholdedInvertedEdgeMat;
+            Mat unthresholdedInvertedEdgeMatROIB= (bUseROI) ? unthresholdedInvertedEdgeMat(crackRectB)   : unthresholdedInvertedEdgeMat;
+            Mat blurredUnthInvEdgeMatROI        = (bUseROI) ? blurredUnthInvEdgeMat(crackRectA)          : blurredUnthInvEdgeMat;
+            Mat thresholdConstMatROI            = (bUseROI) ? thresholdConstMat(crackRectA)              : thresholdConstMat;
+            Mat adaptiveThreshImgROI            = (bUseROI) ? adaptiveThreshImg(crackRectA)              : adaptiveThreshImg;
+            Mat edgeMatROI                      = (bUseROI) ? edgeMat(crackRectA)                        : edgeMat;
+            
+            //--------------------------
+            // ADAPTIVE THRESHOLDING:
+            unthresholdedInvertedEdgeMatROIB.setTo(0);
+            
+            cv::subtract (255, grayMatROI, tempMat1ROI);
+            cv::bitwise_and (thresholdedImageOfHandMatROI, tempMat1ROI, unthresholdedInvertedEdgeMatROIB);
+            
+            int k = ((int)(blurKernelSize)*2 + 1);
+            cv::blur ( unthresholdedInvertedEdgeMatROIA, blurredUnthInvEdgeMatROI, cv::Size(k,k) );
+            
+            // Fill the thresholdConstMat with the threshold value (but only if it has changed).
+            if (thresholdValue != prevThresholdValue){
+                thresholdConstMat.setTo( (unsigned char) ((int)thresholdValue));
+            } prevThresholdValue = thresholdValue;
+            
+            // Create the adaptiveThreshImg by adding a weighted blurred + constant image.
+            cv::scaleAdd (blurredUnthInvEdgeMatROI, blurredStrengthWeight, thresholdConstMatROI, adaptiveThreshImgROI);
+            
+            // Do the actual adaptive thresholding.
+            cv::subtract (unthresholdedInvertedEdgeMatROIA, adaptiveThreshImgROI, tempMat2ROI);
+            int thresholdMode = cv::THRESH_BINARY;
+            cv::threshold (tempMat2ROI, edgeMatROI, 1, 255, thresholdMode);
+        
+        
+        } else {
+            bBoundsAreReasonable = false;
+            // printf("Bad bounds %d %d %d %d\n", leftmostRayX, rightmostRayX, topmostRayY, bottommostRayY);
+            return;
+        }
+    
+        
+        
+        
+        
+        
+        
+        
+        // Suppress edges which are maloriented,
+        // according to the angles given in leapDiagnosticFboMat
+        
+        
+        // Threshold to select pixels which represent sufficiently-strong edges
+
+        
+        
+        
+        // For each thresholded edge pixel, classify according to which perfect ray it's closest to.
+        // Fit a line through the classified points, creating a best-fit line.
+        // At regular intervals, Search along the best-fit line for the darkest point of the trough
+        // Collect those points, somehow add them to the contour
+        // Repair the indexing of handmarks.
+        
+        
+    }
 }
 
 
@@ -210,7 +462,7 @@ void HandContourAnalyzer::draw(){
 	
 	// drawOrientations();
 	// drawCrotchCalculations (crotchSearchIndex0, crotchSearchIndex1);
-	evaluateCrotchQuality();
+	// evaluateCrotchQuality();
 	
 	
 	

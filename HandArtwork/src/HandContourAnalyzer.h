@@ -84,6 +84,11 @@ struct SlopeInterceptLine {
 	float			yIntercept;
 };
 
+struct PerfectRay {
+    float cx, cy;                   // the coordinates of the crotch (initially)
+    float kx, ky;                   // the coordinates of a midpoint between knuckles
+    int whichCrotch;                // the index of the crotch (0..3) to which this belongs.
+};
 
 
 
@@ -251,6 +256,20 @@ public:
     float   malorientationSuppression;
     void    refineCrotches(LeapVisualizer &lv,
                            const Mat &grayMat,
+                           const Mat &thresholdedImageOfHandMat,
                            const Mat &leapDiagnosticFboMat);
+    Mat     tempMat1;
+    Mat     tempMat2;
+    Mat     edgeMat;
+    Mat     thresholdConstMat;
+    Mat     unthresholdedInvertedEdgeMat;
+    Mat     blurredUnthInvEdgeMat;
+    Mat     adaptiveThreshImg;
+    
+    float blurKernelSize;
+    float thresholdValue;
+    float prevThresholdValue;
+    float blurredStrengthWeight;
+    
 
 };

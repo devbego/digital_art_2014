@@ -456,11 +456,11 @@ void ofApp::setupGui() {
 	gui1->loadSettings(originalAppDataPath + "HandSegmenterSettings.xml");
 	gui1->addSpacer();
 	
-	gui1->addSlider("thresholdValue", 0.0, 128.0, &thresholdValue);
-	gui1->addSlider("blurKernelSize", 1, 63, &blurKernelSize);
-	gui1->addSlider("blurredStrengthWeight", 0.0, 1.0, &blurredStrengthWeight);
-	gui1->addSlider("laplaceDelta",		0,	255, &laplaceDelta);
-	gui1->addSlider("laplaceSensitivity",0.0, 4.0, &laplaceSensitivity);
+	gui1->addSlider("HCA:thresholdValue", 0.0, 128.0,       &(myHandContourAnalyzer.thresholdValue));
+	gui1->addSlider("HCA:blurKernelSize", 1, 40,            &(myHandContourAnalyzer.blurKernelSize));
+	gui1->addSlider("HCA:blurredStrengthWeight", 0.0, 1.0,  &(myHandContourAnalyzer.blurredStrengthWeight));
+	gui1->addSlider("laplaceDelta",		0,	255,        &laplaceDelta);
+	gui1->addSlider("laplaceSensitivity",0.0, 4.0,      &laplaceSensitivity);
 	
 	gui1->addSpacer();
 	gui1->addLabelToggle("bUseROIForFilters",			&bUseROIForFilters);
@@ -554,6 +554,7 @@ void ofApp::setupGui() {
     vnames.push_back("edgesMat1");
     vnames.push_back("leapDiagnosticFboMat");
     vnames.push_back("coloredBinarizedImg");
+    vnames.push_back("edgeMat");
     vnames.push_back("processFrameImg");
     gui4->addLabel("Contour Analyzer Underlay", OFX_UI_FONT_SMALL);
     contourAnalyzerUnderlayRadio = gui4->addRadio("VR", vnames, OFX_UI_ORIENTATION_VERTICAL);
@@ -771,7 +772,7 @@ void ofApp::updateComputerVision(){
 	compositeThresholdedImageWithLeapFboPixels();
 	
 	myHandContourAnalyzer.update (thresholdedFinal, leapDiagnosticFboMat, leapVisualizer);
-    myHandContourAnalyzer.refineCrotches (leapVisualizer, grayMat, leapDiagnosticFboMat);
+    // myHandContourAnalyzer.refineCrotches (leapVisualizer, grayMat, thresholdedFinal, leapDiagnosticFboMat); // RESTORE THIS AFTER DEBUGGING.
 }
 
 
@@ -1157,6 +1158,7 @@ void ofApp::draw(){
         drawContourAnalyzer();
     }
     
+    
 
 
 	//------------------------------
@@ -1275,7 +1277,7 @@ void ofApp::drawContourAnalyzer(){
     
     int whichCAU = getSelection (contourAnalyzerUnderlayRadio);
     
-    ofSetColor(127);
+    ofSetColor(255);
     switch (whichCAU){
         default:
         case 0:		drawMat(grayMat,				0,0, imgW,imgH);	break;
@@ -1285,7 +1287,8 @@ void ofApp::drawContourAnalyzer(){
         case 4:		drawMat(edgesMat1,				0,0, imgW,imgH);	break;
         case 5:		drawMat(leapDiagnosticFboMat,	0,0, imgW,imgH);	break;
         case 6:		drawMat(coloredBinarizedImg,	0,0, imgW,imgH);	break;
-        case 7:		if(bInPlaybackMode ){
+        case 7:     drawMat(myHandContourAnalyzer.edgeMat, 0,0, imgW,imgH);	break;
+        case 8:		if(bInPlaybackMode ){
                         video.draw(0, 0, imgW,imgH);
                     } else {
                         processFrameImg.draw(0,0,imgW,imgH);
@@ -1294,6 +1297,12 @@ void ofApp::drawContourAnalyzer(){
     }
     
     myHandContourAnalyzer.draw();
+    
+    // Only temporarily in draw(). Move this back to update() after it has been debugged.
+    long long t0 = ofGetElapsedTimeMicros();
+    myHandContourAnalyzer.refineCrotches (leapVisualizer, grayMat, thresholdedFinal, leapDiagnosticFboMat);
+    long long t1 = ofGetElapsedTimeMicros();
+    printf("refineCrotches took %d\n", (int)(t1-t0));
     
    
     //-----------------------------------
