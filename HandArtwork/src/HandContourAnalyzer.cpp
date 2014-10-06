@@ -676,12 +676,25 @@ bool HandContourAnalyzer::refineCrotches (LeapVisualizer &lv,
                             for (int i=0; i<N_HANDMARKS; i++){
                                 // Compute the running average
                                 int aHandMarkIndex = HandmarksRefined[i].index;
-                                float A = handmarkBlur;
-                                float B = 1.0-A;
-                                HandmarksRefined[i].pointAvg.x =    (A * HandmarksRefined[i].pointAvg.x) +
-                                                                    (B * theHandContourResampled [ aHandMarkIndex ].x);
-                                HandmarksRefined[i].pointAvg.y =    (A * HandmarksRefined[i].pointAvg.y) +
-                                                                    (B * theHandContourResampled [ aHandMarkIndex ].y);
+                                
+                                float currx = theHandContourResampled [ aHandMarkIndex ].x;
+                                float curry = theHandContourResampled [ aHandMarkIndex ].y;
+                                float prevx = HandmarksRefined[i].pointAvg.x;
+                                float prevy = HandmarksRefined[i].pointAvg.y;
+                                float dhmx =  currx - prevx;
+                                float dhmy =  curry - prevy;
+                                float dhmh =  sqrt(dhmx*dhmx + dhmy*dhmy);
+                                
+                                if (dhmh > 50){
+                                    HandmarksRefined[i].pointAvg.x =    currx;
+                                    HandmarksRefined[i].pointAvg.y =    curry;
+                                    
+                                } else { // blur
+                                    float A = handmarkBlur;
+                                    float B = 1.0-A;
+                                    HandmarksRefined[i].pointAvg.x =    (A * prevx) + (B * currx);
+                                    HandmarksRefined[i].pointAvg.y =    (A * prevy) + (B * curry);
+                                }
                             }
                         }
                         
@@ -2910,11 +2923,29 @@ void HandContourAnalyzer::assembleHandmarksPreliminary(){
 			Handmarks[i].point	= theHandContourResampled [ aHandMarkIndex ];
 			Handmarks[i].valid	= true;
 			
-			// Compute the running average
-			float A = handmarkBlur;
-            float B = 1.0-A;
-            Handmarks[i].pointAvg.x = (A * Handmarks[i].pointAvg.x) + (B * theHandContourResampled [ aHandMarkIndex ].x);
-			Handmarks[i].pointAvg.y = (A * Handmarks[i].pointAvg.y) + (B * theHandContourResampled [ aHandMarkIndex ].y);
+            
+            // Compute the running average
+            float currx = theHandContourResampled [ aHandMarkIndex ].x;
+            float curry = theHandContourResampled [ aHandMarkIndex ].y;
+            float prevx = Handmarks[i].pointAvg.x;
+            float prevy = Handmarks[i].pointAvg.y;
+            float dhmx =  currx - prevx;
+            float dhmy =  curry - prevy;
+            float dhmh =  sqrt(dhmx*dhmx + dhmy*dhmy);
+            
+            if (dhmh > 50){
+                Handmarks[i].pointAvg.x =    currx;
+                Handmarks[i].pointAvg.y =    curry;
+                
+            } else { // blur
+                float A = handmarkBlur;
+                float B = 1.0-A;
+                Handmarks[i].pointAvg.x =    (A * prevx) + (B * currx);
+                Handmarks[i].pointAvg.y =    (A * prevy) + (B * curry);
+            }
+            
+            
+            
         
 			
 		} else if (aHandMarkIndex <= -1){

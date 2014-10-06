@@ -1178,27 +1178,55 @@ void ofApp::draw(){
 	//------------------------------
 	// 2. COMPUTE AND DISPLAY PUPPET
 	if (bComputeAndDisplayPuppet){
-
+        
         ofPushStyle();
-		ofPushMatrix();
+        ofPushMatrix();
         
-        // Get the texture from the camera or the stored video, depending on the playback mode.
-        ofTexture &handImageTexture = (bInPlaybackMode) ?
-            (video.getTextureReference()) :
-            (processFrameImg.getTextureReference());
+        bool bEverythingIsAwesome = true;
+        bool bCalculatedMesh = myHandMeshBuilder.bCalculatedMesh;
+        bEverythingIsAwesome = bCalculatedMesh; // && there's no show-stopping fault!
         
-		// Position the right edge of the puppet at the right edge of the window.
-        // We also scale up the puppet image to the optimal display size here.
-        float renderScale = puppetDisplayScale * ((bWorkAtHalfScale) ? 2 : 1);
-        float puppetOffsetX = ofGetWindowWidth() - imgW*renderScale;
-        float puppetOffsetY = ofGetWindowHeight()/2.0 - imgH*renderScale/2.0;
-        ofTranslate( puppetOffsetX, puppetOffsetY, 0);
-        ofScale (renderScale,renderScale);
-		
-		// Draw the puppet.
-		myPuppetManager.drawPuppet(bComputeAndDisplayPuppet, handImageTexture);
-		ofPopMatrix();
+        if (bEverythingIsAwesome){
+            
+            // SHOW THE PUPPET!
+            // Position the right edge of the puppet at the right edge of the window.
+            // We also scale up the puppet image to the optimal display size here.
+            float renderScale = puppetDisplayScale * ((bWorkAtHalfScale) ? 2 : 1);
+            float puppetOffsetX = ofGetWindowWidth() - imgW*renderScale;
+            float puppetOffsetY = ofGetWindowHeight()/2.0 - imgH*renderScale/2.0;
+            ofTranslate( puppetOffsetX, puppetOffsetY, 0);
+            ofScale (renderScale,renderScale);
+            
+            // Get the texture from the camera or the stored video, depending on the playback mode.
+            ofTexture &handImageTexture = (bInPlaybackMode) ?
+                (video.getTextureReference()) :
+                (processFrameImg.getTextureReference());
+            
+            // Draw the puppet.
+            myPuppetManager.drawPuppet(bComputeAndDisplayPuppet, handImageTexture);
+            
+        
+        } else {
+            
+            // ONLY SHOW THE VIDEO/CAMERA
+            float renderScale = puppetDisplayScale * 1.0;
+            float puppetOffsetX = ofGetWindowWidth() - cameraWidth*renderScale;
+            float puppetOffsetY = ofGetWindowHeight()/2.0 - cameraHeight*renderScale/2.0;
+            ofTranslate( puppetOffsetX, puppetOffsetY, 0);
+            ofScale (renderScale,renderScale);
+            ofSetColor(255,255,255);
+            
+            // Else if myHandMeshBuilder failed to build a mesh, just show video.
+            if (bInPlaybackMode){
+                video.draw(0,0);
+            } else {
+                processFrameImg.draw(0,0);
+            }
+        }
+        
+        ofPopMatrix();
         ofPopStyle();
+ 
 	}
 
     
