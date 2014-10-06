@@ -486,7 +486,7 @@ void ofApp::setupGui() {
 	gui2->addSlider("crotchCurvaturePowf",  0.0, 2.0,		&(myHandContourAnalyzer.crotchCurvaturePowf));
 	gui2->addSlider("crotchDerivativePowf", 0.0, 2.0,		&(myHandContourAnalyzer.crotchDerivativePowf));
 	gui2->addIntSlider("crotchSearchRadius", 1, 32,			&(myHandContourAnalyzer.crotchSearchRadius));
-	gui2->addSlider("crotchContourSearchMask", 0.0, 0.5,&(myHandContourAnalyzer.crotchContourSearchTukeyMaskPct));
+	gui2->addSlider("crotchContourSearchMask", 0.0, 0.5,    &(myHandContourAnalyzer.crotchContourSearchTukeyMaskPct));
     
     gui2->addSpacer();
     gui2->addSlider("minCrotchQuality", 0.0, 0.30,              &(myHandContourAnalyzer.minCrotchQuality));
@@ -771,19 +771,18 @@ void ofApp::updateComputerVision(){
 void ofApp::updateHandMesh(){
 	
 	bool bRefined = myHandContourAnalyzer.refineCrotches (leapVisualizer, grayMat, thresholdedFinal, leapDiagnosticFboMat);
-	
+    ofVec3f& theHandCentroid     = myHandContourAnalyzer.handCentroidLeap;
+    ofVec3f& theLeapWristPoint   = myHandContourAnalyzer.wristPosition;
+    
 	if (bRefined){
-		ofPolyline &theHandContour = myHandContourAnalyzer.theHandContourRefined;
-		Handmark *theHandmarks = myHandContourAnalyzer.HandmarksRefined;
-		ofVec3f theHandCentroid = myHandContourAnalyzer.handCentroidLeap;
-		myHandMeshBuilder.buildMesh (theHandContour, theHandCentroid, theHandmarks);
+		ofPolyline &theHandContour  = myHandContourAnalyzer.theHandContourRefined;
+		Handmark *theHandmarks      = myHandContourAnalyzer.HandmarksRefined;
+		myHandMeshBuilder.buildMesh (theHandContour, theHandCentroid, theLeapWristPoint, theHandmarks);
 		
 	} else {
-		
-		ofPolyline &theHandContour = myHandContourAnalyzer.theHandContourResampled;
-		Handmark *theHandmarks = myHandContourAnalyzer.Handmarks;
-		ofVec3f theHandCentroid = myHandContourAnalyzer.handCentroidLeap;
-		myHandMeshBuilder.buildMesh (theHandContour, theHandCentroid, theHandmarks);
+		ofPolyline &theHandContour  = myHandContourAnalyzer.theHandContourResampled;
+		Handmark *theHandmarks      = myHandContourAnalyzer.Handmarks;
+		myHandMeshBuilder.buildMesh (theHandContour, theHandCentroid, theLeapWristPoint, theHandmarks);
 	}
 	
 }
@@ -1312,9 +1311,6 @@ void ofApp::drawContourAnalyzer(){
     }
     
     myHandContourAnalyzer.draw();
-    
-	// REMOVE THIS AFTER DEBUGGING
-    // myHandContourAnalyzer.refineCrotches (leapVisualizer, grayMat, thresholdedFinal, leapDiagnosticFboMat);
     
    
     //-----------------------------------

@@ -641,8 +641,7 @@ bool HandContourAnalyzer::refineCrotches (LeapVisualizer &lv,
 							nPointsAdded++;
 						}
 						
-						// int contourIndexOfCrotch = crotchContourIndices[whichCrotch];
-						
+												
 						for (int i=0; i<N_HANDMARKS; i++){
 							if (HandmarksRefined[i].index > contourIndexOfCrotch){
 								HandmarksRefined[i].index += nPointsAdded;
@@ -671,6 +670,12 @@ bool HandContourAnalyzer::refineCrotches (LeapVisualizer &lv,
 						}
 						crotchContourIndices[whichCrotch] += (nPointsAdded/2);
 						
+                        
+                        // This will probably botch the running averages. Recompute using new locations.
+
+                        
+                        
+                        
 						
 					}
 					
@@ -2864,29 +2869,33 @@ void HandContourAnalyzer::assembleHandmarksPreliminary(){
 	Handmarks[HANDMARK_PINKYSIDE_WRIST].index	= contourIndexOfPinkysideWrist;
 	Handmarks[HANDMARK_PALM_BASE].index			= contourIndexOfPalmBase;
 	Handmarks[HANDMARK_PINKY_SIDE].index		= contourIndexOfPinkySide;
+    
+    
 	
+    
 	for (int i=0; i<N_HANDMARKS; i++){
-		
 		Handmarks[i].type = (HandmarkType) i;
 		int aHandMarkIndex = Handmarks[i].index;
 		if (aHandMarkIndex > -1){
 			Handmarks[i].point	= theHandContourResampled [ aHandMarkIndex ];
 			Handmarks[i].valid	= true;
 			
-			// Compute the running average (not yet implemented)
-			// float A = 0.8; float B = 1.0-A;
-			// Handmarks[i].pointAvg.x = Handmarks[i].pointAvg.x +
-			
-			// Store the history
-			bool bStoreHistory = false;
-			if (bStoreHistory){
+			// Compute the running average
+			float A = 0.8;
+            float B = 1.0-A;
+            Handmarks[i].pointAvg.x = (A * Handmarks[i].pointAvg.x) + (B * theHandContourResampled [ aHandMarkIndex ].x);
+			Handmarks[i].pointAvg.y = (A * Handmarks[i].pointAvg.y) + (B * theHandContourResampled [ aHandMarkIndex ].y);
+            
+            /*
+             bool bStoreHistory = false;
+			if (bStoreHistory){ // Store the history
 				Handmarks[i].pointHistory.push_back( Handmarks[i].point );
 				if (Handmarks[i].pointHistory.size() > 5){
 					Handmarks[i].pointHistory.pop_front();
 				}
 			}
-			
-			
+            */
+        
 			
 		} else if (aHandMarkIndex <= -1){
 			Handmarks[i].valid	= false;
@@ -2898,6 +2907,10 @@ void HandContourAnalyzer::assembleHandmarksPreliminary(){
 		HandmarksRefined[i].type	= Handmarks[i].type;
 		HandmarksRefined[i].index	= Handmarks[i].index;
 		HandmarksRefined[i].valid	= Handmarks[i].valid;
+        
+        HandmarksRefined[i].pointAvg.x = Handmarks[i].pointAvg.x;
+        HandmarksRefined[i].pointAvg.y = Handmarks[i].pointAvg.y;
+        
 	}
 
 	

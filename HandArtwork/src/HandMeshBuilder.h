@@ -56,7 +56,7 @@ public:
 	//-----------------------------
 	// 2014 Mesher
 	
-	void	buildMesh (ofPolyline &handContour, ofVec3f &handCentroid, Handmark *hmarks);
+	void	buildMesh (ofPolyline &handContour, ofVec3f &handCentroid, ofVec3f &theLeapWristPoint, Handmark *hmarks);
 	int		getMeshVertexIndexOfControlPoint (int which);
 
 	bool	isHandMeshFaulty();
@@ -78,6 +78,8 @@ public:
 	Handmark myHandmarks[N_HANDMARKS];
 	ofPolyline myContour;
 	int thumbsidePalmVertexIndices[6];
+    ofVec3f theLeapCentroid;
+    ofVec3f theLeapWrist;
 	
 	// Utils
 	bool doesContourNeedToBeReversed (ofPolyline &handContour, Handmark *hmarks);
