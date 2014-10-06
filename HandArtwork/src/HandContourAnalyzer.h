@@ -86,9 +86,23 @@ struct SlopeInterceptLine {
 
 struct PerfectRay {
     float cx, cy;                   // the coordinates of the crotch (initially)
-    float kx, ky;                   // the coordinates of a midpoint between knuckles
+    float kx, ky;                   // the coordinates of a point near the knuckles
+	float dx, dy;					// distances between coords
+	float lineMag2;					// distance squared.
     int whichCrotch;                // the index of the crotch (0..3) to which this belongs.
+	
+	// the pixels in the thresholded edge image which belong to me.
+	vector<ofVec3f> belongingPixels;
+	
+	float ax, ay;
+	float bx, by;
+	float fitSlope;
+	float fitIntercept;
+	vector<ofVec3f> newContourPoints;
 };
+
+
+
 
 
 
@@ -265,11 +279,13 @@ public:
     Mat     unthresholdedInvertedEdgeMat;
     Mat     blurredUnthInvEdgeMat;
     Mat     adaptiveThreshImg;
+	Mat		pixelOwnershipMat;
     
     float blurKernelSize;
     float thresholdValue;
     float prevThresholdValue;
     float blurredStrengthWeight;
+	float lineBelongingTolerance;
     
 
 };

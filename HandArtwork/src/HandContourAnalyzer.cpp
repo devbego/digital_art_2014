@@ -45,7 +45,7 @@ void HandContourAnalyzer::setup(int w, int h){
 		crotchQuality[i] = 0;
 	}
     
-    minCrotchQuality = 0.15;
+    minCrotchQuality = 0.18;
     malorientationSuppression = 0.75;
    
     edgeMat.create                      (imgH, imgW, CV_8UC1);
@@ -55,13 +55,15 @@ void HandContourAnalyzer::setup(int w, int h){
     unthresholdedInvertedEdgeMat.create	(imgH, imgW, CV_8UC1);
     blurredUnthInvEdgeMat.create        (imgH, imgW, CV_8UC1);
     adaptiveThreshImg.create            (imgH, imgW, CV_8UC1);
+	pixelOwnershipMat.create            (imgH, imgW, CV_8UC1);
     
     thresholdConstMat.setTo( (unsigned char) ((int)10));
     
     blurKernelSize				= 6.0;
-    blurredStrengthWeight		= 1.00;
-    thresholdValue				= 36.0;
+    blurredStrengthWeight		= 0.95;
+    thresholdValue				= 30.0;
     prevThresholdValue			= 0;
+	lineBelongingTolerance		= 8.85;
 	
 }
 
@@ -118,7 +120,6 @@ void HandContourAnalyzer::refineCrotches (LeapVisualizer &lv,
     // This could be moved to after (bPerformCrotchRefinement) to save cycles.
     edgeMat.setTo(0);
     
-    
     // It's only necessary to perform crotch refinement
     // if one or more of our crotches are of a poor quality.
     bool bPerformCrotchRefinement = false;
@@ -129,19 +130,15 @@ void HandContourAnalyzer::refineCrotches (LeapVisualizer &lv,
         }
     }
     
-    // CLOBBERED FOR DEBUGGING:
-    // Search for ///// to unclobber.
-    
-    
-    
-    if (true){ ///// bPerformCrotchRefinement){
+
+    if (bPerformCrotchRefinement){
         bool bDrawDebug = true;
-        
         
         //------------------------------
         // Compute the "perfect ray": from the crotch to the midpoint between knuckles
         vector<PerfectRay> perfectRays;
         perfectRays.clear();
+		
         for (int i=0; i<nCrotches; i++){
             int whichCrotch = 3-i; // yeah, I know
             if (crotchQuality[whichCrotch] < minCrotchQuality){ // true) { /////
@@ -220,137 +217,257 @@ void HandContourAnalyzer::refineCrotches (LeapVisualizer &lv,
                 }
                 
                 aPerfectRay.whichCrotch = whichCrotch;
+				aPerfectRay.belongingPixels.clear();
+				
+				float dx = aPerfectRay.kx - aPerfectRay.cx;
+				float dy = aPerfectRay.ky - aPerfectRay.cy;
+				aPerfectRay.dx = dx;
+				aPerfectRay.dy = dy;
+				aPerfectRay.lineMag2 = dx*dx + dy*dy;
+				
                 perfectRays.push_back(aPerfectRay);
             }
         }
-        if (bDrawDebug){
-            // Draw the perfect rays. 
-            int nPerfectRaysToDraw = perfectRays.size();
-            for (int j=0; j<nPerfectRaysToDraw; j++){
-                PerfectRay aPerfectRay = perfectRays[j];
-                ofSetColor (20,255,200);
-                ofLine (aPerfectRay.cx,aPerfectRay.cy, aPerfectRay.kx,aPerfectRay.ky);
-                ofDrawBitmapString ( ofToString (aPerfectRay.whichCrotch), aPerfectRay.kx+1,aPerfectRay.ky+3);
-            }
-        }
+		
+		int nPerfectRays = perfectRays.size();
+		if (nPerfectRays > 0){
+		
+			if (bDrawDebug){
+				// Draw the perfect rays.
+				for (int j=0; j<nPerfectRays; j++){
+					PerfectRay& aPerfectRay = perfectRays[j];
+					ofSetColor (20,255,200);
+					ofLine (aPerfectRay.cx,aPerfectRay.cy, aPerfectRay.kx,aPerfectRay.ky);
+					ofDrawBitmapString ( ofToString (aPerfectRay.whichCrotch), aPerfectRay.kx+1,aPerfectRay.ky+3);
+				}
+			}
         
         
-        //------------------------------
-        // Compute edges into the grayMat.
-        
-        // To find the dark cracks,
-        // Invert the gray image, making those cracks bright;
-        // Mask this against the thresholdedImageOfHandMat.
-        // The masked, inverted result goes in unthresholdedInvertedEdgeMat.
-        
-        // Compute ROI and assign appropriate sub-Mats.
-        bool bUseROI = true;
-        
-        // Find the leftmost and rightmost possible points containing cracks.
-        int rightmostRayX   = -99999;
-        int leftmostRayX    =  99999;
-        int bottommostRayY  = -99999;
-        int topmostRayY     =  99999;
-        for (int j=0; j<perfectRays.size(); j++){
-            PerfectRay aPerfectRay = perfectRays[j];
-            leftmostRayX = MIN (leftmostRayX,      aPerfectRay.kx);
-            leftmostRayX = MIN (leftmostRayX,      aPerfectRay.cx);
-            rightmostRayX = MAX (rightmostRayX,    aPerfectRay.kx);
-            rightmostRayX = MAX (rightmostRayX,    aPerfectRay.cx);
-            
-            topmostRayY     = MIN (topmostRayY,    aPerfectRay.ky);
-            topmostRayY     = MIN (topmostRayY,    aPerfectRay.cy);
-            bottommostRayY  = MAX (bottommostRayY, aPerfectRay.ky);
-            bottommostRayY  = MAX (bottommostRayY, aPerfectRay.cy);
-            
-        }
-        
-        bool bBoundsAreReasonable = false;
-        if ((leftmostRayX > 0) && (leftmostRayX < imgW) &&
-            (rightmostRayX > 0) && (rightmostRayX < imgW) &&
-            (topmostRayY > 0) && (topmostRayY < imgH) &&
-            (bottommostRayY > 0) && (bottommostRayY < imgH)){
-            bBoundsAreReasonable = true;
+			//------------------------------
+			// Compute edges into the grayMat.
+			
+			// To find the dark cracks,
+			// Invert the gray image, making those cracks bright;
+			// Mask this against the thresholdedImageOfHandMat.
+			// The masked, inverted result goes in unthresholdedInvertedEdgeMat.
+			
+			// Compute ROI and assign appropriate sub-Mats.
+			bool bUseROI = true;
+			
+			// Find the leftmost and rightmost possible points containing cracks.
+			int rightmostRayX   = -99999;
+			int leftmostRayX    =  99999;
+			int bottommostRayY  = -99999;
+			int topmostRayY     =  99999;
+			for (int j=0; j<perfectRays.size(); j++){
+				PerfectRay aPerfectRay = perfectRays[j];
+				leftmostRayX = MIN (leftmostRayX,      aPerfectRay.kx);
+				leftmostRayX = MIN (leftmostRayX,      aPerfectRay.cx);
+				rightmostRayX = MAX (rightmostRayX,    aPerfectRay.kx);
+				rightmostRayX = MAX (rightmostRayX,    aPerfectRay.cx);
+				
+				topmostRayY     = MIN (topmostRayY,    aPerfectRay.ky);
+				topmostRayY     = MIN (topmostRayY,    aPerfectRay.cy);
+				bottommostRayY  = MAX (bottommostRayY, aPerfectRay.ky);
+				bottommostRayY  = MAX (bottommostRayY, aPerfectRay.cy);
+				
+			}
+			
+			bool bBoundsAreReasonable = false;
+			if ((leftmostRayX > 0) && (leftmostRayX < imgW) &&
+				(rightmostRayX > 0) && (rightmostRayX < imgW) &&
+				(topmostRayY > 0) && (topmostRayY < imgH) &&
+				(bottommostRayY > 0) && (bottommostRayY < imgH)){
+				bBoundsAreReasonable = true;
+		
+				int marginA = 10;
+				int leftmostRayXa    = MAX(0,    leftmostRayX  -marginA);
+				int rightmostRayXa   = MIN(imgW, rightmostRayX +marginA);
+				int topmostRayYa     = MAX(0,    topmostRayY   -marginA);
+				int bottommostRayYa  = MIN(imgH, bottommostRayY+marginA);
+				
+				// slightly expanded ROI, to ensure blurring doesn't creep incorrectly.
+				int marginB = 40;
+				int leftmostRayXb    = MAX(0,    leftmostRayX  -marginB);
+				int rightmostRayXb   = MIN(imgW, rightmostRayX +marginB);
+				int topmostRayYb     = MAX(0,    topmostRayY   -marginB);
+				int bottommostRayYb  = MIN(imgH, bottommostRayY+marginB);
+				
+				// Set up Mats which either use, or don't use, ROI.
+				CvRect crackRectA = cvRect(leftmostRayXa,topmostRayYa, rightmostRayXa-leftmostRayXa, bottommostRayYa-topmostRayYa);
+				CvRect crackRectB = cvRect(leftmostRayXb,topmostRayYb, rightmostRayXb-leftmostRayXb, bottommostRayYb-topmostRayYb);
+				
+				Mat grayMatROI  = (bUseROI) ?  grayMat(crackRectB) : grayMat;
+				Mat tempMat1ROI = (bUseROI) ? tempMat1(crackRectB) : tempMat1;
+				Mat tempMat2ROI = (bUseROI) ? tempMat2(crackRectA) : tempMat2;
+				Mat thresholdedImageOfHandMatROI    = (bUseROI) ? thresholdedImageOfHandMat(crackRectB)      : thresholdedImageOfHandMat;
+				Mat unthresholdedInvertedEdgeMatROIA= (bUseROI) ? unthresholdedInvertedEdgeMat(crackRectA)   : unthresholdedInvertedEdgeMat;
+				Mat unthresholdedInvertedEdgeMatROIB= (bUseROI) ? unthresholdedInvertedEdgeMat(crackRectB)   : unthresholdedInvertedEdgeMat;
+				Mat blurredUnthInvEdgeMatROI        = (bUseROI) ? blurredUnthInvEdgeMat(crackRectA)          : blurredUnthInvEdgeMat;
+				Mat thresholdConstMatROI            = (bUseROI) ? thresholdConstMat(crackRectA)              : thresholdConstMat;
+				Mat adaptiveThreshImgROI            = (bUseROI) ? adaptiveThreshImg(crackRectA)              : adaptiveThreshImg;
+				Mat edgeMatROI                      = (bUseROI) ? edgeMat(crackRectA)                        : edgeMat;
+				
+				//--------------------------
+				// ADAPTIVE THRESHOLDING:
+				unthresholdedInvertedEdgeMatROIB.setTo(0);
+				
+				cv::subtract (255, grayMatROI, tempMat1ROI);
+				cv::bitwise_and (thresholdedImageOfHandMatROI, tempMat1ROI, unthresholdedInvertedEdgeMatROIB);
+				
+				int k = ((int)(blurKernelSize)*2 + 1);
+				cv::blur ( unthresholdedInvertedEdgeMatROIA, blurredUnthInvEdgeMatROI, cv::Size(k,k) );
+				
+				// Fill the thresholdConstMat with the threshold value (but only if it has changed).
+				if (thresholdValue != prevThresholdValue){
+					thresholdConstMat.setTo( (unsigned char) ((int)thresholdValue));
+				} prevThresholdValue = thresholdValue;
+				
+				// Create the adaptiveThreshImg by adding a weighted blurred + constant image.
+				cv::scaleAdd (blurredUnthInvEdgeMatROI, blurredStrengthWeight, thresholdConstMatROI, adaptiveThreshImgROI);
+				
+				// Do the actual adaptive thresholding.
+				// Threshold to select pixels which represent sufficiently-strong edges.
+				cv::subtract (unthresholdedInvertedEdgeMatROIA, adaptiveThreshImgROI, tempMat2ROI);
+				int thresholdMode = cv::THRESH_BINARY;
+				cv::threshold (tempMat2ROI, edgeMatROI, 1, 255, thresholdMode);
+				
+				
+				//----------------------------------
+				// Determine which crotch each lit pixel belongs to.
+				
+				pixelOwnershipMat.setTo(0);
+				unsigned char *edgeMatData = edgeMat.data;
+				unsigned char *pixelOwnershipData = pixelOwnershipMat.data;
+				int prow, pindex;
+				float p1x,p1y, p2x,p2y;
+				float dx, dy, lineMag2;
+				float u, inx, iny, dist2;
+				float lineBelongingTolerance2 = lineBelongingTolerance*lineBelongingTolerance;
+				
+				for (int y=topmostRayYa; y<bottommostRayYa; y++){
+					prow = y*imgW;
+					for (int x=leftmostRayXa; x<rightmostRayXa; x++){
+						pindex = prow + x;
+						
+						// If a pixel in the edge image is non-black,
+						// determine its distance to each of the perfect rays.
+						if (edgeMatData[pindex] > 0){
+							
+							int jPerfectRayToWhichPixelIsClosest = 0;
+							float uValueWithRespectToClosestLine = 0;
+							float leastDistance2FromNearestLine = 999999;
+							
+							for (int j=0; j<nPerfectRays; j++){
+								PerfectRay& aPerfectRay = perfectRays[j];
+								
+								p1x = aPerfectRay.cx; //  p2x = aPerfectRay.kx; // not required here.
+								p1y = aPerfectRay.cy; //  p2y = aPerfectRay.ky;
+								dx  = aPerfectRay.dx; //  i.e. p2x - p1x;
+								dy  = aPerfectRay.dy; //  i.e. p2y - p1y;
+								lineMag2 = aPerfectRay.lineMag2;
+								
+								// intersection point
+								u   = ((x-p1x)*dx + (y-p1y)*dy) / lineMag2;
+								inx = p1x + u * dx;
+								iny = p1y + u * dy;
+								dist2 = ofDistSquared(x,y, inx,iny);
+								if (dist2 < leastDistance2FromNearestLine){
+									leastDistance2FromNearestLine = dist2;
+									uValueWithRespectToClosestLine = u;
+									jPerfectRayToWhichPixelIsClosest = j;
+								}
+							}
+							
+							// If the pixel is close enough to this line
+							// (both absolutely and in terms of its parametric projection),
+							if ((leastDistance2FromNearestLine < lineBelongingTolerance2) &&
+								(uValueWithRespectToClosestLine >= 0) &&
+								(uValueWithRespectToClosestLine <= 1.0)){
+								
+								// Then color the pixel according to the ID of its closest crotch.
+								// i.e For each thresholded edge pixel, classify according to which perfect ray it's closest to.
+								int whichCrotchClosest = perfectRays[jPerfectRayToWhichPixelIsClosest].whichCrotch;
+								edgeMatData[pindex] = 50 + (whichCrotchClosest * 50);
+								
+								// Increment the pixels that belong to this ray.
+								// Note that we are storing the u value in the z-coord. Abuse!
+								float u = uValueWithRespectToClosestLine;
+								perfectRays[jPerfectRayToWhichPixelIsClosest].belongingPixels.push_back( ofVec3f(x,y,u));
+								
+							} else {
+								// Otherwise, black it out.
+								edgeMatData[pindex] = 0;
+							}
+							
+						}
+					}
+				} // end for all pixels
+				
+				
+				// For each crotch's perfect ray,
+				// For each of the pixels which is tagged to belong to that ray,
+				// fit a line through those pixels, to get a new approximation.
+				// I.e Fit a line through the classified points, creating a best-fit line.
+				//
+				for (int j=0; j<nPerfectRays; j++){
+					PerfectRay& aPerfectRay = perfectRays[j];
+					vector<ofVec3f> &belongingPixels = aPerfectRay.belongingPixels;
+					int nBelongingPixels = belongingPixels.size();
+					int whichCrotch = perfectRays[j].whichCrotch;
+					
+					SlopeInterceptLine newFitLine = computeFitLine (belongingPixels, 0, nBelongingPixels-1);
+					float ax = aPerfectRay.cx;
+					float ay = newFitLine.slope*ax + newFitLine.yIntercept;
+					float bx = aPerfectRay.kx;
+					float by = newFitLine.slope*bx + newFitLine.yIntercept;
+					
+					aPerfectRay.ax = ax;
+					aPerfectRay.ay = ay;
+					aPerfectRay.bx = bx;
+					aPerfectRay.by = by;
+					aPerfectRay.fitSlope = newFitLine.slope;
+					aPerfectRay.fitIntercept = newFitLine.yIntercept;
+					aPerfectRay.newContourPoints.clear();
+					
+					ofSetColor(255,255,0);
+					ofLine (ax,ay, bx,by);
+				}
+				
+				
+				
+				
+				
+				// At regular intervals, Search along the best-fit line for the darkest point of the trough
+				// Collect those points, somehow add them to the contour
+				// Repair the indexing of handmarks.
+				
+				
+			
+			
+			} else {
+				bBoundsAreReasonable = false;
+				return;
+			}
+			
+		} else {
+			// nPerfectRays is zero.
+			return;
+		}
     
-            int marginA = 10;
-            int leftmostRayXa    = MAX(0,    leftmostRayX  -marginA);
-            int rightmostRayXa   = MIN(imgW, rightmostRayX +marginA);
-            int topmostRayYa     = MAX(0,    topmostRayY   -marginA);
-            int bottommostRayYa  = MIN(imgH, bottommostRayY+marginA);
-            
-            // slightly expanded ROI, to ensure blurring doesn't creep incorrectly.
-            int marginB = 40;
-            int leftmostRayXb    = MAX(0,    leftmostRayX  -marginB);
-            int rightmostRayXb   = MIN(imgW, rightmostRayX +marginB);
-            int topmostRayYb     = MAX(0,    topmostRayY   -marginB);
-            int bottommostRayYb  = MIN(imgH, bottommostRayY+marginB);
-            
-            // Set up Mats which either use, or don't use, ROI.
-            CvRect crackRectA = cvRect(leftmostRayXa,topmostRayYa, rightmostRayXa-leftmostRayXa, bottommostRayYa-topmostRayYa);
-            CvRect crackRectB = cvRect(leftmostRayXb,topmostRayYb, rightmostRayXb-leftmostRayXb, bottommostRayYb-topmostRayYb);
-            
-            Mat grayMatROI  = (bUseROI) ?  grayMat(crackRectB) : grayMat;
-            Mat tempMat1ROI = (bUseROI) ? tempMat1(crackRectB) : tempMat1;
-            Mat tempMat2ROI = (bUseROI) ? tempMat2(crackRectA) : tempMat2;
-            Mat thresholdedImageOfHandMatROI    = (bUseROI) ? thresholdedImageOfHandMat(crackRectB)      : thresholdedImageOfHandMat;
-            Mat unthresholdedInvertedEdgeMatROIA= (bUseROI) ? unthresholdedInvertedEdgeMat(crackRectA)   : unthresholdedInvertedEdgeMat;
-            Mat unthresholdedInvertedEdgeMatROIB= (bUseROI) ? unthresholdedInvertedEdgeMat(crackRectB)   : unthresholdedInvertedEdgeMat;
-            Mat blurredUnthInvEdgeMatROI        = (bUseROI) ? blurredUnthInvEdgeMat(crackRectA)          : blurredUnthInvEdgeMat;
-            Mat thresholdConstMatROI            = (bUseROI) ? thresholdConstMat(crackRectA)              : thresholdConstMat;
-            Mat adaptiveThreshImgROI            = (bUseROI) ? adaptiveThreshImg(crackRectA)              : adaptiveThreshImg;
-            Mat edgeMatROI                      = (bUseROI) ? edgeMat(crackRectA)                        : edgeMat;
-            
-            //--------------------------
-            // ADAPTIVE THRESHOLDING:
-            unthresholdedInvertedEdgeMatROIB.setTo(0);
-            
-            cv::subtract (255, grayMatROI, tempMat1ROI);
-            cv::bitwise_and (thresholdedImageOfHandMatROI, tempMat1ROI, unthresholdedInvertedEdgeMatROIB);
-            
-            int k = ((int)(blurKernelSize)*2 + 1);
-            cv::blur ( unthresholdedInvertedEdgeMatROIA, blurredUnthInvEdgeMatROI, cv::Size(k,k) );
-            
-            // Fill the thresholdConstMat with the threshold value (but only if it has changed).
-            if (thresholdValue != prevThresholdValue){
-                thresholdConstMat.setTo( (unsigned char) ((int)thresholdValue));
-            } prevThresholdValue = thresholdValue;
-            
-            // Create the adaptiveThreshImg by adding a weighted blurred + constant image.
-            cv::scaleAdd (blurredUnthInvEdgeMatROI, blurredStrengthWeight, thresholdConstMatROI, adaptiveThreshImgROI);
-            
-            // Do the actual adaptive thresholding.
-            cv::subtract (unthresholdedInvertedEdgeMatROIA, adaptiveThreshImgROI, tempMat2ROI);
-            int thresholdMode = cv::THRESH_BINARY;
-            cv::threshold (tempMat2ROI, edgeMatROI, 1, 255, thresholdMode);
-        
-        
-        } else {
-            bBoundsAreReasonable = false;
-            // printf("Bad bounds %d %d %d %d\n", leftmostRayX, rightmostRayX, topmostRayY, bottommostRayY);
-            return;
-        }
-    
         
         
         
         
         
+	
         
         
-        // Suppress edges which are maloriented,
-        // according to the angles given in leapDiagnosticFboMat
-        
-        
-        // Threshold to select pixels which represent sufficiently-strong edges
 
         
         
         
-        // For each thresholded edge pixel, classify according to which perfect ray it's closest to.
-        // Fit a line through the classified points, creating a best-fit line.
-        // At regular intervals, Search along the best-fit line for the darkest point of the trough
-        // Collect those points, somehow add them to the contour
-        // Repair the indexing of handmarks.
+    
         
         
     }

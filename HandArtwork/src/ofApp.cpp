@@ -459,8 +459,7 @@ void ofApp::setupGui() {
 	gui1->addSlider("HCA:thresholdValue", 0.0, 128.0,       &(myHandContourAnalyzer.thresholdValue));
 	gui1->addSlider("HCA:blurKernelSize", 1, 40,            &(myHandContourAnalyzer.blurKernelSize));
 	gui1->addSlider("HCA:blurredStrengthWeight", 0.0, 1.0,  &(myHandContourAnalyzer.blurredStrengthWeight));
-	gui1->addSlider("laplaceDelta",		0,	255,        &laplaceDelta);
-	gui1->addSlider("laplaceSensitivity",0.0, 4.0,      &laplaceSensitivity);
+	gui1->addSlider("HCA:lineBelongingTolerance", 0, 64,	&(myHandContourAnalyzer.lineBelongingTolerance));
 	
 	gui1->addSpacer();
 	gui1->addLabelToggle("bUseROIForFilters",			&bUseROIForFilters);
