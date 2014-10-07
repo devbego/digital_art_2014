@@ -35,7 +35,8 @@ void PuppetManager::setupPuppeteer (HandMeshBuilder &myHandMeshBuilder){
 	scenes.push_back(new TwitchScene			(&puppet, &handSkeleton, &immutableHandSkeleton));
 	scenes.push_back(new PinkyPuppeteerScene	(&puppet, &handWithFingertipsSkeleton, &immutableHandWithFingertipsSkeleton));
 	scenes.push_back(new FingerLengthPuppeteerScene(&puppet, &handWithFingertipsSkeleton, &immutableHandWithFingertipsSkeleton));
-	
+    scenes.push_back(new SpringFingerScene	(&puppet, &handSkeleton, &immutableHandSkeleton));
+
 	myHandMeshBuilder.loadDefaultMesh();
 	
 	//--------------------

@@ -39,6 +39,7 @@
 #include "TwitchScene.h"
 #include "PinkyPuppeteerScene.h"
 #include "FingerLengthPuppeteerScene.h"
+#include "SpringFingerScene.h"
 
 #include "HandSkeleton.h"
 #include "ThreePointSkeleton.h"
