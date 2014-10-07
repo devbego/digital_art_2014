@@ -497,6 +497,7 @@ void ofApp::setupGui() {
     
     gui4->addSlider("backgroundGray", 0,255,            &backgroundGray); // slider
     gui4->addSlider("puppetDisplayScale", 0.5, 2.0,     &puppetDisplayScale); // slider
+    gui4->addToggle("useTopologyModifierManager", &useTopologyModifierManager);
     
     gui4->addSpacer();
     gui4->addLabelToggle("bDrawLeapWorld",              &bDrawLeapWorld,                false, true);
@@ -1109,7 +1110,21 @@ void ofApp::draw(){
     
     //-----------------------------------
     // 1. DEBUGVIEW: DIAGNOSTICS & CONTROLS FOR DEVS
-	guiTabBar->setPosition(20,20);
+    guiTabBar->setPosition(20,20);
+    
+    // set puppet or topology modifier gui visibility
+    if(guiTabBar->isVisible()) {
+        if(useTopologyModifierManager) {
+            myTopologyModifierManager.setGuiVisibility(true);
+            myPuppetManager.setGuiVisibility(false);
+        } else {
+            myPuppetManager.setGuiVisibility(true);
+            myTopologyModifierManager.setGuiVisibility(false);
+        }
+    } else {
+        myPuppetManager.setGuiVisibility(false);
+        myTopologyModifierManager.setGuiVisibility(false);
+    }
 
     if (bDrawLeapWorld){
         drawLeapWorld();
@@ -1966,8 +1981,7 @@ void ofApp::keyPressed(int key){
 
         case 'g':
 		case 'G':
-			guiTabBar->toggleVisible();
-			myPuppetManager.setGuiVisibility( guiTabBar->isVisible());
+            guiTabBar->toggleVisible();
 			if (guiTabBar->isVisible()){
 				ofShowCursor();
 			} else {

@@ -14,7 +14,7 @@ protected:
     ofMesh final;
     
 public:
-    MinusOne();
+    MinusOne() { name = "MinusOne"; }
     void update(const ofMesh& mesh);
     ofMesh& getModifiedMesh();
     void drawBlends();

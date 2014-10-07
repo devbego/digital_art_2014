@@ -2,17 +2,6 @@
 
 #include "ofxPuppet.h"
 
-MinusOne::MinusOne() {
-    // post-removal indices, not original indices
-    int toStitchLeft[] = {99, 104, 109, 114, 120};
-    int toStitchRight[] = {98, 103, 108, 113, 119};
-    int toStitchCount = 5;
-    stitchIndices.clear();
-    for(int i = 0; i < toStitchCount; i++) {
-        stitchIndices.push_back(pair<ofIndexType, ofIndexType>(toStitchLeft[i], toStitchRight[i]));
-    }
-}
-
 void MinusOne::update(const ofMesh& mesh) {
     ofMesh handMesh = mesh;
     
@@ -36,6 +25,14 @@ void MinusOne::update(const ofMesh& mesh) {
     handMesh = dropUnusedVertices(handMesh);
     
     // stitch sides together
+    // post-removal indices, not original indices
+    int toStitchLeft[] = {99, 104, 109, 114, 120};
+    int toStitchRight[] = {98, 103, 108, 113, 119};
+    int toStitchCount = 5;
+    stitchIndices.clear();
+    for(int i = 0; i < toStitchCount; i++) {
+        stitchIndices.push_back(pair<ofIndexType, ofIndexType>(toStitchLeft[i], toStitchRight[i]));
+    }
     handMesh = stitch(handMesh, stitchIndices);
     
     float opacity[] = {
