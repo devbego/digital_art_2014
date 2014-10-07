@@ -16,7 +16,8 @@
  // Thanks to Elliot Woods and Simon Sarginson for assistance with Leap/Camera calibration.
  // Thanks to Adam Carlucci for assistance using the Accelerate Framework in openFrameworks.
  // Additional thanks to Rick Barraza and Ben Lower of Microsoft; Christian Schaller and 
- // Hannes Hofmann of Metrilus GmbH; and Doug Carmean and Chris Rojas of Intel.
+ // Hannes Hofmann of Metrilus GmbH; Dr Roland Goecke of University of Canberra; 
+ // and Doug Carmean and Chris Rojas of Intel.
  //
  // Developed in openFrameworks (OF), a free, open-source toolkit for arts engineering.
  // This project also uses a number of open-source OF "addons" contributed by others:
@@ -36,6 +37,19 @@
 */
 
 
+// TODO: Add +1/-1 scenes by Kyle
+// TODO: Add other scenes by Chris (springy?)
+// TODO: Improve thresholding for persons with dark skin.
+// TODO: Connect application faults to show/hide Puppet (see draw()).
+// TODO: Enable saving of GUIs into XML files.
+// TODO: Implement touchscreen behavior (swipe or poke to change scenes)
+// TODO: Make sure cursor hides/shows properly.
+// TODO: Darken camera image & puppet when hand is too high.
+// TODO: Patch holes in wrist area by filling with solid color from LEAP arm.
+// TODO: Decide on final list of scenes, disable others.
+// TODO: Refactor ofApp.cpp/h to have a CameraAndLeapRecorder. (Not urgent)
+// TODO: Check whether computing amount of leap motion works with delayed data
+
 //=============================================================================
 /*  IMPORTANT NOTE FOR COMPILING WITH LEAP on OSX:
     In OS X, you must have this in the Run Script Build Phase of your project.
@@ -49,65 +63,7 @@ cp -f ../../../addons/ofxLeapMotion/libs/lib/osx/libLeap.dylib "$TARGET_BUILD_DI
 
 
 //=============================================================================
-/*
- TODO
- 
 
- Enable saving of the various GUIs into XML files.
-  make all settings savable to XML (they are not currently!)
- Hide/reveal the cursor when we are in play/diagnostic modes.
-  Refactor ofApp.cpp/h to have a CameraAndLeapRecorder.
-
- 
- Scenes: 
- -- completely disable display of sub-GUI
- -- ensure display of Puppet is flush to the right edge of the canvas.
- -- In updatePuppeteer(), when bCalculatedMesh is false but a hand is 
-     still present, we should show the undistorted video hand instead.
-
- the closer they Z value are to the camera (BAD), the darker their camera image gets
- composite laplacian edges.
- use ROI
-
- Improve detection of HANDMARK_PINKY_SIDE in HandContourAnalyzer::computePinkySide() with local curvature search. 
- Prevent darkness from climbing up the hand by placing a white stripe at base of arm
- 
-
-deal with dark skin thresholding
- == base on ofMap from the colors of liz to miranda's hands
- 
- White out the wrist before contour detection.
-
- check all ofmaps' for div-0
- 
- dist from wrist better than dist from palm for finger calcs - check thumb in frame 87, 341, 342 in csugrue
- 
-  computing amount of leap motion doesn't work with delayed data
- leapVisualizer.getMotionAmountFromHandPointVectors() fails when we are using temporally offset data from prevLeapFrameRecorder
-  
- feedback if hand is not far in enough, or in too far
- if there's two hands in the scene, use the leap hand whose centroid is closer to the blob
-
--- Do the crotch search as we already are, but search along the contour between knuckles 0 and 4
--- Sort discovered crotches by index, in the right direction
--- Fingernail-fit between crotches.
--- Compute quality of crotches
--- For crotches of sufficiently low quality, 
- -- Do a pass for edge detection, with malorientation-suppression. 
- -- Threshold to select pixels which represent sufficiently-strong edges
- -- Compute the "perfect line", from the crotch to the midpoint between knuckles
- -- For each thresholded edge pixel, classify according to which perfect ray it's closest to. 
- -- Fit a line through the classified points, creating a best-fit line. 
- -- At regular intervals, Search along the best-fit line for the darkest point of the trough
- -- Collect those points, somehow add them to the contour
- 
- Use direction-extremality * fingernailfit to compute tip quality
-
- */
-
-
-
-//--------------------------------------------------------------
 void ofApp::setup(){
 	
 	// App settings
@@ -215,22 +171,13 @@ void ofApp::setup(){
 	bUseRedChannelForLuminance	= true;
 	bDoMorphologicalOps			= true;
 	bDoAdaptiveThresholding		= false;
-	bDoLaplacianEdgeDetect		= true;
 
 	blurKernelSize				= 4.0;
-	laplaceKSize				= 7;
 	blurredStrengthWeight		= 0.07;
 	thresholdValue				= 26;
 	prevThresholdValue			= 0;
-	laplaceDelta				= 125.0;
-	laplaceSensitivity			= 0.59;
 	
 	colorVideo.allocate			(cameraWidth, cameraHeight);
-    thresholdedFinal1024.create	(cameraWidth, cameraHeight, CV_8UC1);
-    videoMat1024.create         (cameraWidth, cameraHeight, CV_8UC3);
-    thresholdedFinal8UC31024.create (cameraWidth, cameraHeight, CV_8UC3);
-    maskedCamVidImg1024.create      (cameraWidth, cameraHeight, CV_8UC3);
-    
     maskedCamVidImg.create      (imgW, imgH, CV_8UC3);
 	
 	colorVideoHalfScale.allocate(imgW, imgH);
@@ -458,21 +405,21 @@ void ofApp::setupGui() {
 	gui1->addLabel("Image Processing");
 	
 	gui1->loadSettings(originalAppDataPath + "HandSegmenterSettings.xml");
-	gui1->addSpacer();
-	
-	gui1->addSlider("HCA:thresholdValue", 0.0, 128.0,       &(myHandContourAnalyzer.thresholdValue));
-	gui1->addSlider("HCA:blurKernelSize", 1, 40,            &(myHandContourAnalyzer.blurKernelSize));
-	gui1->addSlider("HCA:blurredStrengthWeight", 0.0, 1.0,  &(myHandContourAnalyzer.blurredStrengthWeight));
-	gui1->addSlider("HCA:lineBelongingTolerance", 0, 64,	&(myHandContourAnalyzer.lineBelongingTolerance));
-	gui1->addSlider("HCA:perpendicularSearch", 0.0, 0.5,	&(myHandContourAnalyzer.perpendicularSearch));
-	
 	
 	gui1->addSpacer();
 	gui1->addLabelToggle("bUseROIForFilters",			&bUseROIForFilters);
 	gui1->addLabelToggle("bUseRedChannelForLuminance",	&bUseRedChannelForLuminance);
 	gui1->addLabelToggle("bDoAdaptiveThresholding",		&bDoAdaptiveThresholding);
 	gui1->addLabelToggle("bDoMorphologicalOps",			&bDoMorphologicalOps);
-	gui1->addLabelToggle("bDoLaplacianEdgeDetect",		&bDoLaplacianEdgeDetect);
+	
+	gui1->addSpacer();
+	gui1->addSlider("HCA-thresholdValue", 0.0, 128.0,       &(myHandContourAnalyzer.thresholdValue));
+	gui1->addSlider("HCA-blurKernelSize", 1, 40,            &(myHandContourAnalyzer.blurKernelSize));
+	gui1->addSlider("HCA-blurredStrengthWeight", 0.0, 1.0,  &(myHandContourAnalyzer.blurredStrengthWeight));
+	gui1->addSlider("HCA-lineBelongingTolerance", 0, 64,	&(myHandContourAnalyzer.lineBelongingTolerance));
+	gui1->addSlider("HCA-perpendicularSearch", 0.0, 0.5,	&(myHandContourAnalyzer.perpendicularSearch));
+	
+
 
 	gui1->loadSettings(originalAppDataPath + "HandSegmenterSettings.xml");
 	gui1->autoSizeToFitWidgets();
@@ -764,7 +711,6 @@ void ofApp::updateComputerVision(){
 	computeFrameDifferencing();							// not used presently
 	thresholdLuminanceImage();
 	applyMorphologicalOps();
-	applyEdgeAmplification();
 	compositeThresholdedImageWithLeapFboPixels();
 	
 	myHandContourAnalyzer.update (thresholdedFinal, leapDiagnosticFboMat, leapVisualizer);
@@ -926,69 +872,6 @@ void ofApp::applyMorphologicalOps(){
 		thresholded.copyTo (thresholdedFinal);
 	}
 }
-
-
-//--------------------------------------------------------------
-void ofApp::applyEdgeAmplification(){
-	
-	if (bDoLaplacianEdgeDetect){
-		
-		/*
-		// Canny edge detection
-		int edgeThresh = 1;
-		int lowThreshold = (int) laplaceDelta;
-		int const max_lowThreshold = 100;
-		int ratio = 3;
-		blur ( grayMat, edgesMat1, cv::Size(3,3) );
-		int kernel_size = 3;
-		cv::Canny( edgesMat1, edgesMat1, lowThreshold, lowThreshold*ratio, kernel_size );
-		*/
-		
-
-		/*
-		// Laplacian edge detection
-		blur ( grayMat, grayMat, cv::Size(5,5) );
-		int		kSize = 7; //laplaceKSize; //7;
-		double	sensitivity = (double)laplaceSensitivity / 100.0;
-		cv::Laplacian (grayMat, edgesMat1, -1, kSize, (double)sensitivity, (double)laplaceDelta, cv::BORDER_DEFAULT );
-		*/
-		
-		
-		/* 
-		// Sobel edge detection
-		int scale = 1;
-		int delta = 0;
-		int ddepth = CV_16S;
-		
-		Mat grad_x, grad_y;
-		Mat abs_grad_x, abs_grad_y;
-		Mat src = grayMat;
-		blur ( src, src, cv::Size(7,7) );
-
-		// Gradient X
-		Sobel( src, grad_x, ddepth, 1, 0, 3, scale, delta, BORDER_DEFAULT );
-		convertScaleAbs( grad_x, abs_grad_x );
-		
-		// Gradient Y
-		Sobel( src, grad_y, ddepth, 0, 1, 3, scale, delta, BORDER_DEFAULT );
-		convertScaleAbs( grad_y, abs_grad_y );
-		
-		// Total Gradient (approximate)
-		addWeighted( abs_grad_x, 0.5, abs_grad_y, 0.5, 0, edgesMat1 );
-		*/
-		
-
-		// Some combination techniques
-		// cv::addWeighted( abs_grad_x, 0.5, abs_grad_y, 0.5, 0, edgesMat1 );
-		// cv::max(edgesMat1, laplaceEdgesMat, edgesMat1);
-		// cv::multiply(edgesMat1, laplaceEdgesMat, edgesMat1, 1.0/256.0);
-		
-	} else {
-		// thresholdedFinal = thresholded.clone();
-	}
-	
-}
-
 
 
 
@@ -1215,48 +1098,26 @@ void ofApp::draw(){
             
             // THE PUPPET IS FAULTY :(
             // SO ONLY SHOW THE VIDEO/CAMERA.
-            //
-            bool bUse1024Resolution = false;
-            //
-            // Seems to be having some kind of memory allocation problem.
-            // Furthermore, the 1024 isn't really worth it because the upscaled edges are still crappy.
-            if (bUse1024Resolution){
-                // version at 1024:
-                cv::resize(thresholdedFinal, thresholdedFinal1024, cv::Size(cameraWidth, cameraHeight));
-                thresholdedFinalThrice1024[0] = thresholdedFinal1024;
-                thresholdedFinalThrice1024[1] = thresholdedFinal1024;
-                thresholdedFinalThrice1024[2] = thresholdedFinal1024;
-                cv::merge(thresholdedFinalThrice1024, 3, thresholdedFinal8UC31024);
-                cv::bitwise_and( toCv(colorVideo), thresholdedFinal8UC31024, maskedCamVidImg1024);
-                
-                float renderScale = puppetDisplayScale * 1.0;
-                float puppetOffsetX = ofGetWindowWidth() - cameraWidth*renderScale;
-                float puppetOffsetY = ofGetWindowHeight()/2.0 - cameraHeight*renderScale/2.0;
-                ofTranslate( puppetOffsetX, puppetOffsetY, 0);
-                ofScale (renderScale,renderScale);
-
-                ofSetColor(255,255,255);
-                drawMat (maskedCamVidImg1024, 0,0);
-                
-            } else {
-                // Version at 512x384:
-                // Composite the colored camera/video image (in videoMat) against
-                // the thresholdedFinal (in an RGBfied version), to produce the maskedCamVidImg
-                thresholdedFinalThrice[0] = thresholdedFinal;
-                thresholdedFinalThrice[1] = thresholdedFinal;
-                thresholdedFinalThrice[2] = thresholdedFinal;
-                cv::merge(thresholdedFinalThrice, 3, thresholdedFinal8UC3);
-                cv::bitwise_and(videoMat, thresholdedFinal8UC3, maskedCamVidImg);
-                // if (bInPlaybackMode)
-                
-                float renderScale = puppetDisplayScale * 2.0;
-                float puppetOffsetX = ofGetWindowWidth() - imgW*renderScale;
-                float puppetOffsetY = ofGetWindowHeight()/2.0 - imgH*renderScale/2.0;
-                ofTranslate( puppetOffsetX, puppetOffsetY, 0);
-                ofScale (renderScale,renderScale);
-                ofSetColor(255,255,255);
-                drawMat(maskedCamVidImg, 0,0);
-            }
+            
+			// We'll use the video version at 512x384 resolution.
+			// (The 1024 version threw memory errors, and had a crappy edge anyway.)
+			// Composite the colored camera/video image (in videoMat) against
+			// the thresholdedFinal (in an RGBfied version), to produce the maskedCamVidImg
+			thresholdedFinalThrice[0] = thresholdedFinal;
+			thresholdedFinalThrice[1] = thresholdedFinal;
+			thresholdedFinalThrice[2] = thresholdedFinal;
+			cv::merge(thresholdedFinalThrice, 3, thresholdedFinal8UC3);
+			cv::bitwise_and(videoMat, thresholdedFinal8UC3, maskedCamVidImg);
+			// if (bInPlaybackMode)
+			
+			float renderScale = puppetDisplayScale * 2.0;
+			float puppetOffsetX = ofGetWindowWidth() - imgW*renderScale;
+			float puppetOffsetY = ofGetWindowHeight()/2.0 - imgH*renderScale/2.0;
+			ofTranslate( puppetOffsetX, puppetOffsetY, 0);
+			ofScale (renderScale,renderScale);
+			ofSetColor(255,255,255);
+			drawMat(maskedCamVidImg, 0,0);
+            
         }
         
         ofPopMatrix();
@@ -1751,14 +1612,17 @@ void ofApp::drawLeapWorld(){
 }
 
 
+//--------------------------------------------------------------
 void ofApp::drawText(){
     float textY = 500;
     ofSetColor(ofColor::white);
     ofDrawBitmapString("YO KYLE & CHRIS",               20, textY+=15);
     ofDrawBitmapString("Press 'p' to show/hide puppet", 20, textY+=15);
     ofDrawBitmapString("Press 'g' to show/hide GUI",    20, textY+=15);
+    ofDrawBitmapString("(You may need to press 'g' twice to see puppet gui)",    20, textY+=15);
     ofDrawBitmapString("Press '2' to load calibration", 20, textY+=15);
     ofDrawBitmapString("Press '1' to load sequence",    20, textY+=15);
+    ofDrawBitmapString("TODO's at top of ofApp.cpp",    20, textY+=15);
 }
 
 //--------------------------------------------------------------
@@ -1767,9 +1631,6 @@ void ofApp::drawText2(){
 	float textY = 500;
 	
 	ofSetColor(ofColor::white);
-	//ofDrawBitmapString("Display, record & playback Leap 2.0 Controller data.", 20, textY); textY+=15;
-	//ofDrawBitmapString("Built in openFrameworks by Golan Levin, golan@flong.com", 20, textY); textY+=15;
-	//textY+=15;
 
 	ofSetColor( (leap.isConnected()) ?  ofColor::green : ofColor(255,51,51)) ;
 	ofDrawBitmapString( (leap.isConnected() ? "Leap is Connected!" : "Leap is NOT CONNECTED!"), 20, textY);

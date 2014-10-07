@@ -451,6 +451,7 @@
 		3B57149619D4D3A10071F156 /* vertex.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = vertex.hpp; sourceTree = "<group>"; };
 		3BB5E3A12BFEB583A265CC90 /* vec_math.hpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 30; name = vec_math.hpp; path = ../../../addons/ofxCvMin/libs/opencv/include/opencv2/gpu/device/vec_math.hpp; sourceTree = SOURCE_ROOT; };
 		3BDCF9112612C1C34CD41B23 /* timer.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 30; name = timer.h; path = ../../../addons/ofxCvMin/libs/opencv/include/opencv2/flann/timer.h; sourceTree = SOURCE_ROOT; };
+		3BDDE60C19E4673E0018E845 /* HandSegmenterSettings.xml */ = {isa = PBXFileReference; lastKnownFileType = text.xml; name = HandSegmenterSettings.xml; path = bin/data/HandSegmenterSettings.xml; sourceTree = SOURCE_ROOT; };
 		3BFC9EB819D174DA00284002 /* Leap.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Leap.h; sourceTree = "<group>"; };
 		3BFC9EB919D174DA00284002 /* LeapMath.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LeapMath.h; sourceTree = "<group>"; };
 		3BFC9EBE19D174DA00284002 /* libLeap.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; path = libLeap.dylib; sourceTree = "<group>"; };
@@ -1428,6 +1429,14 @@
 				3B57149619D4D3A10071F156 /* vertex.hpp */,
 			);
 			path = butterfly;
+			sourceTree = "<group>";
+		};
+		3BDDE60B19E467320018E845 /* settings */ = {
+			isa = PBXGroup;
+			children = (
+				3BDDE60C19E4673E0018E845 /* HandSegmenterSettings.xml */,
+			);
+			name = settings;
 			sourceTree = "<group>";
 		};
 		3BFC9E8819D174D900284002 /* ofxLeapMotion */ = {
@@ -2463,6 +2472,7 @@
 		E4B69E1C0A3A1BDC003C02F2 /* src */ = {
 			isa = PBXGroup;
 			children = (
+				3BDDE60B19E467320018E845 /* settings */,
 				E4B69E1D0A3A1BDC003C02F2 /* main.cpp */,
 				E4B69E1E0A3A1BDC003C02F2 /* ofApp.cpp */,
 				E4B69E1F0A3A1BDC003C02F2 /* ofApp.h */,
@@ -3142,7 +3152,7 @@
 				);
 				MACOSX_DEPLOYMENT_TARGET = 10.8;
 				PRODUCT_NAME = "$(TARGET_NAME)Debug";
-				SDKROOT = macosx10.9;
+				SDKROOT = macosx10.8;
 				USER_HEADER_SEARCH_PATHS = ../../../addons/ofxLibdc/libs/osx/include/;
 				WRAPPER_EXTENSION = app;
 			};
@@ -3234,7 +3244,7 @@
 				);
 				MACOSX_DEPLOYMENT_TARGET = 10.8;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = macosx10.9;
+				SDKROOT = macosx10.8;
 				USER_HEADER_SEARCH_PATHS = ../../../addons/ofxLibdc/libs/osx/include/;
 				WRAPPER_EXTENSION = app;
 			};

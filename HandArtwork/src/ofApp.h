@@ -242,7 +242,6 @@ class ofApp : public ofBaseApp{
 	bool bDoMorphologicalOps;
 	bool bDoAdaptiveThresholding;
 	bool bComputePixelBasedFrameDifferencing;
-	bool bDoLaplacianEdgeDetect;
 	bool bDrawContourAnalyzer;
     bool bDrawMeshBuilderWireframe;
     bool bDrawLeapWorld;
@@ -253,11 +252,6 @@ class ofApp : public ofBaseApp{
 	
 	Mat	videoMat;
 	// vector<Mat> rgbVideoChannelMats;
-    Mat videoMat1024;
-    Mat thresholdedFinal1024;
-    Mat thresholdedFinal8UC31024;
-    Mat thresholdedFinalThrice1024[3];
-    Mat maskedCamVidImg1024; 
 	
 	Mat grayMat;
 	Mat prevGrayMat;
@@ -288,10 +282,6 @@ class ofApp : public ofBaseApp{
 	float thresholdValue;
 	float prevThresholdValue;
 	float blurredStrengthWeight;
-	
-	int	  laplaceKSize;
-	float laplaceDelta;
-	float laplaceSensitivity;
 	
 	void  computeHandStatistics(); 
 	float amountOfPixelMotion01;
