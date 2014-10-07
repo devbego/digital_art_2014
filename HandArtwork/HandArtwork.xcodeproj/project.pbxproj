@@ -22,6 +22,8 @@
 		250A95BA26587BE85DB0A353 /* ofxCvColorImage.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CE9C7160245B19131DAE6128 /* ofxCvColorImage.cpp */; };
 		26874B150C8535AEA0F24C8C /* ofxUIImageSlider.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2689C5C8A97002C218125F2F /* ofxUIImageSlider.cpp */; };
 		2745022019E4A4160077009E /* MeshUtils.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2745021F19E4A4160077009E /* MeshUtils.cpp */; };
+		2745022719E4A47D0077009E /* MinusOne.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2745022219E4A47D0077009E /* MinusOne.cpp */; };
+		2745022819E4A47D0077009E /* PlusOne.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2745022419E4A47D0077009E /* PlusOne.cpp */; };
 		3B04CBDC19D1DE8A005E6F31 /* EqualizeScene.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3B04CBAF19D1DE8A005E6F31 /* EqualizeScene.cpp */; };
 		3B04CBDD19D1DE8A005E6F31 /* FingerLengthPuppeteerScene.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3B04CBB119D1DE8A005E6F31 /* FingerLengthPuppeteerScene.cpp */; };
 		3B04CBDE19D1DE8A005E6F31 /* GrowingMiddleFingerScene.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3B04CBB319D1DE8A005E6F31 /* GrowingMiddleFingerScene.cpp */; };
@@ -287,6 +289,11 @@
 		266AC11AC0E8AEECBB4AA1B5 /* features2d.hpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 30; name = features2d.hpp; path = ../../../addons/ofxCvMin/libs/opencv/include/opencv2/nonfree/features2d.hpp; sourceTree = SOURCE_ROOT; };
 		2689C5C8A97002C218125F2F /* ofxUIImageSlider.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 30; name = ofxUIImageSlider.cpp; path = ../../../addons/ofxUI/src/ofxUIImageSlider.cpp; sourceTree = SOURCE_ROOT; };
 		2745021F19E4A4160077009E /* MeshUtils.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = MeshUtils.cpp; sourceTree = "<group>"; };
+		2745022219E4A47D0077009E /* MinusOne.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = MinusOne.cpp; sourceTree = "<group>"; };
+		2745022319E4A47D0077009E /* MinusOne.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MinusOne.h; sourceTree = "<group>"; };
+		2745022419E4A47D0077009E /* PlusOne.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = PlusOne.cpp; sourceTree = "<group>"; };
+		2745022519E4A47D0077009E /* PlusOne.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PlusOne.h; sourceTree = "<group>"; };
+		2745022619E4A47D0077009E /* TopologyModifier.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TopologyModifier.h; sourceTree = "<group>"; };
 		28155024C27152A66926B553 /* ofxUIBaseDraws.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 30; name = ofxUIBaseDraws.cpp; path = ../../../addons/ofxUI/src/ofxUIBaseDraws.cpp; sourceTree = SOURCE_ROOT; };
 		2834D88A62CD23F3DE2C47D1 /* ofxButton.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 30; name = ofxButton.h; path = ../../../addons/ofxGui/src/ofxButton.h; sourceTree = SOURCE_ROOT; };
 		28D05A6EBDBFC54F1E60CA73 /* vec_distance.hpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 30; name = vec_distance.hpp; path = ../../../addons/ofxCvMin/libs/opencv/include/opencv2/gpu/device/vec_distance.hpp; sourceTree = SOURCE_ROOT; };
@@ -1091,6 +1098,18 @@
 			name = opencv;
 			sourceTree = "<group>";
 		};
+		2745022119E4A47D0077009E /* topology-modifiers */ = {
+			isa = PBXGroup;
+			children = (
+				2745022219E4A47D0077009E /* MinusOne.cpp */,
+				2745022319E4A47D0077009E /* MinusOne.h */,
+				2745022419E4A47D0077009E /* PlusOne.cpp */,
+				2745022519E4A47D0077009E /* PlusOne.h */,
+				2745022619E4A47D0077009E /* TopologyModifier.h */,
+			);
+			path = "topology-modifiers";
+			sourceTree = "<group>";
+		};
 		328E739345D6731CDF606BE6 /* nonfree */ = {
 			isa = PBXGroup;
 			children = (
@@ -1495,6 +1514,7 @@
 				3BFC9EE219D1754F00284002 /* hand-structure */,
 				3BFC9EEA19D1754F00284002 /* MeshUtils.h */,
 				2745021F19E4A4160077009E /* MeshUtils.cpp */,
+				2745022119E4A47D0077009E /* topology-modifiers */,
 				3BFC9F1919D1754F00284002 /* SharedUtils.h */,
 			);
 			name = SharedCode;
@@ -2687,6 +2707,7 @@
 				7CDAD32BE4FA46701E3552C7 /* RunningBackground.cpp in Sources */,
 				3B4384F119D1BFB7001F75FE /* WmlVector2.cpp in Sources */,
 				10B69DE456AED1288FC9316B /* Tracker.cpp in Sources */,
+				2745022719E4A47D0077009E /* MinusOne.cpp in Sources */,
 				3B04CBE319D1DE8A005E6F31 /* NorthScene.cpp in Sources */,
 				A6668C5B1272D7FCD5B5A16F /* Utilities.cpp in Sources */,
 				3B04CBEC19D1DE8A005E6F31 /* StraightenFingersScene.cpp in Sources */,
@@ -2698,6 +2719,7 @@
 				3BFC9F9319D175DB00284002 /* voronoi_site_setofsites.cpp in Sources */,
 				E7438AC667B5977264C0F470 /* Utilities.cpp in Sources */,
 				6AA8127CA1A38430B316CE2C /* Wrappers.cpp in Sources */,
+				2745022819E4A47D0077009E /* PlusOne.cpp in Sources */,
 				3BFC9ED919D174DA00284002 /* ofxLeapMotion.cpp in Sources */,
 				A0C1C42F6293BEC48CA02D5D /* Base.cpp in Sources */,
 				DF2B08505F60BABD6D71FD96 /* Camera.cpp in Sources */,
