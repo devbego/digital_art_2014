@@ -278,6 +278,9 @@ void ofApp::setup(){
 	myPuppetManager.setupPuppetGui ();
     puppetDisplayScale = 1.20;
     
+    useTopologyModifierManager = true;
+    myTopologyModifierManager.setup();
+    
     // APPLICATION FAULT MANAGER
     appFaultManager.setup();
     minHandInsertionPercent = 0.29;
@@ -582,9 +585,14 @@ void ofApp::update(){
 	elapsedMicrosInt = (int) elapsedMicros;
 
 	
-	// Update all aspects of the puppet geometry
-    myPuppetManager.updatePuppeteer( bComputeAndDisplayPuppet, myHandMeshBuilder);
-    
+    if(useTopologyModifierManager) {
+        if(bComputeAndDisplayPuppet) {
+            myTopologyModifierManager.update(myHandMeshBuilder);
+        }
+    } else {
+        // Update all aspects of the puppet geometry
+        myPuppetManager.updatePuppeteer( bComputeAndDisplayPuppet, myHandMeshBuilder);
+    }
 
 }
 
@@ -1162,9 +1170,14 @@ void ofApp::draw(){
                 (video.getTextureReference()) :
                 (processFrameImg.getTextureReference());
             
-            // Draw the puppet.
-            myPuppetManager.drawPuppet(bComputeAndDisplayPuppet, handImageTexture);
-            
+            if(useTopologyModifierManager) {
+                if(bComputeAndDisplayPuppet) {
+                    myTopologyModifierManager.draw(handImageTexture);
+                }
+            } else {
+                // Draw the puppet.
+                myPuppetManager.drawPuppet(bComputeAndDisplayPuppet, handImageTexture);
+            }
         
         } else {
             
@@ -1283,10 +1296,12 @@ void ofApp::drawDiagnosticMiniImages(){
     drawMat(leapDiagnosticFboMat,	imgW * xItem, 0); xItem++;
     drawMat(coloredBinarizedImg,	imgW * xItem, 0); xItem++;
     
+    ofPushStyle();
     ofSetColor(ofColor::orange);
     for (int i=0; i<6; i++){
         ofDrawBitmapString( ofToString(i+1), imgW*i +5, 15/miniScale);
     }
+    ofPopStyle();
     
     ofPopMatrix();
 }

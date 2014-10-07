@@ -21,6 +21,7 @@
 
 //------------------------------
 #include "PuppetManager.h"
+#include "TopologyModifierManager.h"
 
 #include "ofxPuppetInteractive.h"
 #include "NoneScene.h"
@@ -333,5 +334,6 @@ class ofApp : public ofBaseApp{
 	PuppetManager myPuppetManager;
     float puppetDisplayScale;
 	
-	
+    TopologyModifierManager myTopologyModifierManager;
+    bool useTopologyModifierManager;
 };

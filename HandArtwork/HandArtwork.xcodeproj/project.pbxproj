@@ -24,6 +24,7 @@
 		2745022019E4A4160077009E /* MeshUtils.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2745021F19E4A4160077009E /* MeshUtils.cpp */; };
 		2745022719E4A47D0077009E /* MinusOne.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2745022219E4A47D0077009E /* MinusOne.cpp */; };
 		2745022819E4A47D0077009E /* PlusOne.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2745022419E4A47D0077009E /* PlusOne.cpp */; };
+		2745022B19E4A4EF0077009E /* TopologyModifierManager.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2745022919E4A4EF0077009E /* TopologyModifierManager.cpp */; };
 		3B04CBDC19D1DE8A005E6F31 /* EqualizeScene.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3B04CBAF19D1DE8A005E6F31 /* EqualizeScene.cpp */; };
 		3B04CBDD19D1DE8A005E6F31 /* FingerLengthPuppeteerScene.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3B04CBB119D1DE8A005E6F31 /* FingerLengthPuppeteerScene.cpp */; };
 		3B04CBDE19D1DE8A005E6F31 /* GrowingMiddleFingerScene.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3B04CBB319D1DE8A005E6F31 /* GrowingMiddleFingerScene.cpp */; };
@@ -294,6 +295,8 @@
 		2745022419E4A47D0077009E /* PlusOne.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = PlusOne.cpp; sourceTree = "<group>"; };
 		2745022519E4A47D0077009E /* PlusOne.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PlusOne.h; sourceTree = "<group>"; };
 		2745022619E4A47D0077009E /* TopologyModifier.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TopologyModifier.h; sourceTree = "<group>"; };
+		2745022919E4A4EF0077009E /* TopologyModifierManager.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = TopologyModifierManager.cpp; sourceTree = "<group>"; };
+		2745022A19E4A4EF0077009E /* TopologyModifierManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TopologyModifierManager.h; sourceTree = "<group>"; };
 		28155024C27152A66926B553 /* ofxUIBaseDraws.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 30; name = ofxUIBaseDraws.cpp; path = ../../../addons/ofxUI/src/ofxUIBaseDraws.cpp; sourceTree = SOURCE_ROOT; };
 		2834D88A62CD23F3DE2C47D1 /* ofxButton.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 30; name = ofxButton.h; path = ../../../addons/ofxGui/src/ofxButton.h; sourceTree = SOURCE_ROOT; };
 		28D05A6EBDBFC54F1E60CA73 /* vec_distance.hpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 30; name = vec_distance.hpp; path = ../../../addons/ofxCvMin/libs/opencv/include/opencv2/gpu/device/vec_distance.hpp; sourceTree = SOURCE_ROOT; };
@@ -2497,6 +2500,8 @@
 				3BFC9F9E19D175F500284002 /* HandMeshBuilder.h */,
 				3BFC9F5C19D175BB00284002 /* LeapVisualizer.cpp */,
 				3BFC9F5D19D175BB00284002 /* LeapVisualizer.h */,
+				2745022919E4A4EF0077009E /* TopologyModifierManager.cpp */,
+				2745022A19E4A4EF0077009E /* TopologyModifierManager.h */,
 				3B35DC6919D526680008E9A1 /* PuppetManager.cpp */,
 				3B35DC6A19D526680008E9A1 /* PuppetManager.h */,
 				3BFC9FA119D1760000284002 /* FingerTipCalibRecorder.h */,
@@ -2709,6 +2714,7 @@
 				10B69DE456AED1288FC9316B /* Tracker.cpp in Sources */,
 				2745022719E4A47D0077009E /* MinusOne.cpp in Sources */,
 				3B04CBE319D1DE8A005E6F31 /* NorthScene.cpp in Sources */,
+				2745022B19E4A4EF0077009E /* TopologyModifierManager.cpp in Sources */,
 				A6668C5B1272D7FCD5B5A16F /* Utilities.cpp in Sources */,
 				3B04CBEC19D1DE8A005E6F31 /* StraightenFingersScene.cpp in Sources */,
 				DBCB84A37F9AECC254870D79 /* Wrappers.cpp in Sources */,
