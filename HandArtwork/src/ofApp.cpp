@@ -16,7 +16,8 @@
  // Thanks to Elliot Woods and Simon Sarginson for assistance with Leap/Camera calibration.
  // Thanks to Adam Carlucci for assistance using the Accelerate Framework in openFrameworks.
  // Additional thanks to Rick Barraza and Ben Lower of Microsoft; Christian Schaller and 
- // Hannes Hofmann of Metrilus GmbH; and Doug Carmean and Chris Rojas of Intel.
+ // Hannes Hofmann of Metrilus GmbH; Dr Roland Goecke of University of Canberra; 
+ // and Doug Carmean and Chris Rojas of Intel.
  //
  // Developed in openFrameworks (OF), a free, open-source toolkit for arts engineering.
  // This project also uses a number of open-source OF "addons" contributed by others:
@@ -37,7 +38,7 @@
 
 
 // TODO: Add +1/-1 scenes by Kyle
-// TODO: Add other scence by Chris (springy?)
+// TODO: Add other scenes by Chris (springy?)
 // TODO: Improve thresholding for persons with dark skin.
 // TODO: Connect application faults to show/hide Puppet (see draw()).
 // TODO: Enable saving of GUIs into XML files.
@@ -170,22 +171,13 @@ void ofApp::setup(){
 	bUseRedChannelForLuminance	= true;
 	bDoMorphologicalOps			= true;
 	bDoAdaptiveThresholding		= false;
-	bDoLaplacianEdgeDetect		= true;
 
 	blurKernelSize				= 4.0;
-	laplaceKSize				= 7;
 	blurredStrengthWeight		= 0.07;
 	thresholdValue				= 26;
 	prevThresholdValue			= 0;
-	laplaceDelta				= 125.0;
-	laplaceSensitivity			= 0.59;
 	
 	colorVideo.allocate			(cameraWidth, cameraHeight);
-    thresholdedFinal1024.create	(cameraWidth, cameraHeight, CV_8UC1);
-    videoMat1024.create         (cameraWidth, cameraHeight, CV_8UC3);
-    thresholdedFinal8UC31024.create (cameraWidth, cameraHeight, CV_8UC3);
-    maskedCamVidImg1024.create      (cameraWidth, cameraHeight, CV_8UC3);
-    
     maskedCamVidImg.create      (imgW, imgH, CV_8UC3);
 	
 	colorVideoHalfScale.allocate(imgW, imgH);
@@ -413,21 +405,21 @@ void ofApp::setupGui() {
 	gui1->addLabel("Image Processing");
 	
 	gui1->loadSettings(originalAppDataPath + "HandSegmenterSettings.xml");
-	gui1->addSpacer();
-	
-	gui1->addSlider("HCA:thresholdValue", 0.0, 128.0,       &(myHandContourAnalyzer.thresholdValue));
-	gui1->addSlider("HCA:blurKernelSize", 1, 40,            &(myHandContourAnalyzer.blurKernelSize));
-	gui1->addSlider("HCA:blurredStrengthWeight", 0.0, 1.0,  &(myHandContourAnalyzer.blurredStrengthWeight));
-	gui1->addSlider("HCA:lineBelongingTolerance", 0, 64,	&(myHandContourAnalyzer.lineBelongingTolerance));
-	gui1->addSlider("HCA:perpendicularSearch", 0.0, 0.5,	&(myHandContourAnalyzer.perpendicularSearch));
-	
 	
 	gui1->addSpacer();
 	gui1->addLabelToggle("bUseROIForFilters",			&bUseROIForFilters);
 	gui1->addLabelToggle("bUseRedChannelForLuminance",	&bUseRedChannelForLuminance);
 	gui1->addLabelToggle("bDoAdaptiveThresholding",		&bDoAdaptiveThresholding);
 	gui1->addLabelToggle("bDoMorphologicalOps",			&bDoMorphologicalOps);
-	gui1->addLabelToggle("bDoLaplacianEdgeDetect",		&bDoLaplacianEdgeDetect);
+	
+	gui1->addSpacer();
+	gui1->addSlider("HCA-thresholdValue", 0.0, 128.0,       &(myHandContourAnalyzer.thresholdValue));
+	gui1->addSlider("HCA-blurKernelSize", 1, 40,            &(myHandContourAnalyzer.blurKernelSize));
+	gui1->addSlider("HCA-blurredStrengthWeight", 0.0, 1.0,  &(myHandContourAnalyzer.blurredStrengthWeight));
+	gui1->addSlider("HCA-lineBelongingTolerance", 0, 64,	&(myHandContourAnalyzer.lineBelongingTolerance));
+	gui1->addSlider("HCA-perpendicularSearch", 0.0, 0.5,	&(myHandContourAnalyzer.perpendicularSearch));
+	
+
 
 	gui1->loadSettings(originalAppDataPath + "HandSegmenterSettings.xml");
 	gui1->autoSizeToFitWidgets();
@@ -719,7 +711,6 @@ void ofApp::updateComputerVision(){
 	computeFrameDifferencing();							// not used presently
 	thresholdLuminanceImage();
 	applyMorphologicalOps();
-	applyEdgeAmplification();
 	compositeThresholdedImageWithLeapFboPixels();
 	
 	myHandContourAnalyzer.update (thresholdedFinal, leapDiagnosticFboMat, leapVisualizer);
@@ -881,69 +872,6 @@ void ofApp::applyMorphologicalOps(){
 		thresholded.copyTo (thresholdedFinal);
 	}
 }
-
-
-//--------------------------------------------------------------
-void ofApp::applyEdgeAmplification(){
-	
-	if (bDoLaplacianEdgeDetect){
-		
-		/*
-		// Canny edge detection
-		int edgeThresh = 1;
-		int lowThreshold = (int) laplaceDelta;
-		int const max_lowThreshold = 100;
-		int ratio = 3;
-		blur ( grayMat, edgesMat1, cv::Size(3,3) );
-		int kernel_size = 3;
-		cv::Canny( edgesMat1, edgesMat1, lowThreshold, lowThreshold*ratio, kernel_size );
-		*/
-		
-
-		/*
-		// Laplacian edge detection
-		blur ( grayMat, grayMat, cv::Size(5,5) );
-		int		kSize = 7; //laplaceKSize; //7;
-		double	sensitivity = (double)laplaceSensitivity / 100.0;
-		cv::Laplacian (grayMat, edgesMat1, -1, kSize, (double)sensitivity, (double)laplaceDelta, cv::BORDER_DEFAULT );
-		*/
-		
-		
-		/* 
-		// Sobel edge detection
-		int scale = 1;
-		int delta = 0;
-		int ddepth = CV_16S;
-		
-		Mat grad_x, grad_y;
-		Mat abs_grad_x, abs_grad_y;
-		Mat src = grayMat;
-		blur ( src, src, cv::Size(7,7) );
-
-		// Gradient X
-		Sobel( src, grad_x, ddepth, 1, 0, 3, scale, delta, BORDER_DEFAULT );
-		convertScaleAbs( grad_x, abs_grad_x );
-		
-		// Gradient Y
-		Sobel( src, grad_y, ddepth, 0, 1, 3, scale, delta, BORDER_DEFAULT );
-		convertScaleAbs( grad_y, abs_grad_y );
-		
-		// Total Gradient (approximate)
-		addWeighted( abs_grad_x, 0.5, abs_grad_y, 0.5, 0, edgesMat1 );
-		*/
-		
-
-		// Some combination techniques
-		// cv::addWeighted( abs_grad_x, 0.5, abs_grad_y, 0.5, 0, edgesMat1 );
-		// cv::max(edgesMat1, laplaceEdgesMat, edgesMat1);
-		// cv::multiply(edgesMat1, laplaceEdgesMat, edgesMat1, 1.0/256.0);
-		
-	} else {
-		// thresholdedFinal = thresholded.clone();
-	}
-	
-}
-
 
 
 
@@ -1170,48 +1098,26 @@ void ofApp::draw(){
             
             // THE PUPPET IS FAULTY :(
             // SO ONLY SHOW THE VIDEO/CAMERA.
-            //
-            bool bUse1024Resolution = false;
-            //
-            // Seems to be having some kind of memory allocation problem.
-            // Furthermore, the 1024 isn't really worth it because the upscaled edges are still crappy.
-            if (bUse1024Resolution){
-                // version at 1024:
-                cv::resize(thresholdedFinal, thresholdedFinal1024, cv::Size(cameraWidth, cameraHeight));
-                thresholdedFinalThrice1024[0] = thresholdedFinal1024;
-                thresholdedFinalThrice1024[1] = thresholdedFinal1024;
-                thresholdedFinalThrice1024[2] = thresholdedFinal1024;
-                cv::merge(thresholdedFinalThrice1024, 3, thresholdedFinal8UC31024);
-                cv::bitwise_and( toCv(colorVideo), thresholdedFinal8UC31024, maskedCamVidImg1024);
-                
-                float renderScale = puppetDisplayScale * 1.0;
-                float puppetOffsetX = ofGetWindowWidth() - cameraWidth*renderScale;
-                float puppetOffsetY = ofGetWindowHeight()/2.0 - cameraHeight*renderScale/2.0;
-                ofTranslate( puppetOffsetX, puppetOffsetY, 0);
-                ofScale (renderScale,renderScale);
-
-                ofSetColor(255,255,255);
-                drawMat (maskedCamVidImg1024, 0,0);
-                
-            } else {
-                // Version at 512x384:
-                // Composite the colored camera/video image (in videoMat) against
-                // the thresholdedFinal (in an RGBfied version), to produce the maskedCamVidImg
-                thresholdedFinalThrice[0] = thresholdedFinal;
-                thresholdedFinalThrice[1] = thresholdedFinal;
-                thresholdedFinalThrice[2] = thresholdedFinal;
-                cv::merge(thresholdedFinalThrice, 3, thresholdedFinal8UC3);
-                cv::bitwise_and(videoMat, thresholdedFinal8UC3, maskedCamVidImg);
-                // if (bInPlaybackMode)
-                
-                float renderScale = puppetDisplayScale * 2.0;
-                float puppetOffsetX = ofGetWindowWidth() - imgW*renderScale;
-                float puppetOffsetY = ofGetWindowHeight()/2.0 - imgH*renderScale/2.0;
-                ofTranslate( puppetOffsetX, puppetOffsetY, 0);
-                ofScale (renderScale,renderScale);
-                ofSetColor(255,255,255);
-                drawMat(maskedCamVidImg, 0,0);
-            }
+            
+			// We'll use the video version at 512x384 resolution.
+			// (The 1024 version threw memory errors, and had a crappy edge anyway.)
+			// Composite the colored camera/video image (in videoMat) against
+			// the thresholdedFinal (in an RGBfied version), to produce the maskedCamVidImg
+			thresholdedFinalThrice[0] = thresholdedFinal;
+			thresholdedFinalThrice[1] = thresholdedFinal;
+			thresholdedFinalThrice[2] = thresholdedFinal;
+			cv::merge(thresholdedFinalThrice, 3, thresholdedFinal8UC3);
+			cv::bitwise_and(videoMat, thresholdedFinal8UC3, maskedCamVidImg);
+			// if (bInPlaybackMode)
+			
+			float renderScale = puppetDisplayScale * 2.0;
+			float puppetOffsetX = ofGetWindowWidth() - imgW*renderScale;
+			float puppetOffsetY = ofGetWindowHeight()/2.0 - imgH*renderScale/2.0;
+			ofTranslate( puppetOffsetX, puppetOffsetY, 0);
+			ofScale (renderScale,renderScale);
+			ofSetColor(255,255,255);
+			drawMat(maskedCamVidImg, 0,0);
+            
         }
         
         ofPopMatrix();
