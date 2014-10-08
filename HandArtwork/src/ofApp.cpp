@@ -2145,12 +2145,12 @@ void ofApp::keyPressed(int key){
 		case ',':
 			bDrawContourAnalyzer = !bDrawContourAnalyzer;
 			break;
-        case '>':
-            myPuppetManager.animateSceneChange(-1);
-            break;
-        case '<':
-            myPuppetManager.animateSceneChange(1);
-            break;
+//        case '>':
+//            myPuppetManager.animateSceneChange(-1);
+//            break;
+//        case '<':
+//            myPuppetManager.animateSceneChange(1);
+//            break;
             
     }
     
@@ -2187,11 +2187,20 @@ void ofApp::mousePressed(int x, int y, int button){
 //--------------------------------------------------------------
 void ofApp::mouseReleased(int x, int y, int button){
     
+    
     // calculate distance from swipeStart
     float dist = fabs(y-swipeStart);
     if(dist > 100){
-        if(y > swipeStart) myPuppetManager.animateSceneChange(1);
-        else myPuppetManager.animateSceneChange(-1);
+        if(y > swipeStart) myPuppetManager.animateSceneChange(-1);
+        else myPuppetManager.animateSceneChange(1);
+    }else if(!guiTabBar->isVisible()){
+        
+        // random pick
+        if( ofRandom(2) > 1){
+            myPuppetManager.animateSceneChange(-1);
+        }else{
+            myPuppetManager.animateSceneChange(1);
+        }
     }
 }
 
