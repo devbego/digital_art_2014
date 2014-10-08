@@ -91,6 +91,7 @@ void PuppetManager::setupPuppeteer (HandMeshBuilder &myHandMeshBuilder){
     
     bInIdleMode = false;
     nextSceneId = 0;
+    sceneStartTime = 0;
 }
 
 
@@ -208,6 +209,7 @@ void PuppetManager::animateSceneChange(int dir){
 void PuppetManager::setNextScene(){
     
     setScene(nextSceneId);
+    sceneStartTime = ofGetElapsedTimef();
 }
 
 //--------------------------------------------------------------

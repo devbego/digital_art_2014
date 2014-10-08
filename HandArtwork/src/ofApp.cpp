@@ -139,7 +139,7 @@ void ofApp::setup(){
 	bComputePixelBasedFrameDifferencing = false;
 	bDoCompositeThresholdedImageWithLeapFboPixels = false;
 	bDrawGradient               = true;
-	
+	bKioskMode                  = false;
 	
 	//--------------- Setup LEAP
 	leap.open();
@@ -1548,7 +1548,7 @@ void ofApp::applicationStateMachine(){
     //------- update time each fault has occurred
     
     // no user present
-    if(nBlobsInScene == 0 || bInPlaybackMode){
+    if(nBlobsInScene == 0 || (bInPlaybackMode && bKioskMode) ){
         appFaultManager.updateHasFault(FAULT_NO_USER_PRESENT_BRIEF,dt);
         appFaultManager.updateHasFault(FAULT_NO_USER_PRESENT_LONG,dt);
     }else{
@@ -1629,6 +1629,13 @@ void ofApp::applicationStateMachine(){
         appFaultManager.updateResetFault (FAULT_HAND_NOT_DEEP_ENOUGH);
     }
     
+    
+    // scene on too long
+    if( ofGetElapsedTimef() - myPuppetManager.sceneStartTime > 60 ){
+        appFaultManager.updateHasFault (FAULT_SAME_SCENE_TOO_LONG, dt);
+    }else{
+        appFaultManager.updateResetFault(FAULT_SAME_SCENE_TOO_LONG);
+    }
     
     // get all detected faults
     vector<ApplicationFault> faults = appFaultManager.getAllFaults();
@@ -2181,12 +2188,10 @@ void ofApp::keyPressed(int key){
 		case ',':
 			bDrawContourAnalyzer = !bDrawContourAnalyzer;
 			break;
-//        case '>':
-//            myPuppetManager.animateSceneChange(-1);
-//            break;
-//        case '<':
-//            myPuppetManager.animateSceneChange(1);
-//            break;
+      case 'k':
+            bKioskMode = !bKioskMode;
+            if(!bKioskMode) myPuppetManager.bInIdleMode = false;
+            break;
             
     }
     

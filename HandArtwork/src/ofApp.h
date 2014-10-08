@@ -252,6 +252,7 @@ class ofApp : public ofBaseApp{
     bool bDrawAppFaultDebugText;
 	bool bDrawImageInBackground;
     bool bDrawGradient;
+    bool bKioskMode;
     
 	ofxCvColorImage colorVideo;
 	ofxCvColorImage colorVideoHalfScale;

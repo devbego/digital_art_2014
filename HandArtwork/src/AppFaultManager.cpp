@@ -24,6 +24,7 @@ void AppFaultManager::setup(){
     timeHasFault[FAULT_HAND_TOO_CURLED] = 0;
     timeHasFault[FAULT_HAND_TOO_VERTICAL] = 0;
     timeHasFault[FAULT_HAND_NOT_DEEP_ENOUGH] = 0;
+    timeHasFault[FAULT_SAME_SCENE_TOO_LONG] = 0;
 
     
     timeLimit[FAULT_NOTHING_WRONG] = 0;
@@ -38,6 +39,7 @@ void AppFaultManager::setup(){
     timeLimit[FAULT_HAND_TOO_CURLED] = 1;
     timeLimit[FAULT_HAND_TOO_VERTICAL] = 1;
     timeLimit[FAULT_HAND_NOT_DEEP_ENOUGH] = 1;
+    timeLimit[FAULT_SAME_SCENE_TOO_LONG] = 1;
     
     bShowingFault = false;
     
@@ -199,6 +201,11 @@ void AppFaultManager::drawFaultHelpScreen(){
                 myFaultString = "I'm sorry! Your hand might be too small :(";
                 myFaultStringNL = "Het spijt me! Je hand is waarschijnlijk te klein voor mij :(";
                 break;
+            
+            case FAULT_SAME_SCENE_TOO_LONG:
+                myFaultString = "Touch the screen for a new scene";
+                myFaultStringNL = "Raak het scherm aan voor een nieuwe scène";
+                break;
                 
             default:
                 break;
@@ -307,44 +314,48 @@ void AppFaultManager::drawFaultHelpScreen(){
 void AppFaultManager::drawDebug(int x, int y){
     
     float timeVal = timeHasFault[FAULT_NO_USER_PRESENT_BRIEF];
-    ofSetColor(0,ofMap(timeVal,0,1,0,255),255);
+    ofSetColor(0,ofMap(timeVal,0,timeLimit[FAULT_NO_USER_PRESENT_BRIEF],0,255),255);
     ofDrawBitmapString("No User Present Brief",x,y); y+= 15;
     
     timeVal = timeHasFault[FAULT_NO_USER_PRESENT_LONG];
-    ofSetColor(0,ofMap(timeVal,0,10,0,255),255);
+    ofSetColor(0,ofMap(timeVal,0,timeLimit[FAULT_NO_USER_PRESENT_LONG],0,255),255);
     ofDrawBitmapString("No User Present Long",x,y); y+= 15;
     
     timeVal = timeHasFault[FAULT_LEAP_DROPPED_FRAME];
-    ofSetColor(0,ofMap(timeVal,0,.1,0,255),255);
+    ofSetColor(0,ofMap(timeVal,0,timeLimit[FAULT_LEAP_DROPPED_FRAME],0,255),255);
     ofDrawBitmapString("Leap dropped frame",x,y); y+= 15;
     
     timeVal = timeHasFault[FAULT_NO_LEAP_HAND_TOO_SMALL];
-    ofSetColor(0,ofMap(timeVal,0,.5,0,255),255);
+    ofSetColor(0,ofMap(timeVal,0,timeLimit[FAULT_NO_LEAP_HAND_TOO_SMALL],0,255),255);
     ofDrawBitmapString("Hands too small",x,y); y+= 15;
     
     timeVal = timeHasFault[FAULT_NO_LEAP_OBJECT_PRESENT];
-    ofSetColor(0,ofMap(timeVal,0,.5,0,255),255);
+    ofSetColor(0,ofMap(timeVal,0,timeLimit[FAULT_NO_LEAP_OBJECT_PRESENT],0,255),255);
     ofDrawBitmapString("Object present",x,y); y+= 15;
     
     timeVal = timeHasFault[FAULT_TOO_MANY_HANDS];
-    ofSetColor(0,ofMap(timeVal,0,.5,0,255),255);
+    ofSetColor(0,ofMap(timeVal,0,timeLimit[FAULT_TOO_MANY_HANDS],0,255),255);
     ofDrawBitmapString("Too many hands",x,y); y+= 15;
     
     timeVal = timeHasFault[FAULT_HAND_TOO_FAST];
-    ofSetColor(0,ofMap(timeVal,0,.5,0,255),255);
+    ofSetColor(0,ofMap(timeVal,0,timeLimit[FAULT_HAND_TOO_FAST],0,255),255);
     ofDrawBitmapString("Hands too fast",x,y); y+= 15;
     
     timeVal = timeHasFault[FAULT_HAND_TOO_HIGH];
-    ofSetColor(0,ofMap(timeVal,0,.5,0,255),255);
+    ofSetColor(0,ofMap(timeVal,0,timeLimit[FAULT_HAND_TOO_HIGH],0,255),255);
     ofDrawBitmapString("Hands too high",x,y); y+= 15;
     
     timeVal = timeHasFault[FAULT_HAND_TOO_CURLED];
-    ofSetColor(0,ofMap(timeVal,0,.5,0,255),255);
+    ofSetColor(0,ofMap(timeVal,0,timeLimit[FAULT_HAND_TOO_CURLED],0,255),255);
     ofDrawBitmapString("Hands too curled",x,y); y+= 15;
     
     timeVal = timeHasFault[FAULT_HAND_TOO_VERTICAL];
-    ofSetColor(0,ofMap(timeVal,0,.5,0,255),255);
+    ofSetColor(0,ofMap(timeVal,0,timeLimit[FAULT_HAND_TOO_VERTICAL],0,255),255);
     ofDrawBitmapString("Hands too vertical",x,y); y+= 15;
+    
+    timeVal = timeHasFault[FAULT_SAME_SCENE_TOO_LONG];
+    ofSetColor(0,ofMap(timeVal,0,timeLimit[FAULT_SAME_SCENE_TOO_LONG],0,255),255);
+    ofDrawBitmapString("Same scene too long",x,y); y+= 15;
     
 }
 

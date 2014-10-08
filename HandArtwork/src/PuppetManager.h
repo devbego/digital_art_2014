@@ -113,5 +113,7 @@ public:
     
     // idle draw mode
     bool bInIdleMode;
+    
+    float sceneStartTime;
 	
 };

@@ -21,7 +21,8 @@ enum ApplicationFault {
 	FAULT_HAND_TOO_HIGH				= 128,	/* The hand is physically too close to the cameras */
 	FAULT_HAND_TOO_CURLED			= 256,	/* The hand is a fist or curled up, or has a curled finger */
 	FAULT_HAND_TOO_VERTICAL			= 512,	/* The hand is turned away from the camera */
-    FAULT_HAND_NOT_DEEP_ENOUGH      = 1024
+    FAULT_HAND_NOT_DEEP_ENOUGH      = 1024,
+    FAULT_SAME_SCENE_TOO_LONG       = 2048  /* The same scene has been playing more than ~1 minute */
 };
 
 
