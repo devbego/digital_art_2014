@@ -1935,6 +1935,7 @@ void ofApp::drawGradientOverlay(){
     int offSet = 50;
     int boxSize = 300+offSet;
     
+    ofFill();
     ofSetColor(0,255);
     ofRect(ofGetWidth()-offSet,0,offSet,ofGetHeight());
     
