@@ -21,7 +21,7 @@ protected:
     ofMesh final;
     
 public:
-    PlusOne() { name = "PlusOne"; }
+    string getName() const;
     void update(const ofMesh& mesh);
     ofMesh& getModifiedMesh();
     void drawBlends();

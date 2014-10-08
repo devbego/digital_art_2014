@@ -4,11 +4,8 @@
 #include "ofTexture.h"
 
 class TopologyModifier {
-protected:
-    string name;
 public:
-    TopologyModifier() : name("") {}
-    string getName() const {return name;}
+    virtual string getName() const = 0;
     virtual void update(const ofMesh& mesh) = 0;
     virtual ofMesh& getModifiedMesh() = 0;
     virtual void drawBlends() {

@@ -1,5 +1,9 @@
 #include "PlusOne.h"
 
+string PlusOne::getName() const {
+    return "PlusOne";
+}
+
 void PlusOne::update(const ofMesh& mesh) {
     ofMesh handMesh = mesh;
     

@@ -2,6 +2,10 @@
 
 #include "ofxPuppet.h"
 
+string MinusOne::getName() const {
+    return "MinusOne";
+}
+
 void MinusOne::update(const ofMesh& mesh) {
     ofMesh handMesh = mesh;
     
