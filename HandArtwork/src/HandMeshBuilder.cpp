@@ -28,7 +28,7 @@ void HandMeshBuilder::initialize(int w, int h){
 
 //============================================================
 void HandMeshBuilder::loadDefaultMesh(){
-	handMesh.load("models/hand-2014-151v-R.ply"); //handmarksNew.ply");
+	handMesh.load("models/hand-2014-151v-R.ply");
 	for (int i = 0; i < handMesh.getNumVertices(); i++) {
 		// handMesh.addTexCoord(handMesh.getVertex(i));
 		

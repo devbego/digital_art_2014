@@ -43,6 +43,7 @@
 #include "StraightenFingersScene.h"
 #include "SplayFingersScene.h"
 #include "SplayFingers2Scene.h"
+#include "SpringFingerScene.h"
 #include "TwitchScene.h"
 #include "PinkyPuppeteerScene.h"
 #include "FingerLengthPuppeteerScene.h"
@@ -122,6 +123,7 @@ class ofApp : public ofBaseApp{
 	
 	ofImage currentFrameImg; // where we store the current frame we grabbed from the Camera
     ofImage processFrameImg; // where we store the processed frame for calibration/display
+	ofImage backgroundImage; // an image to show behind the puppet, instead of just ofBackground(0).
 
     int currentFrameNumber;
 	vector<ofPixels> imageSequence;
@@ -157,7 +159,6 @@ class ofApp : public ofBaseApp{
     bool	bShowCalibPoints;
     bool	bRecordThisCalibFrame;
     bool	bUseCorrectedCamera;
-    bool	bShowLargeCamImageOnTop;
 	bool	bUseRGBLeapFbo;
     bool	bShowText;
     bool    bDrawMiniImages;
@@ -206,7 +207,7 @@ class ofApp : public ofBaseApp{
     void drawDiagnosticMiniImages();
     void drawContourAnalyzer();
     void drawMeshBuilderWireframe();
-    
+    void huntForBlendFunc (int period, int defaultSid, int defaultDid);
     bool useCorrectedCam();
 	
 
@@ -229,37 +230,35 @@ class ofApp : public ofBaseApp{
 	void extractVideoMatFromLiveVideo();
 	void extractVideoMatFromBufferedVideoFrame();
 	void extractLuminanceChannelFromSourceVideoMat();
+	void computeThresholdFromSkinColor();
 	void computeFrameDifferencing();
 	void thresholdLuminanceImage();
 	void applyMorphologicalOps();
 	void applyEdgeAmplification();
 	void compositeThresholdedImageWithLeapFboPixels();
 	
-	bool bShowAnalysisBig;
+	
+	
 	bool bWorkAtHalfScale;
-	bool bUseROIForFilters;
 	bool bUseRedChannelForLuminance;
 	bool bDoMorphologicalOps;
 	bool bDoAdaptiveThresholding;
 	bool bComputePixelBasedFrameDifferencing;
-	bool bDoLaplacianEdgeDetect;
 	bool bDrawContourAnalyzer;
+	bool bShowContourAnalyzerBig;
     bool bDrawMeshBuilderWireframe;
     bool bDrawLeapWorld;
     bool bDrawAppFaultDebugText;
+	bool bDrawImageInBackground;
     
 	ofxCvColorImage colorVideo;
 	ofxCvColorImage colorVideoHalfScale;
 	
 	Mat	videoMat;
 	// vector<Mat> rgbVideoChannelMats;
-    Mat videoMat1024;
-    Mat thresholdedFinal1024;
-    Mat thresholdedFinal8UC31024;
-    Mat thresholdedFinalThrice1024[3];
-    Mat maskedCamVidImg1024; 
 	
 	Mat grayMat;
+	Mat skinColorPatch;
 	Mat prevGrayMat;
 	Mat diffGrayMat;
 	Mat graySmall;
@@ -273,7 +272,6 @@ class ofApp : public ofBaseApp{
 	Mat handPartIDTmpImg;	// just used to store the information for a single finger at a time.
 	
 	Mat thresholded;		// binarized hand, black-white only
-	Mat edgesMat1;
 	Mat	thresholdedFinal;	//
 	Mat	thresholdedFinal8UC3;
 	Mat thresholdedFinalThrice[3];
@@ -289,9 +287,8 @@ class ofApp : public ofBaseApp{
 	float prevThresholdValue;
 	float blurredStrengthWeight;
 	
-	int	  laplaceKSize;
-	float laplaceDelta;
-	float laplaceSensitivity;
+	int	  skinColorPatchSize;
+	float averageSkinLuminance;
 	
 	void  computeHandStatistics(); 
 	float amountOfPixelMotion01;
@@ -334,6 +331,7 @@ class ofApp : public ofBaseApp{
 	PuppetManager myPuppetManager;
     float puppetDisplayScale;
 	
-    TopologyModifierManager myTopologyModifierManager;
+	TopologyModifierManager myTopologyModifierManager;
     bool useTopologyModifierManager;
+	
 };
