@@ -2144,6 +2144,12 @@ void ofApp::keyPressed(int key){
 		case ',':
 			bDrawContourAnalyzer = !bDrawContourAnalyzer;
 			break;
+        case '>':
+            myPuppetManager.animateSceneChange(-1);
+            break;
+        case '<':
+            myPuppetManager.animateSceneChange(1);
+            break;
             
     }
     
@@ -2173,10 +2179,19 @@ void ofApp::mousePressed(int x, int y, int button){
             lastIndexLeapPos = leapVisualizer.getIndexFingertipFromXML(video.getCurrentFrameID());
         }
     }
+    
+    swipeStart = y;
 }
 
 //--------------------------------------------------------------
 void ofApp::mouseReleased(int x, int y, int button){
+    
+    // calculate distance from swipeStart
+    float dist = fabs(y-swipeStart);
+    if(dist > 100){
+        if(y > swipeStart) myPuppetManager.animateSceneChange(1);
+        else myPuppetManager.animateSceneChange(-1);
+    }
 }
 
 //--------------------------------------------------------------

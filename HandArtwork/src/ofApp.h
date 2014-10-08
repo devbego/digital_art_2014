@@ -333,5 +333,9 @@ class ofApp : public ofBaseApp{
 	
 	TopologyModifierManager myTopologyModifierManager;
     bool useTopologyModifierManager;
+    
+    // ------------------------------
+    // swipe scenes
+    float swipeStart;
 	
 };

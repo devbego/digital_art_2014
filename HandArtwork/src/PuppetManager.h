@@ -63,6 +63,11 @@ public:
 	void drawPuppet (bool bComputeAndDisplayPuppet,  ofTexture &handImageTexture );
 	void setGuiVisibility (bool bShowGuis);
 	
+    void setScene( int sceneIndex ); // manually set a specific scene
+    void incrementScene(); // increment to next scene in order
+    void animateSceneChange(int dir); // animates puppet in and out of scene plus change
+    void updateSceneSwapAnimation();
+    
 	ofxPuppet puppet;
 	void setSkeleton(Skeleton* skeleton);
 	vector<Scene*> scenes;
@@ -96,5 +101,14 @@ public:
 	
 	float elapsedPuppetMicros;
 	int   elapsedPuppetMicrosInt;
+    
+    
+    // swap scene animation
+    bool bSwappingOut;
+    bool bSwappingIn;
+    float sceneSwapPosition;
+    float swapCounter;
+    float swapTarget;
+    
 	
 };

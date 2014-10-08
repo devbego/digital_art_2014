@@ -82,6 +82,12 @@ void PuppetManager::setupPuppeteer (HandMeshBuilder &myHandMeshBuilder){
 	
 	elapsedPuppetMicros		= 10000;
 	elapsedPuppetMicrosInt	= 10000;
+    
+    
+    bSwappingOut = false;
+    bSwappingIn = false;
+    sceneSwapPosition = 0.0f;
+    swapCounter = 0;
 }
 
 
@@ -162,7 +168,36 @@ int getRadioSelection(ofxUIRadio* radio) {
 	return -1;
 }
 
+void PuppetManager::setScene( int sceneIndex ){
+    
+    vector<ofxUIToggle*> toggles = sceneRadio->getToggles();
+    if(sceneIndex >= toggles.size()) return;
+    
+    for (int i = 0; i < toggles.size(); i++) {
+        toggles[i]->setValue(false);
+    }
+    
+    toggles[sceneIndex]->setValue(true);
+}
 
+void PuppetManager::animateSceneChange(int dir){
+    bSwappingOut = true;
+    bSwappingIn = false;
+    swapCounter = 0;
+    
+    if(dir > 0)swapTarget = ofGetHeight();
+    else swapTarget = -ofGetHeight()*.5;
+}
+
+void PuppetManager::incrementScene(){
+    
+    int currScene = getRadioSelection(sceneRadio);
+    vector<ofxUIToggle*> toggles = sceneRadio->getToggles();
+    currScene++;
+    if(currScene >= toggles.size() ) currScene = 1;
+    
+    setScene(currScene);
+}
 
 //--------------------------------------------------------------
 void PuppetManager::updatePuppeteer (bool bComputeAndDisplayPuppet, HandMeshBuilder &myHandMeshBuilder){
@@ -271,8 +306,42 @@ void PuppetManager::updatePuppeteer (bool bComputeAndDisplayPuppet, HandMeshBuil
 	long long postPuppetMicros = ofGetElapsedTimeMicros();
 	elapsedPuppetMicros = 0.8*elapsedPuppetMicros + 0.2*(float)(postPuppetMicros - prePuppetMicros);
 	elapsedPuppetMicrosInt = (int) elapsedPuppetMicros;
+    
+    updateSceneSwapAnimation();
 }
 
+void PuppetManager::updateSceneSwapAnimation(){
+    
+        if(bSwappingOut){
+        
+        if(swapCounter < 1){
+            swapCounter+=.1;
+            float pos = ofLerp(0, swapTarget, powf(swapCounter,1.975));
+            sceneSwapPosition = pos;
+        }else{
+            swapCounter = 0;
+            bSwappingIn = true;
+            bSwappingOut = false;
+            incrementScene();
+            if(swapTarget < 0 ) swapTarget = ofGetHeight();
+            else swapTarget = -ofGetHeight()*.5;
+        }
+    }
+    
+    if(bSwappingIn){
+        
+        if(swapCounter < 1){
+            swapCounter+=.1;
+            swapCounter = MAX(swapCounter,0);
+            float pos = ofLerp(swapTarget, 0, powf(swapCounter,.25));
+            sceneSwapPosition = pos;
+        }else{
+            swapCounter = 0;
+            sceneSwapPosition = 0;
+            bSwappingIn = false;
+        }
+    }
+}
 
 
 void PuppetManager::setGuiVisibility (bool bShowGuis){
@@ -297,6 +366,9 @@ void PuppetManager::drawPuppet (bool bComputeAndDisplayPuppet, ofTexture &handIm
 	if (bComputeAndDisplayPuppet){
 		bool bUseSubdivision = true;
 		
+        ofPushMatrix();
+        ofTranslate(0,sceneSwapPosition);
+        
 		ofPushStyle();
 		{
 			
@@ -360,6 +432,7 @@ void PuppetManager::drawPuppet (bool bComputeAndDisplayPuppet, ofTexture &handIm
 		}
 		
 		ofPopStyle();
+        ofPopMatrix();
 	}
 }
 
