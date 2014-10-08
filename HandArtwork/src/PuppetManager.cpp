@@ -140,7 +140,7 @@ void PuppetManager::setupPuppetGui(){
 	puppetGui->setPosition(290, 10);
 	
 	// set the initial scene
-    sceneRadio->getToggles()[0]->setValue(true);
+    sceneRadio->getToggles()[8]->setValue(true);
 }
 
 //--------------------------------------------------------------

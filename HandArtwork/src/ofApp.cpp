@@ -82,7 +82,7 @@ void ofApp::setup(){
     string basePath = ofToDataPath("", true);
     ofSetDataPathRoot("../../../../../SharedData/");
 	
-	backgroundImage.loadImage("backgroundImage.jpg");
+	backgroundImage.loadImage("recordings/backgroundImage.jpg");
     
     cameraWidth		= 1024;
     cameraHeight	= 768;
@@ -128,14 +128,14 @@ void ofApp::setup(){
     bRecordThisCalibFrame		= false;
     bUseCorrectedCamera			= true;
     bDrawLeapWorld              = true;
-    bShowText					= true;
-    bDrawMiniImages             = true;
+    bShowText					= false;
+    bDrawMiniImages             = false;
     bDrawSmallCameraView        = true;
 	bDrawImageInBackground		= true;
-	bDrawContourAnalyzer		= true;
-    bDrawAppFaultDebugText      = true;
-	bComputeAndDisplayPuppet	= false;
-	bFullscreen					= false;
+	bDrawContourAnalyzer		= false;
+    bDrawAppFaultDebugText      = false;
+	bComputeAndDisplayPuppet	= true;
+	bFullscreen					= true;
 	bComputePixelBasedFrameDifferencing = false;
 	bDoCompositeThresholdedImageWithLeapFboPixels = false;
 	
@@ -293,6 +293,7 @@ void ofApp::setup(){
     //--------------
 	// MUST BE LAST IN SETUP()
 	setupGui();
+    keyPressed('g');
 }
 
 
