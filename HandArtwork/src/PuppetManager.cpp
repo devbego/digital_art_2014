@@ -72,9 +72,9 @@ void PuppetManager::setupPuppeteer (HandMeshBuilder &myHandMeshBuilder){
 	
 	bPuppetMouseControl		= false;
 	bShowPuppetTexture		= true;
-	bShowPuppetWireframe	= true;
+	bShowPuppetWireframe	= false;
 	bShowPuppetControlPoints= false;
-	bShowPuppetSkeleton		= true;
+	bShowPuppetSkeleton		= false;
 	bShowPuppetMeshPoints	= false;
 	
 	frameBasedAnimation		= false;
