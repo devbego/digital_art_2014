@@ -138,7 +138,7 @@ void ofApp::setup(){
 	bFullscreen					= true;
 	bComputePixelBasedFrameDifferencing = false;
 	bDoCompositeThresholdedImageWithLeapFboPixels = false;
-	
+	bDrawGradient               = true;
 	
 	
 	//--------------- Setup LEAP
@@ -512,7 +512,8 @@ void ofApp::setupGui() {
     gui4->addLabelToggle("bDrawMiniImages",             &bDrawMiniImages,               false, true);
     gui4->addLabelToggle("bShowText",                   &bShowText,                     false, true);
     gui4->addLabelToggle("bDrawAppFaultDebugText",      &bDrawAppFaultDebugText,        false, true);
-    
+    gui4->addLabelToggle("bDrawGradientOverlay",      &bDrawGradient,        false, true);
+
     gui4->addSpacer();
     gui4->addLabelToggle("bDrawContourAnalyzer",        &bDrawContourAnalyzer,          false, true);
 
@@ -1290,7 +1291,7 @@ void ofApp::draw(){
    // ofRect(mouseX, mouseY, 80,80) ;
     // printf("handTooHighDur = %f     col = %f \n", handTooHighDur, col);
 		
-    drawGradientOverlay();
+    if( bDrawGradient ) drawGradientOverlay();
 }
 
 
@@ -1924,14 +1925,18 @@ void ofApp::drawText(){
 
 void ofApp::drawGradientOverlay(){
     
-    int boxSize = 200;
+    int offSet = 50;
+    int boxSize = 300+offSet;
+    
+    ofSetColor(0,255);
+    ofRect(ofGetWidth()-offSet,0,offSet,ofGetHeight());
     
     glBegin(GL_QUADS);
     glColor4f(0,0,0,0);
     glVertex2f(ofGetWidth()-boxSize,0);
     glColor4f(0,0,0,1);
-    glVertex2f(ofGetWidth(),0);
-    glVertex2f(ofGetWidth(),ofGetHeight());
+    glVertex2f(ofGetWidth()-offSet,0);
+    glVertex2f(ofGetWidth()-offSet,ofGetHeight());
     glColor4f(0,0,0,0);
     glVertex2f(ofGetWidth()-boxSize,ofGetHeight());
     glEnd();
@@ -2226,12 +2231,8 @@ void ofApp::mouseReleased(int x, int y, int button){
         else myPuppetManager.animateSceneChange(1);
     }else if(!guiTabBar->isVisible()){
         
-        // random pick
-        if( ofRandom(2) > 1){
-            myPuppetManager.animateSceneChange(-1);
-        }else{
-            myPuppetManager.animateSceneChange(1);
-        }
+        myPuppetManager.animateSceneChange(0);
+        
     }
 }
 

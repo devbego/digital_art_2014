@@ -251,6 +251,7 @@ class ofApp : public ofBaseApp{
     bool bDrawLeapWorld;
     bool bDrawAppFaultDebugText;
 	bool bDrawImageInBackground;
+    bool bDrawGradient;
     
 	ofxCvColorImage colorVideo;
 	ofxCvColorImage colorVideoHalfScale;

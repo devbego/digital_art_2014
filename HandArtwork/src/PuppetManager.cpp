@@ -90,6 +90,7 @@ void PuppetManager::setupPuppeteer (HandMeshBuilder &myHandMeshBuilder){
     swapCounter = 0;
     
     bInIdleMode = false;
+    nextSceneId = 0;
 }
 
 
@@ -189,16 +190,24 @@ void PuppetManager::animateSceneChange(int dir){
     
     if(dir > 0)swapTarget = ofGetHeight();
     else swapTarget = -ofGetHeight()*.5;
-}
-
-void PuppetManager::incrementScene(){
     
     int currScene = getRadioSelection(sceneRadio);
     vector<ofxUIToggle*> toggles = sceneRadio->getToggles();
-    currScene++;
-    if(currScene >= toggles.size() ) currScene = 1;
+
+    if(dir == 1) currScene--;
+    else if(dir == -1) currScene++;
+    else if(dir == 0) currScene = ofRandom(1,toggles.size() );
     
-    setScene(currScene);
+    if(currScene >= toggles.size() ) currScene = 1;
+    if(currScene == 0) currScene = toggles.size()-1;
+    
+    nextSceneId = currScene;
+    
+}
+
+void PuppetManager::setNextScene(){
+    
+    setScene(nextSceneId);
 }
 
 //--------------------------------------------------------------
@@ -324,7 +333,7 @@ void PuppetManager::updateSceneSwapAnimation(){
             swapCounter = 0;
             bSwappingIn = true;
             bSwappingOut = false;
-            incrementScene();
+            setNextScene();
             if(swapTarget < 0 ) swapTarget = ofGetHeight();
             else swapTarget = -ofGetHeight()*.5;
         }
