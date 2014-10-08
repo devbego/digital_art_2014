@@ -72,9 +72,9 @@ void PuppetManager::setupPuppeteer (HandMeshBuilder &myHandMeshBuilder){
 	
 	bPuppetMouseControl		= false;
 	bShowPuppetTexture		= true;
-	bShowPuppetWireframe	= true;
+	bShowPuppetWireframe	= false;
 	bShowPuppetControlPoints= false;
-	bShowPuppetSkeleton		= true;
+	bShowPuppetSkeleton		= false;
 	bShowPuppetMeshPoints	= false;
 	
 	frameBasedAnimation		= false;
@@ -146,7 +146,7 @@ void PuppetManager::setupPuppetGui(){
 	puppetGui->setPosition(290, 10);
 	
 	// set the initial scene
-    sceneRadio->getToggles()[0]->setValue(true);
+    sceneRadio->getToggles()[8]->setValue(true);
 }
 
 //--------------------------------------------------------------
@@ -364,7 +364,7 @@ void PuppetManager::setGuiVisibility (bool bShowGuis){
 void PuppetManager::drawPuppet (bool bComputeAndDisplayPuppet, ofTexture &handImageTexture ){
 	
 	if (bComputeAndDisplayPuppet){
-		bool bUseSubdivision = true;
+		bool bUseSubdivision = true; // why of course!
 		
         ofPushMatrix();
         ofTranslate(0,sceneSwapPosition);
@@ -382,7 +382,7 @@ void PuppetManager::drawPuppet (bool bComputeAndDisplayPuppet, ofTexture &handIm
 					
 					// However, the subdivision causes a (LIFO?) reordering of the vertices.
 					// This causes the pinky to be drawn on top, instead of on the bottom...
-					
+					// TODO: Change butterflySubdivider so that it does not reverse triangle order. 
 					
 					handImageTexture.bind();
 					ofSetColor(255);

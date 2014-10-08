@@ -82,7 +82,7 @@ void ofApp::setup(){
     string basePath = ofToDataPath("", true);
     ofSetDataPathRoot("../../../../../SharedData/");
 	
-	backgroundImage.loadImage("backgroundImage.jpg");
+	backgroundImage.loadImage("recordings/backgroundImage.jpg");
     
     cameraWidth		= 1024;
     cameraHeight	= 768;
@@ -128,14 +128,14 @@ void ofApp::setup(){
     bRecordThisCalibFrame		= false;
     bUseCorrectedCamera			= true;
     bDrawLeapWorld              = true;
-    bShowText					= true;
-    bDrawMiniImages             = true;
+    bShowText					= false;
+    bDrawMiniImages             = false;
     bDrawSmallCameraView        = true;
-	bDrawImageInBackground		= false;
-	bDrawContourAnalyzer		= true;
-    bDrawAppFaultDebugText      = true;
-	bComputeAndDisplayPuppet	= false;
-	bFullscreen					= false;
+	bDrawImageInBackground		= true;
+	bDrawContourAnalyzer		= false;
+    bDrawAppFaultDebugText      = false;
+	bComputeAndDisplayPuppet	= true;
+	bFullscreen					= true;
 	bComputePixelBasedFrameDifferencing = false;
 	bDoCompositeThresholdedImageWithLeapFboPixels = false;
 	
@@ -242,7 +242,7 @@ void ofApp::setup(){
 	
 	
 	// Get us ready to demo in a hurry
-	string filePathCalib = "sep15_CALIBRATION"; //"calib_chris_corrected_4";
+	string filePathCalib = "oct-8-CALIBRATION"; //"calib_chris_corrected_4";
 	calibrateFromXML(filePathCalib);
 	
 	string filePathPlay = "sep15-golan-perfect"; //"play_chris_corrected_4";
@@ -293,6 +293,7 @@ void ofApp::setup(){
     //--------------
 	// MUST BE LAST IN SETUP()
 	setupGui();
+    keyPressed('g');
 }
 
 
@@ -1828,7 +1829,7 @@ void ofApp::drawLeapWorld(){
 
 
 //--------------------------------------------------------------
-void ofApp::drawText(){
+void ofApp::drawText2(){
     float textY = 500;
     ofSetColor(ofColor::white);
     ofDrawBitmapString("YO KYLE & CHRIS",               20, textY+=15);
@@ -1841,7 +1842,7 @@ void ofApp::drawText(){
 }
 
 //--------------------------------------------------------------
-void ofApp::drawText2(){
+void ofApp::drawText(){
 	
 	float textY = 500;
 	

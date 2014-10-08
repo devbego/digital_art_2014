@@ -3190,7 +3190,7 @@
 				);
 				MACOSX_DEPLOYMENT_TARGET = 10.8;
 				PRODUCT_NAME = "$(TARGET_NAME)Debug";
-				SDKROOT = macosx10.8;
+				SDKROOT = macosx10.9;
 				USER_HEADER_SEARCH_PATHS = ../../../addons/ofxLibdc/libs/osx/include/;
 				WRAPPER_EXTENSION = app;
 			};
@@ -3282,7 +3282,7 @@
 				);
 				MACOSX_DEPLOYMENT_TARGET = 10.8;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = macosx10.8;
+				SDKROOT = macosx10.9;
 				USER_HEADER_SEARCH_PATHS = ../../../addons/ofxLibdc/libs/osx/include/;
 				WRAPPER_EXTENSION = app;
 			};
