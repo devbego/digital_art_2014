@@ -295,7 +295,7 @@ void PuppetManager::setGuiVisibility (bool bShowGuis){
 void PuppetManager::drawPuppet (bool bComputeAndDisplayPuppet, ofTexture &handImageTexture ){
 	
 	if (bComputeAndDisplayPuppet){
-		bool bUseSubdivision = true;
+		bool bUseSubdivision = true; // why of course!
 		
 		ofPushStyle();
 		{
@@ -310,7 +310,7 @@ void PuppetManager::drawPuppet (bool bComputeAndDisplayPuppet, ofTexture &handIm
 					
 					// However, the subdivision causes a (LIFO?) reordering of the vertices.
 					// This causes the pinky to be drawn on top, instead of on the bottom...
-					
+					// TODO: Change butterflySubdivider so that it does not reverse triangle order. 
 					
 					handImageTexture.bind();
 					ofSetColor(255);

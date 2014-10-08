@@ -36,12 +36,19 @@ void TopologyModifierManager::setScene(int sceneIndex) {
 int TopologyModifierManager::getSceneCount() const {
     return scenes.size();
 }
+
 void TopologyModifierManager::update(HandMeshBuilder& handMeshBuilder) {
+	
     int scene = sceneRadio->getValue();
     setScene(scene);
+	
+	bool bCalculatedMesh = handMeshBuilder.bCalculatedMesh;
+	if (bCalculatedMesh){
     
-    ofMesh& mesh = handMeshBuilder.getMesh();
-    curScene->update(mesh);
+		ofMesh& mesh = handMeshBuilder.getMesh();
+		curScene->update(mesh);
+	}
+	
 }
 void TopologyModifierManager::draw(const ofTexture& texture) {
     curScene->draw(texture);
