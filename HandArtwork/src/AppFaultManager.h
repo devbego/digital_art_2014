@@ -52,6 +52,7 @@ public:
     // get all detected faults
     vector<ApplicationFault> getAllFaults();
     
+    bool getHasFault(ApplicationFault fault);
     
     map<ApplicationFault, float> timeHasFault; // total seconds fault recorded continuously, if fault not found reset to 0
     map<ApplicationFault, float> timeLimit; // total seconds needed to be considered active fault

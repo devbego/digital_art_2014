@@ -207,6 +207,7 @@ class ofApp : public ofBaseApp{
     void drawDiagnosticMiniImages();
     void drawContourAnalyzer();
     void drawMeshBuilderWireframe();
+    void drawGradientOverlay();
     void huntForBlendFunc (int period, int defaultSid, int defaultDid);
     bool useCorrectedCam();
 	

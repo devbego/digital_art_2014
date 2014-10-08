@@ -60,6 +60,14 @@ void AppFaultManager::updateResetFault( ApplicationFault fault){
     timeHasFault[fault] = 0;
 }
 
+bool AppFaultManager::getHasFault(ApplicationFault fault){
+   
+    if( timeHasFault[fault] > timeLimit[fault] ){
+        return true;
+    }
+    
+    return false;
+}
 
 ApplicationFault AppFaultManager::getLongestFault(){
     
@@ -339,3 +347,4 @@ void AppFaultManager::drawDebug(int x, int y){
     ofDrawBitmapString("Hands too vertical",x,y); y+= 15;
     
 }
+

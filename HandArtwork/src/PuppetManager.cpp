@@ -88,6 +88,8 @@ void PuppetManager::setupPuppeteer (HandMeshBuilder &myHandMeshBuilder){
     bSwappingIn = false;
     sceneSwapPosition = 0.0f;
     swapCounter = 0;
+    
+    bInIdleMode = false;
 }
 
 
@@ -384,10 +386,17 @@ void PuppetManager::drawPuppet (bool bComputeAndDisplayPuppet, ofTexture &handIm
 					// This causes the pinky to be drawn on top, instead of on the bottom...
 					// TODO: Change butterflySubdivider so that it does not reverse triangle order. 
 					
+                    if(!bInIdleMode){
 					handImageTexture.bind();
 					ofSetColor(255);
 					refinedMesh.drawFaces();
 					handImageTexture.unbind();
+                    }else{
+                        ofSetColor(25,200,255,200);
+                        refinedMesh.drawFaces();
+                    }
+                   // ofSetColor(255);
+					//refinedMesh.drawFaces();
 				
 				} else {
 					// Working, but with no mesh subdividing

@@ -110,5 +110,7 @@ public:
     float swapCounter;
     float swapTarget;
     
+    // idle draw mode
+    bool bInIdleMode;
 	
 };

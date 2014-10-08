@@ -599,7 +599,21 @@ void ofApp::update(){
     }
 
     
+    
+    // check if we are in idle mode
+    if(appFaultManager.getHasFault(FAULT_NO_USER_PRESENT_LONG) && leap.getLeapHands().size() == 0){
+        bInPlaybackMode = true;
+        playing = true;
+        myPuppetManager.bInIdleMode = true;
+        
+        // set puppet darw mode and alpha
+    }else if( leap.getLeapHands().size() > 0 && bInPlaybackMode){
+        bInPlaybackMode = false;
+        myPuppetManager.bInIdleMode = false;
 
+    }
+    
+    cout << "leap hands" << leap.getLeapHands().size() << endl;
 }
 
 
@@ -1276,6 +1290,7 @@ void ofApp::draw(){
    // ofRect(mouseX, mouseY, 80,80) ;
     // printf("handTooHighDur = %f     col = %f \n", handTooHighDur, col);
 		
+    drawGradientOverlay();
 }
 
 
@@ -1532,7 +1547,7 @@ void ofApp::applicationStateMachine(){
     //------- update time each fault has occurred
     
     // no user present
-    if(nBlobsInScene == 0){
+    if(nBlobsInScene == 0 || bInPlaybackMode){
         appFaultManager.updateHasFault(FAULT_NO_USER_PRESENT_BRIEF,dt);
         appFaultManager.updateHasFault(FAULT_NO_USER_PRESENT_LONG,dt);
     }else{
@@ -1905,6 +1920,22 @@ void ofApp::drawText(){
     ofDrawBitmapString("Calibration file: "+leapToCameraCalibrator.dirNameLoaded,  textX, textY); textY+=15;
 
 	
+}
+
+void ofApp::drawGradientOverlay(){
+    
+    int boxSize = 200;
+    
+    glBegin(GL_QUADS);
+    glColor4f(0,0,0,0);
+    glVertex2f(ofGetWidth()-boxSize,0);
+    glColor4f(0,0,0,1);
+    glVertex2f(ofGetWidth(),0);
+    glVertex2f(ofGetWidth(),ofGetHeight());
+    glColor4f(0,0,0,0);
+    glVertex2f(ofGetWidth()-boxSize,ofGetHeight());
+    glEnd();
+    
 }
 
 //--------------------------------------------------------------
