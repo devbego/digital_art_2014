@@ -204,7 +204,7 @@ void AppFaultManager::drawFaultHelpScreen(){
             
             case FAULT_SAME_SCENE_TOO_LONG:
                 myFaultString = "Touch the screen for a new scene";
-                myFaultStringNL = "Raak het scherm aan voor een nieuwe scène";
+                myFaultStringNL = "Raak het scherm aan voor een nieuwe scene";
                 break;
                 
             default:
