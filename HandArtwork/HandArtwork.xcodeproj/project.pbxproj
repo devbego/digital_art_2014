@@ -1186,6 +1186,8 @@
 				3B04CBCD19D1DE8A005E6F31 /* SplayFingersScene.h */,
 				9707D02219E0950D000C710E /* SplayFingers2Scene.cpp */,
 				9707D02319E0950D000C710E /* SplayFingers2Scene.h */,
+				3BF6A88419E55B12007DAA3F /* SpringFingerScene.cpp */,
+				3BF6A88519E55B12007DAA3F /* SpringFingerScene.h */,
 				3B04CBCE19D1DE8A005E6F31 /* StartrekScene.cpp */,
 				3B04CBCF19D1DE8A005E6F31 /* StartrekScene.h */,
 				3B04CBD019D1DE8A005E6F31 /* StraightenFingersScene.cpp */,
@@ -1200,8 +1202,6 @@
 				3B04CBD919D1DE8A005E6F31 /* WigglingWristScene.h */,
 				3B04CBDA19D1DE8A005E6F31 /* WobbleScene.cpp */,
 				3B04CBDB19D1DE8A005E6F31 /* WobbleScene.h */,
-				3BF6A88419E55B12007DAA3F /* SpringFingerScene.cpp */,
-				3BF6A88519E55B12007DAA3F /* SpringFingerScene.h */,
 			);
 			path = scenes;
 			sourceTree = "<group>";
