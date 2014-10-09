@@ -51,6 +51,8 @@
 // TODO: Check whether computing amount of leap motion works with delayed data
 // TODO: Record hands when they are still enough -- for eventual research/diagnostic purposes.
 // TODO: Get Bryce to amend ofxButterfly so that it does not reorder triangles.
+// TODO: Create option to rotate entire display view by 180.
+
 
 
 //=============================================================================
@@ -904,10 +906,14 @@ void ofApp::computeThresholdFromSkinColor(){
 		float minSkinLum = 70;
 		float maxThresh = 38; // light skin
 		float minThresh = 20; // dark skin
-		thresholdValue = ofMap (averageSkinLuminance, minSkinLum,maxSkinLum, minThresh,maxThresh);
-		thresholdValue = ofClamp(thresholdValue, minThresh,maxThresh);
 		
+		float averageSkinLuminance01 = ofMap (averageSkinLuminance, minSkinLum,maxSkinLum, 0,1);
+		averageSkinLuminance01 = powf(averageSkinLuminance01, 1.25);
 		
+		thresholdValue		= ofMap (averageSkinLuminance01, 0,1, minThresh,maxThresh);
+		thresholdValue		= ofClamp(thresholdValue, minThresh,maxThresh);
+		
+		thresholdValueDelta = ofMap (averageSkinLuminance, minSkinLum,maxSkinLum, 11,7);
 		
 		/*
 		
@@ -1674,7 +1680,7 @@ void ofApp::applicationStateMachine(){
     
     
     // scene on too long
-    if( ofGetElapsedTimef() - myPuppetManager.sceneStartTime > 60 ){
+    if( ofGetElapsedTimef() - myPuppetManager.sceneStartTime > 25 ){
         appFaultManager.updateHasFault (FAULT_SAME_SCENE_TOO_LONG, dt);
     }else{
         appFaultManager.updateResetFault(FAULT_SAME_SCENE_TOO_LONG);

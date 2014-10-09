@@ -29,7 +29,7 @@ void AppFaultManager::setup(){
     
     timeLimit[FAULT_NOTHING_WRONG] = 0;
     timeLimit[FAULT_NO_USER_PRESENT_BRIEF] = 1;
-    timeLimit[FAULT_NO_USER_PRESENT_LONG] = 10;
+    timeLimit[FAULT_NO_USER_PRESENT_LONG] = 5;
     timeLimit[FAULT_LEAP_DROPPED_FRAME] = 1;
     timeLimit[FAULT_NO_LEAP_HAND_TOO_SMALL] = 1;
     timeLimit[FAULT_NO_LEAP_OBJECT_PRESENT] = 1;
