@@ -53,7 +53,7 @@ class PuppetManager {
     
 public:
 	
-	
+    int initialSceneID;
 	
 	//-------------------------------
 	// PUPPETEER

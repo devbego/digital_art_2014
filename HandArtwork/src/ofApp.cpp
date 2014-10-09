@@ -876,15 +876,16 @@ void ofApp::computeThresholdFromSkinColor(){
 		
 		
 		int avgSum = 0;
-		int avgCount = 0;
+		int avgCount = 1;
 		
 		int index = 0;
+        int q1 = 1*skinColorPatchSize/4;
+        int q3 = 3*skinColorPatchSize/4;
 		unsigned char* skinColorData = skinColorPatch.data;
-		for (int y=0; y<skinColorPatchSize; y++){
-			row = y*skinColorPatchSize;
-			for (int x=0; x<skinColorPatchSize; x++){
+		for (int y=q1; y<q3; y++){
+			for (int x=q1; x<q3; x++){
+                int index = y*skinColorPatchSize + x;
 				unsigned char val = skinColorData[index];
-				index++;
 				if (val > 0){
 					avgCount ++;
 					avgSum += val;
@@ -893,14 +894,14 @@ void ofApp::computeThresholdFromSkinColor(){
 		}
 		
 		
-		float average = (float)avgSum/avgCount;
+		float average = (float)avgSum/(float)avgCount;
 		float skinLumA = 0.96;
 		float skinLumB = 1.0-skinLumA;
 		averageSkinLuminance = skinLumA*averageSkinLuminance + skinLumB*average;
 		
 		// Modify thresholdValue based on average luminance.
-		float maxSkinLum = 180;
-		float minSkinLum = 60;
+		float maxSkinLum = 200;
+		float minSkinLum = 70;
 		float maxThresh = 38; // light skin
 		float minThresh = 20; // dark skin
 		thresholdValue = ofMap (averageSkinLuminance, minSkinLum,maxSkinLum, minThresh,maxThresh);
@@ -917,6 +918,7 @@ void ofApp::computeThresholdFromSkinColor(){
 		*/
 		
 	} else {
+        thresholdValue = 27;
 		; // use a default threshold if the hand centroid is not inside the patch.
 	}
 	
