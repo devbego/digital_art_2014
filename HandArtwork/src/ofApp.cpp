@@ -601,16 +601,14 @@ void ofApp::update(){
 	elapsedMicros = 0.8*elapsedMicros + 0.2*elapsedMicrosThisFrame;
 	elapsedMicrosInt = (int) elapsedMicros;
 	
-	if(useTopologyModifierManager) {
-        if(bComputeAndDisplayPuppet) {
-            myTopologyModifierManager.update(myHandMeshBuilder);
-        }
-    } else {
-        // Update all aspects of the puppet geometry
-        myPuppetManager.updatePuppeteer( bComputeAndDisplayPuppet, myHandMeshBuilder);
-    }
-
-    
+	if (myHandMeshBuilder.bCalculatedMesh){
+		if (useTopologyModifierManager) {
+			myTopologyModifierManager.update(myHandMeshBuilder);
+		} else {
+			// Update all aspects of the puppet geometry
+			myPuppetManager.updatePuppeteer( bComputeAndDisplayPuppet, myHandMeshBuilder);
+		}
+	}
     
     // check if we are in idle mode
     if(appFaultManager.getHasFault(FAULT_NO_USER_PRESENT_LONG) && leap.getLeapHands().size() == 0){

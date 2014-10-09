@@ -93,6 +93,7 @@ public:
 private:
     // Returns true iff the mesh contains two index defined traingles that intersect.
     bool check_triangle_intersections(ofMesh &mesh);
+	bool checkForTrianglesThatAreTooTeeny (ofMesh &mesh); 
     
     int Intersecting(ofVec3f &p0, ofVec3f &p1, ofVec3f &t0, ofVec3f &t1, ofVec3f &t2);
     
