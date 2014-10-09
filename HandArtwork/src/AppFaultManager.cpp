@@ -41,6 +41,21 @@ void AppFaultManager::setup(){
     timeLimit[FAULT_HAND_NOT_DEEP_ENOUGH] = 1;
     timeLimit[FAULT_SAME_SCENE_TOO_LONG] = 1;
     
+    int p = 0;
+    priorityOrder[FAULT_NO_USER_PRESENT_LONG] = p; p++; // most important to show you need to interact
+    priorityOrder[FAULT_HAND_TOO_HIGH] = p; p++;   // touching camera is not nice!
+    priorityOrder[FAULT_HAND_NOT_DEEP_ENOUGH] = p; p++;    // typical mistake
+    priorityOrder[FAULT_TOO_MANY_HANDS] = p; p++;
+    priorityOrder[FAULT_HAND_TOO_FAST] = p; p++;
+    priorityOrder[FAULT_HAND_TOO_VERTICAL] = p; p++;
+    priorityOrder[FAULT_HAND_TOO_CURLED] = p; p++;
+    priorityOrder[FAULT_NO_LEAP_HAND_TOO_SMALL] = p; p++;
+    priorityOrder[FAULT_NO_LEAP_OBJECT_PRESENT] = p; p++;
+    priorityOrder[FAULT_SAME_SCENE_TOO_LONG] = p; p++;
+    priorityOrder[FAULT_LEAP_DROPPED_FRAME] = p; p++;
+    priorityOrder[FAULT_NO_USER_PRESENT_BRIEF] = p; p++;
+    priorityOrder[FAULT_NOTHING_WRONG] = p; p++;
+    
     bShowingFault = false;
     
     font.loadFont("fonts/vagrblsb.ttf", 24);
@@ -69,6 +84,26 @@ bool AppFaultManager::getHasFault(ApplicationFault fault){
     }
     
     return false;
+}
+
+ApplicationFault AppFaultManager::getMostImportantActiveFault(){
+    
+    ApplicationFault activeFault = FAULT_NOTHING_WRONG;
+    int importance = priorityOrder.size()-1;
+    
+    typedef std::map<ApplicationFault,float>::iterator it_type;
+    for(it_type iterator = timeHasFault.begin(); iterator != timeHasFault.end(); iterator++) {
+        ApplicationFault fault = iterator->first;
+        float timeOn = iterator->second;
+        if( timeOn > timeLimit[fault] && priorityOrder[fault] < importance ){
+            importance = priorityOrder[fault];
+            activeFault = fault;
+        }
+    }
+    
+    return activeFault;
+    
+    
 }
 
 ApplicationFault AppFaultManager::getLongestFault(){
@@ -123,19 +158,22 @@ vector<ApplicationFault> AppFaultManager::getAllFaults(){
 
 void AppFaultManager::drawFaultHelpScreen(){
     
+    // use priority to choose shown fault
     ApplicationFault activeFault = FAULT_NOTHING_WRONG;
+    activeFault = getMostImportantActiveFault();
+    float timeOn = timeHasFault[activeFault];
     
-    float timeOn = 0;
-    
-    // find the fault on the longest and above its time limit
-    typedef std::map<ApplicationFault,float>::iterator it_type;
-    for(it_type iterator = timeHasFault.begin(); iterator != timeHasFault.end(); iterator++) {
-        ApplicationFault fault = iterator->first;
-        if( iterator->second > timeLimit[fault] && iterator->second > timeOn){
-            activeFault = fault;
-            timeOn = iterator->second;
-        }
-    }
+//    float timeOn = 0;
+//    
+//    // find the fault on the longest and above its time limit
+//    typedef std::map<ApplicationFault,float>::iterator it_type;
+//    for(it_type iterator = timeHasFault.begin(); iterator != timeHasFault.end(); iterator++) {
+//        ApplicationFault fault = iterator->first;
+//        if( iterator->second > timeLimit[fault] && iterator->second > timeOn){
+//            activeFault = fault;
+//            timeOn = iterator->second;
+//        }
+//    }
     
     
     //cout << "activeFault " << activeFault << endl;
@@ -248,7 +286,14 @@ void AppFaultManager::drawFaultHelpScreen(){
         fontAlpha -= .1;
     }
     
-    //cout << "myFaultString " << myFaultString << endl;
+    // make black out when hands are too high
+    if(shownFault == FAULT_HAND_TOO_HIGH){
+        ofPushStyle();
+        ofSetColor(0,255*powf(fontAlpha,1.5));
+        ofFill();
+        ofRect(0,0,ofGetWidth(),ofGetHeight());
+        ofPopStyle();
+    }
     
     // draw to screen
     float stringWidth =  font.stringWidth(myFaultString);

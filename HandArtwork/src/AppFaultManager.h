@@ -47,6 +47,9 @@ public:
     // get the fault that has been detected the longest amount of time
     ApplicationFault getLongestFault();
     
+    // gets the faults with highest priority that has been triggered
+    ApplicationFault getMostImportantActiveFault();
+    
     // get the current duration of a given fault
     float getDurationOfFault (ApplicationFault fault);
     
@@ -57,6 +60,9 @@ public:
     
     map<ApplicationFault, float> timeHasFault; // total seconds fault recorded continuously, if fault not found reset to 0
     map<ApplicationFault, float> timeLimit; // total seconds needed to be considered active fault
+    
+    map<ApplicationFault, int> priorityOrder; // order by most important (0 most important)
+
     
     ofTrueTypeFont font;
     float fontAlpha;
