@@ -31,6 +31,7 @@ public:
     vector<Spring> springs;
     vector<SpringNode> nodesMids;
     vector<SpringNode> nodesTips;
+    vector<SpringNode> nodesBase;
     vector<SpringNode> nodesExtended;
 	
 };
@@ -47,8 +48,8 @@ public:
         pos.set(0,0);
         vel.set(0,0);
         acc.set(0,0);
-        mass = 12;
-        damp = .95;
+        mass = 8;
+        damp = .10;
         bFixed = false;
     }
     
@@ -59,7 +60,7 @@ public:
     
     void update(){
         vel += acc;
-        vel *= damp;
+        vel -= damp*vel;
         pos += vel;
         acc *= 0;
     }
@@ -89,7 +90,7 @@ public:
     
     Spring(){
         len = 0;
-        k = .2;
+        k = 1.2;
     };
     
     void setup(SpringNode * a, SpringNode * b, float l){

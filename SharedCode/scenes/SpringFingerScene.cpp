@@ -13,11 +13,11 @@ SpringFingerScene::SpringFingerScene(ofxPuppet* puppet, HandSkeleton* handSkelet
     Scene::setup("Spring Fingers", "Spring Fingers (Hand)", puppet, (Skeleton*)handSkeleton, (Skeleton*)immutableHandSkeleton);
     
     // make five springs for five fingers
-    springs.resize(9);
+    springs.resize(15);
     nodesMids.resize(5);
     nodesTips.resize(5);
     nodesExtended.resize(5);
-	
+	nodesBase.resize(5);
 }
 
 
@@ -38,17 +38,23 @@ void SpringFingerScene::update() {
     
 	int mid[] = {HandSkeleton::PINKY_MID, HandSkeleton::RING_MID, HandSkeleton::MIDDLE_MID, HandSkeleton::INDEX_MID, HandSkeleton::THUMB_MID};
 	int tip[] = {HandSkeleton::PINKY_TIP, HandSkeleton::RING_TIP, HandSkeleton::MIDDLE_TIP, HandSkeleton::INDEX_TIP, HandSkeleton::THUMB_TIP};
+    //int base [] = {HandSkeleton::PINKY_BASE, HandSkeleton::RING_BASE, HandSkeleton::MIDDLE_BASE, HandSkeleton::INDEX_BASE, HandSkeleton::THUMB_BASE};
     
     for( int i = 0; i < 5; i++){
         
         int indexTip = tip[i];
         int indexMid = mid[i];
+        //int indexBase = base[i];
         
         ofPoint tipPoint = immutableSkeleton->getPositionAbsolute(indexTip);
         ofPoint midPoint = immutableSkeleton->getPositionAbsolute(indexMid);
-        
+        //ofPoint basePoint = immutableSkeleton->getPositionAbsolute(indexBase);
+
         nodesMids[i].setPosition(midPoint.x, midPoint.y);
         nodesMids[i].bFixed = true;
+        
+        //nodesBase[i].setPosition(basePoint.x,basePoint.y);
+        //nodesBase[i].bFixed = true;
         
         ofVec2f dir = tipPoint-midPoint;
         dir.normalize();
@@ -58,6 +64,7 @@ void SpringFingerScene::update() {
 		
         if(springs[i].len == 0 ){
             nodesTips[i].setPosition(tipPoint.x, tipPoint.y);
+            //nodesMids[i].setPosition(midPoint.x, midPoint.y); //n
         }
     }
     
@@ -66,16 +73,21 @@ void SpringFingerScene::update() {
         
         int indexTip = tip[i];
         int indexMid = mid[i];
+        //int indexBase = base[i];
+
         ofPoint tipPoint = immutableSkeleton->getPositionAbsolute(indexTip);
         ofPoint midPoint = immutableSkeleton->getPositionAbsolute(indexMid);
-		
+       // ofPoint basePoint = immutableSkeleton->getPositionAbsolute(indexBase);
+
         // set up spring
         if(springs[i].len == 0 ){
             
             ofVec2f lenDiff = tipPoint - midPoint;
             if(lenDiff.length() > 1){
                 springs[i].setup(&nodesMids[i],&nodesTips[i], lenDiff.length());
-                if(i<4) springs[i+5].setup(&nodesTips[i], &nodesExtended[i], 25);
+                springs[i+5].setup(&nodesTips[i], &nodesExtended[i], 25);
+                //springs[i+10].setup(&nodesBase[i], &nodesMids[i], 25);
+
             }
         }
     }
@@ -88,10 +100,12 @@ void SpringFingerScene::update() {
             nodesExtended[i].update();
             
             springs[i].update();
-            if(i<4) springs[i+5].update();
-            
+            springs[i+5].update();
+            //springs[i+10].update();
+
             int indexTip = tip[i];
             handSkeleton->setPosition(indexTip, nodesTips[i].pos, true, true);
+            //handSkeleton->setPosition(mid[i], nodesMids[i].pos, true, true);
         }
     }
     

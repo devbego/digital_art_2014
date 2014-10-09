@@ -86,6 +86,9 @@ ApplicationFault AppFaultManager::getLongestFault(){
         }
     }
     
+    if( activeFault == FAULT_SAME_SCENE_TOO_LONG && getHasFault(FAULT_NO_USER_PRESENT_LONG)){
+        activeFault = FAULT_NO_USER_PRESENT_LONG;
+    }
     return activeFault;
 }
 
