@@ -243,6 +243,7 @@ class ofApp : public ofBaseApp{
 	bool bWorkAtHalfScale;
 	bool bUseRedChannelForLuminance;
 	bool bDoMorphologicalOps;
+	bool bUseGradientThreshold;
 	bool bDoAdaptiveThresholding;
 	bool bComputePixelBasedFrameDifferencing;
 	bool bDrawContourAnalyzer;
@@ -271,8 +272,8 @@ class ofApp : public ofBaseApp{
 	Mat tempGrayscaleMat2;
 	Mat coloredBinarizedImg;
     Mat maskedCamVidImg;    // The camera or video RGB image, masked to remove the background,
-	Mat handPartIDImg;		// grayscale image in which each pixel represents what part of the hand it represents
-	Mat handPartIDTmpImg;	// just used to store the information for a single finger at a time.
+	Mat gradientThreshImg;
+	
 	
 	Mat thresholded;		// binarized hand, black-white only
 	Mat	thresholdedFinal;	//
@@ -286,8 +287,10 @@ class ofApp : public ofBaseApp{
 	
 	
 	float blurKernelSize;
-	float thresholdValue;
-	float prevThresholdValue;
+	int		thresholdValue;
+	int		thresholdValueDelta;
+	int		prevThresholdValue;
+	int		prevThresholdValueDelta;
 	float blurredStrengthWeight;
 	
 	int	  skinColorPatchSize;
@@ -311,6 +314,9 @@ class ofApp : public ofBaseApp{
 	
 	//-------------------------------
 	HandContourAnalyzer myHandContourAnalyzer;
+	void computeGradientThreshImg();
+	float gradientThreshPow;
+	float prevGradientThreshPow;
 	
 	//-------------------------------
 	// For app state machine

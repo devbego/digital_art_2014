@@ -177,13 +177,19 @@ void ofApp::setup(){
 	bUseRedChannelForLuminance	= true;
 	bDoMorphologicalOps			= true;
 	bDoAdaptiveThresholding		= false;
+	bUseGradientThreshold		= true;
 
 	blurKernelSize				= 4.0;
 	blurredStrengthWeight		= 0.07;
-	thresholdValue				= 26;
+	thresholdValue				= 28;
+	thresholdValueDelta			= 10;
 	prevThresholdValue			= 0;
+	prevThresholdValueDelta		= 0;
+	gradientThreshPow			= 0.75;
+	prevGradientThreshPow		= 1.0;
 	skinColorPatchSize			= 64;
 	averageSkinLuminance		= 0;
+	
 	
 	skinColorPatch.create (skinColorPatchSize, skinColorPatchSize, CV_8UC1);
 	
@@ -205,8 +211,7 @@ void ofApp::setup(){
 	thresholdConstMat.create	(imgH, imgW, CV_8UC1);
 	tempGrayscaleMat1.create	(imgH, imgW, CV_8UC1);
 	tempGrayscaleMat2.create	(imgH, imgW, CV_8UC1);
-	handPartIDImg.create		(imgH, imgW, CV_8UC1);
-	handPartIDTmpImg.create		(imgH, imgW, CV_8UC1);
+	gradientThreshImg.create	(imgH, imgW, CV_8UC1);
 	
 	videoMat.create				(imgH, imgW, CV_8UC3);
 	leapDiagnosticFboMat.create	(imgH, imgW, CV_8UC3); // 3-channel
@@ -420,9 +425,13 @@ void ofApp::setupGui() {
 	gui1->loadSettings(originalAppDataPath + "HandSegmenterSettings.xml");
 	
 	gui1->addSpacer();
-	gui1->addSlider("thresholdValue", 0.0, 128.0,       &thresholdValue);
-	gui1->addValuePlotter("averageSkinLuminance", 256,	0.00, 255.0, &averageSkinLuminance, 32);
+	gui1->addIntSlider("thresholdValue",		0, 128,		&thresholdValue);
+	gui1->addIntSlider("thresholdValueDelta",	0, 64,		&thresholdValueDelta);
+	gui1->addSlider("gradientThreshPow",		0.5, 2.0,   &gradientThreshPow);
+	gui1->addLabelToggle("bUseGradientThreshold",			&bUseGradientThreshold);
 	
+	gui1->addValuePlotter("averageSkinLuminance", 256,	0.00, 255.0, &averageSkinLuminance, 32);
+	gui1->addSlider("averageSkinLuminance",		0, 255,   &averageSkinLuminance);
 
 	gui1->addLabelToggle("bUseRedChannelForLuminance",	&bUseRedChannelForLuminance);
 	gui1->addLabelToggle("bDoAdaptiveThresholding",		&bDoAdaptiveThresholding);
@@ -520,7 +529,7 @@ void ofApp::setupGui() {
     vector<string> vnames;
     vnames.push_back("grayMat");
     vnames.push_back("thresholded");
-    vnames.push_back("adaptiveThreshImg");
+    vnames.push_back("gradientThreshImg");
     vnames.push_back("thresholdedFinal");
     vnames.push_back("leapDiagnosticFboMat");
     vnames.push_back("edgeMat");
@@ -614,7 +623,7 @@ void ofApp::update(){
 
     }
     
-    cout << "leap hands" << leap.getLeapHands().size() << endl;
+    // cout << "leap hands" << leap.getLeapHands().size() << endl;
 }
 
 
@@ -825,19 +834,91 @@ void ofApp::extractLuminanceChannelFromSourceVideoMat(){
 
 //--------------------------------------------------------------
 void ofApp::computeThresholdFromSkinColor(){
-	
+
+	//----------------------------
 	// Obtain the pixel-coordinate of the hand centroid, from the LEAP.
 	ofVec3f handCentroidLeap = leapVisualizer.getProjectedHandCentroid();
-	float sc = (bWorkAtHalfScale) ? 2.0:1.0;
-	float cx = handCentroidLeap.x/sc;
-	float cy = handCentroidLeap.y/sc;
+	float cx = handCentroidLeap.x/2;
+	float cy = handCentroidLeap.y/2;
 	
 	// Create the bounds of a ROI centered on that point
-	int patchSize = 64;
-	int roiL = cx - (patchSize/2);
-	int roiT = cy - (patchSize/2);
-	int roiR = cx + (patchSize/2);
-	int roiB = cy + (patchSize/2);
+	int roiL = cx - (skinColorPatchSize/2);
+	int roiT = cy - (skinColorPatchSize/2);
+	roiL = MAX(0, MIN( (imgW-1)-skinColorPatchSize, roiL));
+	roiT = MAX(0, MIN( (imgH-1)-skinColorPatchSize, roiT));
+	int roiR = roiL + skinColorPatchSize;
+	int roiB = roiT + skinColorPatchSize;
+	
+	// Make extra sure the centroid is inside the constrained rect.
+	if ((cx > roiL) && (cx < roiR) && (cy > roiT) && (cy < roiB)){
+		CvRect handCentroidROI = cvRect (roiL,roiT, skinColorPatchSize, skinColorPatchSize);
+		
+		unsigned char* skinColorDataSrc = grayMat.data;
+		unsigned char* skinColorDataDst = skinColorPatch.data;
+		
+		int row, indexSrc;
+		int indexDst = 0;
+		
+		int nPatchPixels = skinColorPatchSize*skinColorPatchSize;
+		for (int y=roiT; y<roiB; y++){
+			row = y*imgW;
+			for (int x=roiL; x<roiR; x++){
+				indexSrc = row + x;
+				unsigned char val = skinColorDataSrc[indexSrc];
+				skinColorDataDst[indexDst] = val;
+				indexDst++;
+			}
+		}
+		
+		// sort the patch by rows and cols.
+		cv::sort(skinColorPatch, skinColorPatch, cv::SORT_EVERY_ROW );
+		cv::sort(skinColorPatch, skinColorPatch, cv::SORT_EVERY_COLUMN );
+		
+		
+		int avgSum = 0;
+		int avgCount = 0;
+		
+		int index = 0;
+		unsigned char* skinColorData = skinColorPatch.data;
+		for (int y=0; y<skinColorPatchSize; y++){
+			row = y*skinColorPatchSize;
+			for (int x=0; x<skinColorPatchSize; x++){
+				unsigned char val = skinColorData[index];
+				index++;
+				if (val > 0){
+					avgCount ++;
+					avgSum += val;
+				}
+			}
+		}
+		
+		
+		float average = (float)avgSum/avgCount;
+		float skinLumA = 0.96;
+		float skinLumB = 1.0-skinLumA;
+		averageSkinLuminance = skinLumA*averageSkinLuminance + skinLumB*average;
+		
+		// Modify thresholdValue based on average luminance.
+		float maxSkinLum = 180;
+		float minSkinLum = 60;
+		float maxThresh = 38; // light skin
+		float minThresh = 20; // dark skin
+		thresholdValue = ofMap (averageSkinLuminance, minSkinLum,maxSkinLum, minThresh,maxThresh);
+		thresholdValue = ofClamp(thresholdValue, minThresh,maxThresh);
+		
+		
+		
+		/*
+		
+		ofFill();
+		ofSetColor(255);
+		drawMat (skinColorPatch, mouseX, mouseY);
+		ofDrawBitmapString ( "mean " + ofToString (average), mouseX, mouseY-40);
+		*/
+		
+	} else {
+		; // use a default threshold if the hand centroid is not inside the patch.
+	}
 	
 }
 
@@ -911,9 +992,49 @@ void ofApp::thresholdLuminanceImage(){
 		
 	} else {
 		
-		// If we are not adaptive thresholding, just use a regular threshold.
-		threshold (grayMat, thresholded, thresholdValue);
+		// Recompute the gradient threshold image if it has fresh control values.
+		if ((thresholdValue != prevThresholdValue) ||
+			(thresholdValueDelta != prevThresholdValueDelta) ||
+			(gradientThreshPow != prevGradientThreshPow)){
+			computeGradientThreshImg();
+		}
+		prevThresholdValue = thresholdValue;
+		prevThresholdValueDelta = thresholdValueDelta;
+		prevGradientThreshPow = gradientThreshPow;
+		
+		// Do the thresholding.
+		if (bUseGradientThreshold){
+			// thresholded against gradient
+			cv::subtract(grayMat, gradientThreshImg, thresholded);
+			threshold (thresholded, thresholded, 1);
+			
+		} else {
+			// regular threshold
+			threshold (grayMat, thresholded, thresholdValue);
+		}
+		
 	}
+}
+
+//--------------------------------------------------------------
+void ofApp::computeGradientThreshImg(){
+
+	
+	unsigned char* gradientThreshImgData = gradientThreshImg.data;
+	for (int x=0; x<imgW; x++){
+		float val = ofMap (x, 0,imgW, 1,0);
+		val = powf(val, gradientThreshPow);
+		val = ofMap(val, 1,0, thresholdValue, thresholdValue-thresholdValueDelta);
+		unsigned char valch = (unsigned char)((int)roundf(val));
+		gradientThreshImgData[x] = valch;
+	}
+	for (int y=1; y<imgH; y++){
+		for (int x=0; x<imgW; x++){
+			int index = y*imgW + x;
+			gradientThreshImgData[index] = gradientThreshImgData[x];
+		}
+	}
+	
 }
 
 //--------------------------------------------------------------
@@ -1358,7 +1479,7 @@ void ofApp::drawContourAnalyzer(){
         default:
         case 0:		drawMat(grayMat,						0,0, imgW,imgH);	break;
         case 1:		drawMat(thresholded,					0,0, imgW,imgH);	break;
-        case 2:		drawMat(adaptiveThreshImg,				0,0, imgW,imgH);	break;
+        case 2:		drawMat(gradientThreshImg,				0,0, imgW,imgH);	break;
         case 3:		drawMat(thresholdedFinal,				0,0, imgW,imgH);	break;
         case 4:		drawMat(leapDiagnosticFboMat,			0,0, imgW,imgH);	break;
         case 5:     drawMat(myHandContourAnalyzer.edgeMat,	0,0, imgW,imgH);	break;
@@ -1372,97 +1493,17 @@ void ofApp::drawContourAnalyzer(){
     
     myHandContourAnalyzer.draw();
 	
-	//----------------------------
-	ofVec3f handCentroidLeap = leapVisualizer.getProjectedHandCentroid();
-	float cx = handCentroidLeap.x/2;
-	float cy = handCentroidLeap.y/2;
-	
-	int roiL = cx - (skinColorPatchSize/2);
-	int roiT = cy - (skinColorPatchSize/2);
-	roiL = MAX(0, MIN( (imgW-1)-skinColorPatchSize, roiL));
-	roiT = MAX(0, MIN( (imgH-1)-skinColorPatchSize, roiT));
-	int roiR = roiL + skinColorPatchSize;
-	int roiB = roiT + skinColorPatchSize;
-	
-	// Make extra sure the centroid is inside the constrained rect.
-	if ((cx > roiL) && (cx < roiR) && (cy > roiT) && (cy < roiB)){
-		CvRect handCentroidROI = cvRect (roiL,roiT, skinColorPatchSize, skinColorPatchSize);
-		
-		unsigned char* skinColorDataSrc = grayMat.data;
-		unsigned char* skinColorDataDst = skinColorPatch.data;
-		
-		int row, indexSrc;
-		int indexDst = 0;
-		
-		int nPatchPixels = skinColorPatchSize*skinColorPatchSize;
-		for (int y=roiT; y<roiB; y++){
-			row = y*imgW;
-			for (int x=roiL; x<roiR; x++){
-				indexSrc = row + x;
-				unsigned char val = skinColorDataSrc[indexSrc];
-				skinColorDataDst[indexDst] = val;
-				indexDst++;
-			}
-		}
 
-		// sort the patch by rows and cols.
-		cv::sort(skinColorPatch, skinColorPatch, cv::SORT_EVERY_ROW );
-		cv::sort(skinColorPatch, skinColorPatch, cv::SORT_EVERY_COLUMN );
-
-		
-		int avgSum = 0;
-		int avgCount = 0;
-		
-		int index = 0;
-		unsigned char* skinColorData = skinColorPatch.data;
-		for (int y=0; y<skinColorPatchSize; y++){
-			row = y*skinColorPatchSize;
-			for (int x=0; x<skinColorPatchSize; x++){
-				unsigned char val = skinColorData[index];
-				index++;
-				if (val > 0){
-					avgCount ++;
-					avgSum += val;
-				}
-			}
-		}
-		
-		
-		float average = (float)avgSum/avgCount;
-		averageSkinLuminance = 0.8*averageSkinLuminance + 0.2*average;
-		
-		
-		// cv::Moments skinColorMoments = CvMoments(cv::moments(skinColorPatch));
-		// m00, m10, m01, m20, m11, m02, m30, m21, m12, m03;
-		
-		/*
-		//cv::moments(InputArray array)
-		//Scalar cv::mean(InputArray src);
-		//cv::meanStdDev(InputArray src, OutputArray mean, OutputArray stddev)
-		 */
-		
-		
-		
-		ofFill();
-		ofSetColor(255);
-		drawMat (skinColorPatch, mouseX, mouseY);
-		
-		ofDrawBitmapString ( "mean " + ofToString (average), mouseX, mouseY-40);
-		
-		
-	} else {
-		; // use a default threshold if the hand centroid is not inside the patch.
-	}
 	
 	
 	
-	
+	/*
 	ofNoFill();
 	ofSetColor(0,255,0);
 	ofRect (roiL,roiT,skinColorPatchSize,skinColorPatchSize);
     ofFill();
    
-	
+	*/
 	
 	
     //-----------------------------------
