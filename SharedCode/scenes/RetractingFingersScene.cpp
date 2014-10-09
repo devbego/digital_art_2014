@@ -15,7 +15,7 @@ RetractingFingersScene::RetractingFingersScene(ofxPuppet* puppet, HandWithFinger
 	this->maxTopAngleLeft = 30;
 	this->maxTopAngleRight = -20;
 
-	this->retractHeight = 150;
+	this->retractHeight = 250;
 	this->tipRatio = 0.2;
 	this->topRatio = 0.3;
 	this->middleRatio = 0.5;
@@ -57,28 +57,32 @@ void RetractingFingersScene::update() {
 	HandWithFingertipsSkeleton* immutableHandWithFingertipsSkeleton = (HandWithFingertipsSkeleton*)this->immutableSkeleton;
 
 	int palm = HandWithFingertipsSkeleton::PALM;
-	int tip[] = {HandWithFingertipsSkeleton::PINKY_TIP, HandWithFingertipsSkeleton::RING_TIP, HandWithFingertipsSkeleton::MIDDLE_TIP, HandWithFingertipsSkeleton::INDEX_TIP};
-	int top[] = {HandWithFingertipsSkeleton::PINKY_TOP, HandWithFingertipsSkeleton::RING_TOP, HandWithFingertipsSkeleton::MIDDLE_TOP, HandWithFingertipsSkeleton::INDEX_TOP};
-	int mid[] = {HandWithFingertipsSkeleton::PINKY_MID, HandWithFingertipsSkeleton::RING_MID, HandWithFingertipsSkeleton::MIDDLE_MID, HandWithFingertipsSkeleton::INDEX_MID};
-	int base[] = {HandWithFingertipsSkeleton::PINKY_BASE, HandWithFingertipsSkeleton::RING_BASE, HandWithFingertipsSkeleton::MIDDLE_BASE, HandWithFingertipsSkeleton::INDEX_BASE};
+	int tip[] = {HandWithFingertipsSkeleton::PINKY_TIP, HandWithFingertipsSkeleton::RING_TIP, HandWithFingertipsSkeleton::MIDDLE_TIP, HandWithFingertipsSkeleton::INDEX_TIP,HandWithFingertipsSkeleton::THUMB_TIP};
+	int top[] = {HandWithFingertipsSkeleton::PINKY_TOP, HandWithFingertipsSkeleton::RING_TOP, HandWithFingertipsSkeleton::MIDDLE_TOP, HandWithFingertipsSkeleton::INDEX_TOP,HandWithFingertipsSkeleton::THUMB_TOP};
+	int mid[] = {HandWithFingertipsSkeleton::PINKY_MID, HandWithFingertipsSkeleton::RING_MID, HandWithFingertipsSkeleton::MIDDLE_MID, HandWithFingertipsSkeleton::INDEX_MID,HandWithFingertipsSkeleton::THUMB_MID};
+	int base[] = {HandWithFingertipsSkeleton::PINKY_BASE, HandWithFingertipsSkeleton::RING_BASE, HandWithFingertipsSkeleton::MIDDLE_BASE, HandWithFingertipsSkeleton::INDEX_BASE,HandWithFingertipsSkeleton::THUMB_BASE};
 
 	float fingerTot = tipRatio + topRatio + middleRatio + bottomRatio;
 
-	int fingerCount = 4;
+	int fingerCount = 5;
 	for(int i = 0; i < fingerCount; i++) {
 		ofVec2f fingerTip = immutableHandWithFingertipsSkeleton->getPositionAbsolute(tip[i]);
-		if (fingerTip.y < retractHeight) {
+		//if (fingerTip.y < retractHeight) {
+            if (fingerTip.x < retractHeight) {
+
 			ofVec2f fingerBase = immutableHandWithFingertipsSkeleton->getPositionAbsolute(palm);
 
 			float bigDx = fingerTip.x - fingerBase.x;
 			float bigDy = fingerTip.y - fingerBase.y;
 
-			float dy = retractHeight - fingerBase.y;
-			float dx = (dy * bigDx) / bigDy;
+			//float dy = retractHeight - fingerBase.y;
+			//float dx = (dy * bigDx) / bigDy;
+            float dx = retractHeight-fingerBase.x;
+            float dy = (dx * bigDy) / bigDx;
 
 			float maxLen = sqrt(dx*dx + dy*dy);
 
-			if (dy > 0) {
+			if (dx > 0) {
 				dy = 0; 
 				dx = 0;
 				maxLen = 0;
@@ -228,6 +232,8 @@ void RetractingFingersScene::updateMouse(float mx, float my) {
 	}
 }
 void RetractingFingersScene::draw() {
-	ofSetColor(255);
-	ofLine(0, retractHeight, 768, retractHeight);
+	//ofSetColor(255);
+	//ofLine(0, retractHeight, 768, retractHeight);
+    //ofLine( retractHeight, 0, retractHeight,ofGetWidth());
+
 }
