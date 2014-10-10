@@ -145,6 +145,7 @@ void ofApp::setup(){
 	bKioskMode                  = true;
     bInIdleMode                 = true;
 	bUseBothTypesOfScenes		= true;
+	bDataSampleGrabbingEnabled	= true;
 	
 	//--------------- Setup LEAP
 	leap.open();
@@ -194,6 +195,10 @@ void ofApp::setup(){
 	prevGradientThreshPow		= 1.0;
 	skinColorPatchSize			= 64;
 	averageSkinLuminance		= 0;
+	
+	dataSampleGrabIntervalMillis = 20000;
+	lastDataSampleGrabTimeMillis = 0;
+	dataSampleImg.allocate(cameraWidth, cameraHeight, OF_IMAGE_COLOR);
 	
 	
 	skinColorPatch.create (skinColorPatchSize, skinColorPatchSize, CV_8UC1);
@@ -408,6 +413,7 @@ void ofApp::setupGui() {
     gui0->addIntSlider("playingFrame", 0, 1000,         &playingFrame);
     gui0->addLabelToggle("Fullscreen",					&bFullscreen);
     gui0->addLabelToggle("Do Puppet",					&bComputeAndDisplayPuppet);
+	gui0->addLabelToggle("bDataSampleGrabbingEnabled",	&bDataSampleGrabbingEnabled);
     
     // Display of time consumption for puppeteering.
     gui0->addSpacer();
@@ -1538,21 +1544,71 @@ void ofApp::draw(){
     appFaultManager.drawFaultHelpScreen();
 	
     
-    
     float handTooHighDur = myAppFaultManager.getDurationOfFault (FAULT_HAND_TOO_HIGH);
     //handTooHighDur = ofClamp(handTooHighDur, 0,3);
     //float col = ofMap(handTooHighDur, 0,3, 0,1);
     //col = 255.0 * powf (col, 4.0);
     
-   // ofFill();
-   // ofSetColor(col);
-   // ofRect(mouseX, mouseY, 80,80) ;
-    // printf("handTooHighDur = %f     col = %f \n", handTooHighDur, col);
+	// ofFill();
+	// ofSetColor(col);
+	// ofRect(mouseX, mouseY, 80,80) ;
+	// printf("handTooHighDur = %f     col = %f \n", handTooHighDur, col);
 		
-    if( bDrawGradient ) drawGradientOverlay();
+	if( bDrawGradient ) drawGradientOverlay();
+	updateDataSampleGrabbingProcess();
 }
 
 
+
+//--------------------------------------------------------------
+void ofApp::updateDataSampleGrabbingProcess(){
+	if (bDataSampleGrabbingEnabled && !bRecording && !bInPlaybackMode){
+		bool bCalculatedMesh = bSuccessfullyBuiltMesh;
+		bool bMeshesAreProbablyOK = (appFaultManager.doCurrentFaultsIndicateLikelihoodOfBadMeshes() == false);
+		if (bCalculatedMesh && bMeshesAreProbablyOK){
+			
+			long now = ofGetElapsedTimeMillis();
+			int elapsed = (int)(now - lastDataSampleGrabTimeMillis);
+			if (elapsed >= dataSampleGrabIntervalMillis){
+				
+				string strY = ofToString (ofGetYear());
+				string strN = ofToString (ofGetMonth());
+				string strD = ofToString (ofGetDay());
+				string strH = ofToString (ofGetHours());
+				string strM = ofToString (ofGetMinutes());
+				string strS = ofToString (ofGetSeconds());
+				
+				if (ofGetMonth()   < 10) { strN = "0" + strN; }
+				if (ofGetDay()     < 10) { strD = "0" + strD; }
+				if (ofGetHours()   < 10) { strH = "0" + strH; }
+				if (ofGetMinutes() < 10) { strM = "0" + strM; }
+				if (ofGetSeconds() < 10) { strS = "0" + strS; }
+				
+				string dateString = strY + strN + strD;
+				
+				string filename = "samples/" + dateString + "/sample_";
+				filename += strH;
+				filename += strM;
+				filename += strS;
+				
+				// 1. Record the mesh as a .PLY file.
+				myHandMeshBuilder.getMesh().save(filename + ".ply");
+				
+				// 2. Record the image as a .JPG file.
+				dataSampleImg.setFromPixels( video.getPixels(), cameraWidth, cameraHeight, OF_IMAGE_COLOR);
+				dataSampleImg.saveImage(filename + ".jpg", OF_IMAGE_QUALITY_HIGH);
+				
+				// 3. Record the LEAP data as an .XML file.
+				leapRecorder.startRecording();
+				leapRecorder.recordFrameXML(leap);
+				leapRecorder.endRecording(filename + ".xml");
+				
+				//bInPlaybackMode
+				lastDataSampleGrabTimeMillis = now;
+			}
+		}
+	}
+}
 
 
 //--------------------------------------------------------------

@@ -358,4 +358,12 @@ class ofApp : public ofBaseApp{
 	void nextScene();
 	void prevScene();
 	
+	//------------------------------
+	// Data Sample grabber: stash a .jpg and .ply
+	bool bDataSampleGrabbingEnabled;
+	void updateDataSampleGrabbingProcess();
+	long lastDataSampleGrabTimeMillis;
+	int  dataSampleGrabIntervalMillis;
+	ofImage dataSampleImg;
+	
 };
