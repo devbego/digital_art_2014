@@ -1,4 +1,23 @@
 #include "PlusOne.h"
+#include "ofxPuppet.h"
+
+const IndexSet ringIndices = IndexSet()
+/115
+/119/120/124/125/129/130/134/135
+/140/141/142
+/IndexRange(63, 83);
+
+const IndexSet splitRingBaseIndices = IndexSet()
+/115
+/118/119/123/124/128/129/133/134
+/138/139/140
+/42/43/44;
+
+const IndexSet splitMiddleBaseIndices = IndexSet()
+/115
+/151/120/152/125/153/130/154/135
+/155/141/142
+/63/64/65;
 
 string PlusOne::getName() const {
     return "PlusOne";
@@ -8,11 +27,7 @@ void PlusOne::update(const ofMesh& mesh) {
     ofMesh handMesh = mesh;
     
     // copy of the ring finger
-    int toCopy[] = {
-        115, 119, 124, 129, 134, 140, 63, 66, 69, 72, 75, 78, 81, 82, 83, 80, 77, 74, 71, 68, 65, 142, 135, 130, 125, 120};
-    extraRegion = buildPolyline(handMesh, toCopy, 26);
-    extraRegion.close();
-    extraMesh = copySubmesh(handMesh, extraRegion);
+    extraMesh = copySubmesh(handMesh, ringIndices);
 
     // place the extra finger in approximately the right place
     int extraRootIndex = 21, extraKnuckleIndex = 31;
@@ -22,15 +37,15 @@ void PlusOne::update(const ofMesh& mesh) {
                extraMesh.getVertex(extraKnuckleIndex),
                handMesh.getVertex(splitRootIndex),
                handMesh.getVertex(splitCrotchIndex));
-
+    
     int leftCount = 6, rightCount = 6;
-
+    
     // find the sides of the copied mesh
     int extraLeftIndices[] = {21, 22, 24, 26, 28, 30};
     extraLeftPath = buildPolyline(extraMesh, extraLeftIndices, leftCount);
     int extraRightIndices[] = {21, 23, 25, 27, 29, 32};
     extraRightPath = buildPolyline(extraMesh, extraRightIndices, rightCount);
-
+    
     // split path
     int toSplit[] = {119, 124, 129, 134, 140};
     int toSplitCount = 5;
@@ -45,59 +60,60 @@ void PlusOne::update(const ofMesh& mesh) {
     // find the sides of the split mesh
     int splitLeftIndices[] = {115, 119, 124, 129, 134, 140};
     int splitRightIndices[] = {115, 151, 152, 153, 154, 155};
-
+    
     splitLeftPath = buildPolyline(handMesh, splitLeftIndices, leftCount);
     splitRightPath = buildPolyline(handMesh, splitRightIndices, rightCount);
-
+    
     orientPolyline(splitLeftPath,
                    *splitLeftPath.begin(),
                    *splitLeftPath.rbegin(),
                    *extraLeftPath.begin(),
                    *extraLeftPath.rbegin());
-
+    
     orientPolyline(splitRightPath,
                    *splitRightPath.begin(),
                    *splitRightPath.rbegin(),
                    *extraRightPath.begin(),
                    *extraRightPath.rbegin());
-
-    handPuppet = ofxPuppet();
+    
+    ofxPuppet handPuppet;
     handPuppet.setup(handMesh);
-
+    
     // put control points along hand's left seam
     for(int i = 0; i < leftCount; i++) {
         int splitIndex = splitLeftIndices[i];
         ofVec2f splitVertex = splitLeftPath[i];
         handPuppet.setControlPoint(splitIndex, splitVertex);
     }
-
+    
     // put control points along hand's right seam
     for(int i = 0; i < rightCount; i++) {
         int splitIndex = splitRightIndices[i];
         ofVec2f splitVertex = splitRightPath[i];
         handPuppet.setControlPoint(splitIndex, splitVertex);
     }
-
+    
     // bends the hand into shape
     handPuppet.update();
     handMesh = handPuppet.getDeformedMesh();
-
+    
+    ofxPuppet fingerPuppet;
     fingerPuppet.setup(extraMesh);
-
+    
     // put control points along finger's left seam
     for(int i = 0; i < leftCount; i++) {
         int extraIndex = extraLeftIndices[i];
         ofVec2f splitVertex = splitLeftPath[i];
         fingerPuppet.setControlPoint(extraIndex, splitVertex);
     }
-
+    
     // put control points along finger's right seam
     for(int i = 0; i < rightCount; i++) {
         int extraIndex = extraRightIndices[i];
         ofVec2f splitVertex = splitRightPath[i];
         fingerPuppet.setControlPoint(extraIndex, splitVertex);
     }
-
+    
     // make extra fingernail bisect adjacent fingers
     ofVec2f ringFingernail = handMesh.getVertex(58);
     ofVec2f middleFingernail = handMesh.getVertex(79);
@@ -107,24 +123,17 @@ void PlusOne::update(const ofMesh& mesh) {
     ofVec2f middleKnuckle = handMesh.getVertex(141);
     float extraLength = middleKnuckle.distance(middleFingernail);
     fingerPuppet.setControlPoint(16, extraKnuckle + extraDirection * extraLength);
-
+    
     // bend the finger into shape
     fingerPuppet.update();
     extraMesh = fingerPuppet.getDeformedMesh();
-
+    
     // extract a mesh from the base of the ring finger
-    int baseRegionCount = 14;
-    int leftBaseRegionIndices[] = {
-        115, 118, 123, 128, 133, 138, 42, 43, 44, 140, 134, 129, 124, 119};
-    ofPolyline leftBaseRegion = buildPolyline(handMesh, leftBaseRegionIndices, baseRegionCount);
-    leftBaseMesh = copySubmesh(handMesh, leftBaseRegion);
-
+    leftBaseMesh = copySubmesh(handMesh, splitRingBaseIndices);
+    
     // extract a mesh from the base of the middle finger
-    int rightBaseRegionIndices[] = {
-        115, 151, 152, 153, 154, 155, 63, 64, 65, 142, 135, 130, 125, 120};
-    ofPolyline rightBaseRegion = buildPolyline(handMesh, rightBaseRegionIndices, baseRegionCount);
-    rightBaseMesh = copySubmesh(handMesh, rightBaseRegion);
-
+    rightBaseMesh = copySubmesh(handMesh, splitMiddleBaseIndices);
+    
     // set the colors of the left base to fade from right to left
     // and the right base to fade from left to right
     // the indices start at the base, go around clockwise (for a left hand)
@@ -151,12 +160,9 @@ void PlusOne::update(const ofMesh& mesh) {
         rightBaseMesh.getVertices()[rightBaseIndices[i]] = fromVertex;
     }
     
-    final = handPuppet.getDeformedMesh();
+    final = ofMesh();
+    final.append(handMesh);
     final.append(extraMesh);
-    
-    // this step is required for subdivision
-    // but it kills the texture mapping
-    mergeCoincidentVertices(final);
 }
 
 ofMesh& PlusOne::getModifiedMesh() {

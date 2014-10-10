@@ -302,8 +302,8 @@ void ofApp::setup(){
     // APPLICATION FAULT MANAGER
     appFaultManager.setup();
     minHandInsertionPercent = 0.29;
-    maxAllowableMotion		= 15.0;
-    maxAllowableFingerCurl	= 0.3;
+    maxAllowableMotion		= 15.5;
+    maxAllowableFingerCurl	= 0.31;
     maxAllowableExtentZ		= 0.5;
     maxAllowableHeightZ     = 1.75;
 	
@@ -544,6 +544,7 @@ void ofApp::setupGui() {
     vnames.push_back("grayMat");
     vnames.push_back("thresholded");
     vnames.push_back("gradientThreshImg");
+	vnames.push_back("leapArmPixelsOnlyMat");
     vnames.push_back("thresholdedFinal");
     vnames.push_back("leapDiagnosticFboMat");
     vnames.push_back("edgeMat");
@@ -624,11 +625,11 @@ void ofApp::update(){
 				useTopologyModifierManager = true;
 				myTopologyModifierManager.update (myHandMeshBuilder);
 				myPuppetManager.updatePuppeteerDummy();
-				myHandMeshBuilder.nTolerableTriangleIntersections = 20;
+				//myHandMeshBuilder.nTolerableTriangleIntersections = 20;
 			} else {
 				useTopologyModifierManager = false;
 				myPuppetManager.updatePuppeteer (bComputeAndDisplayPuppet, myHandMeshBuilder);
-				myHandMeshBuilder.nTolerableTriangleIntersections = 500;
+				//myHandMeshBuilder.nTolerableTriangleIntersections = 500;
 			}
 			
 		} else {
@@ -1616,10 +1617,11 @@ void ofApp::drawContourAnalyzer(){
         case 0:		drawMat(grayMat,						0,0, imgW,imgH);	break;
         case 1:		drawMat(thresholded,					0,0, imgW,imgH);	break;
         case 2:		drawMat(gradientThreshImg,				0,0, imgW,imgH);	break;
-        case 3:		drawMat(thresholdedFinal,				0,0, imgW,imgH);	break;
-        case 4:		drawMat(leapDiagnosticFboMat,			0,0, imgW,imgH);	break;
-        case 5:     drawMat(myHandContourAnalyzer.edgeMat,	0,0, imgW,imgH);	break;
-        case 6:		if (bInPlaybackMode ){
+		case 3:		drawMat(leapArmPixelsOnlyMat,			0,0, imgW,imgH);	break;
+        case 4:		drawMat(thresholdedFinal,				0,0, imgW,imgH);	break;
+        case 5:		drawMat(leapDiagnosticFboMat,			0,0, imgW,imgH);	break;
+        case 6:     drawMat(myHandContourAnalyzer.edgeMat,	0,0, imgW,imgH);	break;
+        case 7:		if (bInPlaybackMode ){
                         video.draw(0, 0, imgW,imgH);
                     } else {
                         processFrameImg.draw(0,0,imgW,imgH);
@@ -1836,7 +1838,7 @@ void ofApp::applicationStateMachine(){
  Hou je hand in dit gebied.
  
  Touch the screen for a new scene.
- Raak het scherm aan voor een nieuwe scène.
+ Raak het scherm aan voor een nieuwe scene.
  
  Oops! Try moving more slowly.
  Oeps! Probeer langzamer te bewegen.
@@ -1848,7 +1850,7 @@ void ofApp::applicationStateMachine(){
  Oeps! Je houdt je hand te hoog.
  
  Hey! Just one hand at a time, please.
- Hee! Eén hand tegelijk alsjeblieft.
+ Hee! Een hand tegelijk alsjeblieft.
  
  Hey! Hold still for a moment, please.
  Hee! Hou je hand stil alsjeblieft.
@@ -2440,17 +2442,21 @@ void ofApp::mousePressed(int x, int y, int button){
 //--------------------------------------------------------------
 void ofApp::mouseReleased (int x, int y, int button){
 	
-	// get direction of swipe.
-	int dir = 1;
-	float dist = fabs(y-swipeStart);
-	if (dist > 20){
-		if (y > swipeStart){
-			dir = -1;
-		} else {
-			dir =  1;
+	// If we're in kiosk mode,
+	if (bKioskMode){
+		
+		// use direction of swipe to select next scene
+		int dir = 1;
+		float dist = fabs(y-swipeStart);
+		if (dist > 20){
+			if (y > swipeStart){
+				dir = -1;
+			} else {
+				dir =  1;
+			}
 		}
+		changeScene(dir);
 	}
-	changeScene(dir);
 }
 
 //--------------------------------------------------------------

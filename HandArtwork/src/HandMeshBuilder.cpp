@@ -25,7 +25,7 @@ void HandMeshBuilder::initialize(int w, int h){
 	informThereIsNoHandPresent();
 	bWorkAtHalfScale = true; // absolutely definitely.
 	
-	nTolerableTriangleIntersections = 20;
+	nTolerableTriangleIntersections = 200;
 }
 
 //============================================================

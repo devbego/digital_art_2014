@@ -22,7 +22,7 @@ void LeapVisualizer::setup(){
 	bWorkAtHalfScale			= false;
 	
     diagnosticFingerScaling		= 1.0;
-	armWidthScaling				= 0.700;
+	armWidthScaling				= 0.75;
 	nLeapHandsInScene			= 0;
 
 }

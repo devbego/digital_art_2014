@@ -1,6 +1,16 @@
 #include "MinusOne.h"
 
-#include "ofxPuppet.h"
+const IndexSet ringIndices = IndexSet()
+/115
+/119/120/124/125/129/130/134/135
+/140/141/142
+/IndexRange(63, 83);
+
+const IndexSet ringBaseIndices = IndexSet()
+/115
+/119/120/124/125/129/130/134/135
+/140/141/142
+/63/64/65;
 
 string MinusOne::getName() const {
     return "MinusOne";
@@ -8,26 +18,13 @@ string MinusOne::getName() const {
 
 void MinusOne::update(const ofMesh& mesh) {
     ofMesh handMesh = mesh;
-    
-    // build removal region
-    int toRemove[] = {115, 120, 125, 130, 135, 142, 65, 68, 71, 74, 77, 80, 83, 82, 81, 78, 75, 72, 69, 66, 63, 140, 134, 129, 124, 119
-    };
-    int toRemoveCount = 26;
-    removalRegion = buildPolyline(handMesh, toRemove, toRemoveCount);
-    removalRegion.close();
-    
+
     // make a copy of the removal region, to be used for blending
-    int baseRegionCount = 14;
-    int baseRegionIndices[] = {
-        115, 119, 124, 129, 134, 140, 63, 64, 65, 142, 135, 130, 125, 120
-    };
-    ofPolyline baseRegion = buildPolyline(handMesh, baseRegionIndices, baseRegionCount);
-    blendMesh = copySubmesh(handMesh, baseRegion);
-    
+    blendMesh = copySubmesh(handMesh, ringBaseIndices);
+
     // remove the triangles for the remaining indices
-    removeTriangles(handMesh, removalRegion);
-    handMesh = dropUnusedVertices(handMesh);
-    
+    handMesh = removeSubmesh(handMesh, ringIndices);
+
     // stitch sides together
     // post-removal indices, not original indices
     int toStitchLeft[] = {99, 104, 109, 114, 120};
@@ -58,10 +55,6 @@ void MinusOne::update(const ofMesh& mesh) {
     blendMesh.addColors(colors);
     
     final = handMesh;
-    
-    // this step is required for subdivision
-    // but it kills the texture mapping
-//    mergeCoincidentVertices(final);
 }
 
 ofMesh& MinusOne::getModifiedMesh() {
