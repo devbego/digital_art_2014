@@ -1917,7 +1917,7 @@ int HandMeshBuilder::count_triangle_intersections (ofMesh &mesh)
     }
 	
 	if (nTriangleIntersections > 0){
-		// printf ("%d ------- nTriangleIntersections = %d\n", (int)ofGetElapsedTimeMillis(), nTriangleIntersections);
+		//printf ("%d ------- nTriangleIntersections = %d\n", (int)ofGetElapsedTimeMillis(), nTriangleIntersections);
 	}
     
     return nTriangleIntersections;

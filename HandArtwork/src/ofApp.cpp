@@ -268,9 +268,9 @@ void ofApp::setup(){
 	amountOfPixelMotion01 = 0;
 	amountOfLeapMotion01 = 0;
 	zHandExtent = 0.00;
-	motionAlpha = 0.50;
-	zExtentAlpha = 0.20;
-	fingerCurlAlpha = 0.50;
+	motionAlpha = 0.60;
+	zExtentAlpha = 0.30;
+	fingerCurlAlpha = 0.60;
 	amountOfFingerCurl01 = 0;
 	
 	elapsedMicros = 0;
@@ -521,7 +521,7 @@ void ofApp::setupGui() {
     gui4->addLabel("What to Render");
 	gui4->addToggle("bUseBothTypesOfScenes",			&bUseBothTypesOfScenes);
 	gui4->addToggle("useTopologyModifierManager",		&useTopologyModifierManager);
-	gui4->addIntSlider("nTolerableTriangleIntersections", 0, 150,			&(myHandMeshBuilder.nTolerableTriangleIntersections));
+	gui4->addIntSlider("nTolerableTriangleIntersections", 0, 500,			&(myHandMeshBuilder.nTolerableTriangleIntersections));
 
     gui4->addSlider("backgroundGray", 0,255,            &backgroundGray); // slider
 	gui4->addLabelToggle("bDrawImageInBackground",		&bDrawImageInBackground);
@@ -623,9 +623,11 @@ void ofApp::update(){
 				useTopologyModifierManager = true;
 				myTopologyModifierManager.update (myHandMeshBuilder);
 				myPuppetManager.updatePuppeteerDummy();
+				myHandMeshBuilder.nTolerableTriangleIntersections = 20;
 			} else {
 				useTopologyModifierManager = false;
 				myPuppetManager.updatePuppeteer (bComputeAndDisplayPuppet, myHandMeshBuilder);
+				myHandMeshBuilder.nTolerableTriangleIntersections = 500;
 			}
 			
 		} else {
