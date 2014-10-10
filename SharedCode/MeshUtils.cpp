@@ -1,4 +1,4 @@
-#pragma once
+#include "MeshUtils.h"
 
 #include "ofxPuppet.h"
 
@@ -55,6 +55,29 @@ ofPolyline buildPolyline(ofMesh& mesh, int indices[], int count) {
     return line;
 }
 
+// topological
+ofMesh removeSubmesh(ofMesh& mesh, const IndexSet& indices) {
+    ofMesh copyMesh = mesh;
+    copyMesh.clearIndices();
+    int ni = mesh.getNumIndices();
+    // with all the triangles in this mesh
+    for(int i = 0; i < ni; i += 3) {
+        int i0 = mesh.getIndex(i + 0);
+        int i1 = mesh.getIndex(i + 1);
+        int i2 = mesh.getIndex(i + 2);
+        if(!indices.contains(i0) ||
+           !indices.contains(i1) ||
+           !indices.contains(i2)) {
+            // then this entire triangle is copied
+            copyMesh.addIndex(i0);
+            copyMesh.addIndex(i1);
+            copyMesh.addIndex(i2);
+        }
+    }
+    return dropUnusedVertices(copyMesh);
+}
+
+// geometric
 void removeTriangles(ofMesh& mesh, const ofPolyline& region) {
     int n = mesh.getNumIndices();
     vector<ofIndexType> indices;
@@ -104,6 +127,29 @@ ofMesh dropUnusedVertices(ofMesh& mesh) {
     return out;
 }
 
+// topological
+ofMesh copySubmesh(const ofMesh& mesh, const IndexSet& indices) {
+    ofMesh copyMesh = mesh;
+    copyMesh.clearIndices();
+    int ni = mesh.getNumIndices();
+    // with all the triangles in this mesh
+    for(int i = 0; i < ni; i += 3) {
+        int i0, i1, i2;
+        // if all the vertices of this triangle are to be copied
+        if(indices.contains(i0 = mesh.getIndex(i + 0)) &&
+           indices.contains(i1 = mesh.getIndex(i + 1)) &&
+           indices.contains(i2 = mesh.getIndex(i + 2))) {
+            // then this entire triangle is copied
+            copyMesh.addIndex(i0);
+            copyMesh.addIndex(i1);
+            copyMesh.addIndex(i2);
+        }
+    }
+    return dropUnusedVertices(copyMesh);
+}
+
+// geometric
+// sometimes fails on very small triangles close to the boundary
 ofMesh copySubmesh(const ofMesh& mesh, const ofPolyline& region) {
     ofMesh copyMesh;
     copyMesh = mesh;
@@ -112,7 +158,8 @@ ofMesh copySubmesh(const ofMesh& mesh, const ofPolyline& region) {
         int i0 = mesh.getIndex(i + 0), i1 = mesh.getIndex(i + 1), i2 = mesh.getIndex(i + 2);
         ofVec2f vi0 = mesh.getVertex(i0), vi1 = mesh.getVertex(i1), vi2 = mesh.getVertex(i2);
         ofVec2f avg = (vi0 + vi1 + vi2) / 3;
-        if(region.inside(avg)) {
+        bool inside = region.inside(avg);
+        if(inside) {
             copyMesh.addIndex(i0);
             copyMesh.addIndex(i1);
             copyMesh.addIndex(i2);

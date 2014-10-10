@@ -2,15 +2,10 @@
 
 #include "TopologyModifier.h"
 #include "MeshUtils.h"
-#include "ofxPuppet.h"
 
 class PlusOne : public TopologyModifier {
 protected:
-    ofPolyline extraRegion;
     ofMesh extraMesh;
-    
-    ofxPuppet handPuppet;
-    ofxPuppet fingerPuppet;
     
     ofMesh leftBaseMesh, rightBaseMesh;
     
