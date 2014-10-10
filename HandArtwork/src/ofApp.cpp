@@ -1441,20 +1441,35 @@ void ofApp::draw(){
 				// Note: the image needs to be scaled by puppetscale, or else there is scale-flipping.
 				//
 				
-                if(bInIdleMode && bKioskMode){
+				
+				
+                if (bInIdleMode && bKioskMode){
+					
+					ofPushMatrix();
+					float bgScale = puppetDisplayScale * ((bWorkAtHalfScale) ? 2.0 : 1.0);
+					float ox = ofGetWindowWidth()      - imgW*bgScale;
+					float oy = ofGetWindowHeight()/2.0 - imgH*bgScale/2.0;
+					ofTranslate( ox, oy, 0);
+					ofScale (bgScale, bgScale);
+					
                     drawIdleContour();
-                }else{
-                    ofPushMatrix();
-                    float bgScale = puppetDisplayScale * 1.0;
-                    float ox = ofGetWindowWidth()      - cameraWidth*bgScale;
-                    float oy = ofGetWindowHeight()/2.0 - cameraHeight*bgScale/2.0;
-                    ofTranslate( ox, oy, 0);
-                    ofScale (bgScale, bgScale);
+					ofPopMatrix();
+					 
+					
+                } else {
+					ofPushMatrix();
+					float bgScale = puppetDisplayScale * 1.0;
+					float ox = ofGetWindowWidth()      - cameraWidth*bgScale;
+					float oy = ofGetWindowHeight()/2.0 - cameraHeight*bgScale/2.0;
+					ofTranslate( ox, oy, 0);
+					ofScale (bgScale, bgScale);
                     ofSetColor(255,255,255);
+					
                     colorVideo.draw(0,0, 1024,768);
-                    ofPopMatrix();
-                    
+					ofPopMatrix();
                 }
+				
+				
                 
                 
 			} else {
@@ -2092,10 +2107,11 @@ void ofApp::drawText(){
 	
 }
 
+//--------------------------------------------------------------
 void ofApp::drawGradientOverlay(){
     
     int offSet = 50;
-    int boxSize = 275+offSet;
+    int boxSize = (ofGetWidth()*0.25)+offSet;
     
     ofFill();
     ofSetColor(0,255);
@@ -2113,6 +2129,7 @@ void ofApp::drawGradientOverlay(){
     
 }
 
+//--------------------------------------------------------------
 void ofApp::drawIdleContour(){
     
     // get contours from handContourAnalyzer
@@ -2124,14 +2141,11 @@ void ofApp::drawIdleContour(){
     ofSetLineWidth(4);
     ofSetColor(25,200,255,200);
     ofPolyline smoothContour = myHandContourAnalyzer.theHandContourVerySmooth;
-    ofPushMatrix();
-        ofTranslate(20,-80,0);
-        ofScale(2.5,2.5,1);
+    
 //        for(int i = 0; i < smoothContour.size();i+=2){
 //            ofEllipse(smoothContour[i].x,smoothContour[i].y,2,2);
 //        }
-        smoothContour.draw();
-    ofPopMatrix();
+	smoothContour.draw();
     ofPopStyle();
 }
 
@@ -2290,6 +2304,14 @@ void ofApp::keyPressed(int key){
         case OF_KEY_RIGHT:
              if(video.isLoaded()) video.goToNext();
             break;
+			
+		case '<':
+			prevScene();
+			break;
+		case '>':
+			nextScene();
+			break;
+			
         case 'c':
             cam.reset();
             break;
@@ -2373,7 +2395,9 @@ void ofApp::keyPressed(int key){
 		case ',':
 			bDrawContourAnalyzer = !bDrawContourAnalyzer;
 			break;
-      case 'k':
+			
+		case 'k':
+		case 'K':
             bKioskMode = !bKioskMode;
             if(!bKioskMode){
                 myPuppetManager.bInIdleMode = false;
@@ -2414,26 +2438,38 @@ void ofApp::mousePressed(int x, int y, int button){
 }
 
 //--------------------------------------------------------------
-void ofApp::mouseReleased(int x, int y, int button){
-    
+void ofApp::mouseReleased (int x, int y, int button){
+	
+	// get direction of swipe.
+	int dir = 1;
+	float dist = fabs(y-swipeStart);
+	if (dist > 20){
+		if (y > swipeStart){
+			dir = -1;
+		} else {
+			dir =  1;
+		}
+	}
+	changeScene(dir);
+}
+
+//--------------------------------------------------------------
+void ofApp::nextScene(){ changeScene ( 1); }
+void ofApp::prevScene(){ changeScene (-1); }
+void ofApp::changeScene (int dir){
+	
+	if (dir >= 0){
+		dir  = 1;
+	} else {
+		dir = -1;
+	}
+	
 	if (bUseBothTypesOfScenes){
 		
 		int nTopoScenes = 2;
 		int nPuppScenes = myPuppetManager.scenes.size();
 		int nTotalScenes = nTopoScenes + nPuppScenes;
 		
-		// get direction of swipe.
-		int dir = 1;
-		float dist = fabs(y-swipeStart);
-		if (dist > 20){
-			if (y > swipeStart){
-				dir = -1;
-			} else {
-				dir =  1;
-			}
-		}
-		
-		// modify currentSceneID
 		currentSceneID = (currentSceneID + dir + nTotalScenes)%nTotalScenes;
 		
 		// inform puppeteers
@@ -2447,33 +2483,13 @@ void ofApp::mouseReleased(int x, int y, int button){
 			useTopologyModifierManager = false;
 		}
 		
-		
-		// printf("currentSceneID      = %d\n", currentSceneID);
-	
 	} else {
-	
-	
-	
 		
-		// calculate distance from swipeStart
-		float dist = fabs(y-swipeStart);
-		if (dist > 100){
-			if (y > swipeStart){
-				myPuppetManager.animateSceneChange(-1);
-			} else {
-				myPuppetManager.animateSceneChange( 1);
-			}
-		} else if (!guiTabBar->isVisible()){
-			myPuppetManager.animateSceneChange(0);
-		}
-		
+		myPuppetManager.animateSceneChange(dir);
 	}
-	
-	
-	
-		
 
 }
+
 
 //--------------------------------------------------------------
 void ofApp::windowResized(int w, int h){

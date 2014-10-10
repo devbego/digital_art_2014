@@ -350,9 +350,12 @@ class ofApp : public ofBaseApp{
 	TopologyModifierManager myTopologyModifierManager;
     bool useTopologyModifierManager;
     
-    // ------------------------------
-    // swipe scenes
+    //------------------------------
+    // Change scenes
     float swipeStart;
 	int currentSceneID;
+	void changeScene (int dir);
+	void nextScene();
+	void prevScene();
 	
 };
