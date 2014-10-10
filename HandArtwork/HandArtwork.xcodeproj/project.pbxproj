@@ -21,10 +21,6 @@
 		222C3AB10FA3158602718602 /* ofxUIMultiImageButton.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 17E06821FB98542FDB806E50 /* ofxUIMultiImageButton.cpp */; };
 		250A95BA26587BE85DB0A353 /* ofxCvColorImage.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CE9C7160245B19131DAE6128 /* ofxCvColorImage.cpp */; };
 		26874B150C8535AEA0F24C8C /* ofxUIImageSlider.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2689C5C8A97002C218125F2F /* ofxUIImageSlider.cpp */; };
-		2745022019E4A4160077009E /* MeshUtils.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2745021F19E4A4160077009E /* MeshUtils.cpp */; };
-		2745022719E4A47D0077009E /* MinusOne.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2745022219E4A47D0077009E /* MinusOne.cpp */; };
-		2745022819E4A47D0077009E /* PlusOne.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2745022419E4A47D0077009E /* PlusOne.cpp */; };
-		2745022B19E4A4EF0077009E /* TopologyModifierManager.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2745022919E4A4EF0077009E /* TopologyModifierManager.cpp */; };
 		3B04CBDC19D1DE8A005E6F31 /* EqualizeScene.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3B04CBAF19D1DE8A005E6F31 /* EqualizeScene.cpp */; };
 		3B04CBDD19D1DE8A005E6F31 /* FingerLengthPuppeteerScene.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3B04CBB119D1DE8A005E6F31 /* FingerLengthPuppeteerScene.cpp */; };
 		3B04CBDE19D1DE8A005E6F31 /* GrowingMiddleFingerScene.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3B04CBB319D1DE8A005E6F31 /* GrowingMiddleFingerScene.cpp */; };
@@ -74,6 +70,11 @@
 		3B57149819D4D3A10071F156 /* ofxButterfly.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3B57148B19D4D3A10071F156 /* ofxButterfly.cpp */; };
 		3B57149919D4D3A10071F156 /* cube.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3B57148F19D4D3A10071F156 /* cube.cpp */; };
 		3B57149A19D4D3A10071F156 /* mesh.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3B57149419D4D3A10071F156 /* mesh.cpp */; };
+		3BF6A87819E551CD007DAA3F /* MeshUtils.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3BF6A87719E551CD007DAA3F /* MeshUtils.cpp */; };
+		3BF6A87F19E551DF007DAA3F /* MinusOne.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3BF6A87A19E551DF007DAA3F /* MinusOne.cpp */; };
+		3BF6A88019E551DF007DAA3F /* PlusOne.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3BF6A87C19E551DF007DAA3F /* PlusOne.cpp */; };
+		3BF6A88319E5520D007DAA3F /* TopologyModifierManager.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3BF6A88119E5520D007DAA3F /* TopologyModifierManager.cpp */; };
+		3BF6A88619E55B12007DAA3F /* SpringFingerScene.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3BF6A88419E55B12007DAA3F /* SpringFingerScene.cpp */; };
 		3BFC9ED619D174DA00284002 /* libLeap.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 3BFC9EBE19D174DA00284002 /* libLeap.dylib */; };
 		3BFC9ED919D174DA00284002 /* ofxLeapMotion.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3BFC9ECD19D174DA00284002 /* ofxLeapMotion.cpp */; };
 		3BFC9F5E19D175BB00284002 /* LeapBone.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3BFC9F5019D175BB00284002 /* LeapBone.cpp */; };
@@ -289,14 +290,6 @@
 		2556100026B425E8370BCF75 /* ofxUICircleSlider.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 30; name = ofxUICircleSlider.cpp; path = ../../../addons/ofxUI/src/ofxUICircleSlider.cpp; sourceTree = SOURCE_ROOT; };
 		266AC11AC0E8AEECBB4AA1B5 /* features2d.hpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 30; name = features2d.hpp; path = ../../../addons/ofxCvMin/libs/opencv/include/opencv2/nonfree/features2d.hpp; sourceTree = SOURCE_ROOT; };
 		2689C5C8A97002C218125F2F /* ofxUIImageSlider.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 30; name = ofxUIImageSlider.cpp; path = ../../../addons/ofxUI/src/ofxUIImageSlider.cpp; sourceTree = SOURCE_ROOT; };
-		2745021F19E4A4160077009E /* MeshUtils.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = MeshUtils.cpp; sourceTree = "<group>"; };
-		2745022219E4A47D0077009E /* MinusOne.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = MinusOne.cpp; sourceTree = "<group>"; };
-		2745022319E4A47D0077009E /* MinusOne.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MinusOne.h; sourceTree = "<group>"; };
-		2745022419E4A47D0077009E /* PlusOne.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = PlusOne.cpp; sourceTree = "<group>"; };
-		2745022519E4A47D0077009E /* PlusOne.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PlusOne.h; sourceTree = "<group>"; };
-		2745022619E4A47D0077009E /* TopologyModifier.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TopologyModifier.h; sourceTree = "<group>"; };
-		2745022919E4A4EF0077009E /* TopologyModifierManager.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = TopologyModifierManager.cpp; sourceTree = "<group>"; };
-		2745022A19E4A4EF0077009E /* TopologyModifierManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TopologyModifierManager.h; sourceTree = "<group>"; };
 		28155024C27152A66926B553 /* ofxUIBaseDraws.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 30; name = ofxUIBaseDraws.cpp; path = ../../../addons/ofxUI/src/ofxUIBaseDraws.cpp; sourceTree = SOURCE_ROOT; };
 		2834D88A62CD23F3DE2C47D1 /* ofxButton.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 30; name = ofxButton.h; path = ../../../addons/ofxGui/src/ofxButton.h; sourceTree = SOURCE_ROOT; };
 		28D05A6EBDBFC54F1E60CA73 /* vec_distance.hpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 30; name = vec_distance.hpp; path = ../../../addons/ofxCvMin/libs/opencv/include/opencv2/gpu/device/vec_distance.hpp; sourceTree = SOURCE_ROOT; };
@@ -463,6 +456,17 @@
 		3B57149619D4D3A10071F156 /* vertex.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = vertex.hpp; sourceTree = "<group>"; };
 		3BB5E3A12BFEB583A265CC90 /* vec_math.hpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 30; name = vec_math.hpp; path = ../../../addons/ofxCvMin/libs/opencv/include/opencv2/gpu/device/vec_math.hpp; sourceTree = SOURCE_ROOT; };
 		3BDCF9112612C1C34CD41B23 /* timer.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 30; name = timer.h; path = ../../../addons/ofxCvMin/libs/opencv/include/opencv2/flann/timer.h; sourceTree = SOURCE_ROOT; };
+		3BDDE60C19E4673E0018E845 /* HandSegmenterSettings.xml */ = {isa = PBXFileReference; lastKnownFileType = text.xml; name = HandSegmenterSettings.xml; path = bin/data/HandSegmenterSettings.xml; sourceTree = SOURCE_ROOT; };
+		3BF6A87719E551CD007DAA3F /* MeshUtils.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = MeshUtils.cpp; sourceTree = "<group>"; };
+		3BF6A87A19E551DF007DAA3F /* MinusOne.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = MinusOne.cpp; sourceTree = "<group>"; };
+		3BF6A87B19E551DF007DAA3F /* MinusOne.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MinusOne.h; sourceTree = "<group>"; };
+		3BF6A87C19E551DF007DAA3F /* PlusOne.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = PlusOne.cpp; sourceTree = "<group>"; };
+		3BF6A87D19E551DF007DAA3F /* PlusOne.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PlusOne.h; sourceTree = "<group>"; };
+		3BF6A87E19E551DF007DAA3F /* TopologyModifier.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TopologyModifier.h; sourceTree = "<group>"; };
+		3BF6A88119E5520D007DAA3F /* TopologyModifierManager.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = TopologyModifierManager.cpp; sourceTree = "<group>"; };
+		3BF6A88219E5520D007DAA3F /* TopologyModifierManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TopologyModifierManager.h; sourceTree = "<group>"; };
+		3BF6A88419E55B12007DAA3F /* SpringFingerScene.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = SpringFingerScene.cpp; sourceTree = "<group>"; };
+		3BF6A88519E55B12007DAA3F /* SpringFingerScene.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SpringFingerScene.h; sourceTree = "<group>"; };
 		3BFC9EB819D174DA00284002 /* Leap.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Leap.h; sourceTree = "<group>"; };
 		3BFC9EB919D174DA00284002 /* LeapMath.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LeapMath.h; sourceTree = "<group>"; };
 		3BFC9EBE19D174DA00284002 /* libLeap.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; path = libLeap.dylib; sourceTree = "<group>"; };
@@ -1101,18 +1105,6 @@
 			name = opencv;
 			sourceTree = "<group>";
 		};
-		2745022119E4A47D0077009E /* topology-modifiers */ = {
-			isa = PBXGroup;
-			children = (
-				2745022219E4A47D0077009E /* MinusOne.cpp */,
-				2745022319E4A47D0077009E /* MinusOne.h */,
-				2745022419E4A47D0077009E /* PlusOne.cpp */,
-				2745022519E4A47D0077009E /* PlusOne.h */,
-				2745022619E4A47D0077009E /* TopologyModifier.h */,
-			);
-			path = "topology-modifiers";
-			sourceTree = "<group>";
-		};
 		328E739345D6731CDF606BE6 /* nonfree */ = {
 			isa = PBXGroup;
 			children = (
@@ -1208,6 +1200,8 @@
 				3B04CBD919D1DE8A005E6F31 /* WigglingWristScene.h */,
 				3B04CBDA19D1DE8A005E6F31 /* WobbleScene.cpp */,
 				3B04CBDB19D1DE8A005E6F31 /* WobbleScene.h */,
+				3BF6A88419E55B12007DAA3F /* SpringFingerScene.cpp */,
+				3BF6A88519E55B12007DAA3F /* SpringFingerScene.h */,
 			);
 			path = scenes;
 			sourceTree = "<group>";
@@ -1454,6 +1448,26 @@
 			path = butterfly;
 			sourceTree = "<group>";
 		};
+		3BDDE60B19E467320018E845 /* settings */ = {
+			isa = PBXGroup;
+			children = (
+				3BDDE60C19E4673E0018E845 /* HandSegmenterSettings.xml */,
+			);
+			name = settings;
+			sourceTree = "<group>";
+		};
+		3BF6A87919E551DF007DAA3F /* topology-modifiers */ = {
+			isa = PBXGroup;
+			children = (
+				3BF6A87A19E551DF007DAA3F /* MinusOne.cpp */,
+				3BF6A87B19E551DF007DAA3F /* MinusOne.h */,
+				3BF6A87C19E551DF007DAA3F /* PlusOne.cpp */,
+				3BF6A87D19E551DF007DAA3F /* PlusOne.h */,
+				3BF6A87E19E551DF007DAA3F /* TopologyModifier.h */,
+			);
+			path = "topology-modifiers";
+			sourceTree = "<group>";
+		};
 		3BFC9E8819D174D900284002 /* ofxLeapMotion */ = {
 			isa = PBXGroup;
 			children = (
@@ -1516,9 +1530,9 @@
 				3BFC9EE119D1754F00284002 /* BufferedVideo.h */,
 				3BFC9EE219D1754F00284002 /* hand-structure */,
 				3BFC9EEA19D1754F00284002 /* MeshUtils.h */,
-				2745021F19E4A4160077009E /* MeshUtils.cpp */,
-				2745022119E4A47D0077009E /* topology-modifiers */,
+				3BF6A87719E551CD007DAA3F /* MeshUtils.cpp */,
 				3BFC9F1919D1754F00284002 /* SharedUtils.h */,
+				3BF6A87919E551DF007DAA3F /* topology-modifiers */,
 			);
 			name = SharedCode;
 			path = ../../SharedCode;
@@ -2489,6 +2503,7 @@
 		E4B69E1C0A3A1BDC003C02F2 /* src */ = {
 			isa = PBXGroup;
 			children = (
+				3BDDE60B19E467320018E845 /* settings */,
 				E4B69E1D0A3A1BDC003C02F2 /* main.cpp */,
 				E4B69E1E0A3A1BDC003C02F2 /* ofApp.cpp */,
 				E4B69E1F0A3A1BDC003C02F2 /* ofApp.h */,
@@ -2500,10 +2515,10 @@
 				3BFC9F9E19D175F500284002 /* HandMeshBuilder.h */,
 				3BFC9F5C19D175BB00284002 /* LeapVisualizer.cpp */,
 				3BFC9F5D19D175BB00284002 /* LeapVisualizer.h */,
-				2745022919E4A4EF0077009E /* TopologyModifierManager.cpp */,
-				2745022A19E4A4EF0077009E /* TopologyModifierManager.h */,
 				3B35DC6919D526680008E9A1 /* PuppetManager.cpp */,
 				3B35DC6A19D526680008E9A1 /* PuppetManager.h */,
+				3BF6A88119E5520D007DAA3F /* TopologyModifierManager.cpp */,
+				3BF6A88219E5520D007DAA3F /* TopologyModifierManager.h */,
 				3BFC9FA119D1760000284002 /* FingerTipCalibRecorder.h */,
 				3BFC9F4F19D1757A00284002 /* LeapEtc */,
 				3BFC9F6619D175DB00284002 /* havoc2d */,
@@ -2672,6 +2687,7 @@
 				B266578FC55D23BFEBC042E7 /* ofxGuiGroup.cpp in Sources */,
 				483908258D00B98B4BE69F07 /* ofxLabel.cpp in Sources */,
 				F285EB3169F1566CA3D93C20 /* ofxPanel.cpp in Sources */,
+				3BF6A88619E55B12007DAA3F /* SpringFingerScene.cpp in Sources */,
 				837220E80EB56CD44AD27F2A /* ofxSlider.cpp in Sources */,
 				B56FE57CC35806596D38118C /* ofxSliderGroup.cpp in Sources */,
 				3B35DC6B19D526680008E9A1 /* PuppetManager.cpp in Sources */,
@@ -2712,9 +2728,9 @@
 				7CDAD32BE4FA46701E3552C7 /* RunningBackground.cpp in Sources */,
 				3B4384F119D1BFB7001F75FE /* WmlVector2.cpp in Sources */,
 				10B69DE456AED1288FC9316B /* Tracker.cpp in Sources */,
-				2745022719E4A47D0077009E /* MinusOne.cpp in Sources */,
+				3BF6A87F19E551DF007DAA3F /* MinusOne.cpp in Sources */,
 				3B04CBE319D1DE8A005E6F31 /* NorthScene.cpp in Sources */,
-				2745022B19E4A4EF0077009E /* TopologyModifierManager.cpp in Sources */,
+				3BF6A88319E5520D007DAA3F /* TopologyModifierManager.cpp in Sources */,
 				A6668C5B1272D7FCD5B5A16F /* Utilities.cpp in Sources */,
 				3B04CBEC19D1DE8A005E6F31 /* StraightenFingersScene.cpp in Sources */,
 				DBCB84A37F9AECC254870D79 /* Wrappers.cpp in Sources */,
@@ -2725,7 +2741,7 @@
 				3BFC9F9319D175DB00284002 /* voronoi_site_setofsites.cpp in Sources */,
 				E7438AC667B5977264C0F470 /* Utilities.cpp in Sources */,
 				6AA8127CA1A38430B316CE2C /* Wrappers.cpp in Sources */,
-				2745022819E4A47D0077009E /* PlusOne.cpp in Sources */,
+				3BF6A88019E551DF007DAA3F /* PlusOne.cpp in Sources */,
 				3BFC9ED919D174DA00284002 /* ofxLeapMotion.cpp in Sources */,
 				A0C1C42F6293BEC48CA02D5D /* Base.cpp in Sources */,
 				DF2B08505F60BABD6D71FD96 /* Camera.cpp in Sources */,
@@ -2814,7 +2830,7 @@
 				3B04CBED19D1DE8A005E6F31 /* TwitchScene.cpp in Sources */,
 				3B57149719D4D3A10071F156 /* cubic_spline.cpp in Sources */,
 				3B43851819D1C014001F75FE /* Grabber.cpp in Sources */,
-				2745022019E4A4160077009E /* MeshUtils.cpp in Sources */,
+				3BF6A87819E551CD007DAA3F /* MeshUtils.cpp in Sources */,
 				3B4384EE19D1BFB7001F75FE /* WmlLinearSystem.cpp in Sources */,
 				3BFC9F9519D175DB00284002 /* nbody.cpp in Sources */,
 				3BFC9F9019D175DB00284002 /* voronoi_site_polygon.cpp in Sources */,
@@ -3174,7 +3190,7 @@
 				);
 				MACOSX_DEPLOYMENT_TARGET = 10.8;
 				PRODUCT_NAME = "$(TARGET_NAME)Debug";
-				SDKROOT = macosx10.9;
+				SDKROOT = macosx10.8;
 				USER_HEADER_SEARCH_PATHS = ../../../addons/ofxLibdc/libs/osx/include/;
 				WRAPPER_EXTENSION = app;
 			};
@@ -3266,7 +3282,7 @@
 				);
 				MACOSX_DEPLOYMENT_TARGET = 10.8;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = macosx10.9;
+				SDKROOT = macosx10.8;
 				USER_HEADER_SEARCH_PATHS = ../../../addons/ofxLibdc/libs/osx/include/;
 				WRAPPER_EXTENSION = app;
 			};

@@ -14,7 +14,7 @@ void PuppetManager::setupPuppeteer (HandMeshBuilder &myHandMeshBuilder){
 	
 	// Create all of the scenes
 	scenes.push_back(new NoneScene				(&puppet, &handSkeleton, &immutableHandSkeleton));
-	scenes.push_back(new WaveScene				(&puppet, &handSkeleton, &immutableHandSkeleton));
+	///// scenes.push_back(new WaveScene				(&puppet, &handSkeleton, &immutableHandSkeleton));
     scenes.push_back(new WiggleScene			(&puppet, &handSkeleton, &immutableHandSkeleton));
 	scenes.push_back(new WobbleScene			(&puppet, &handSkeleton, &immutableHandSkeleton));
 	scenes.push_back(new EqualizeScene			(&puppet, &handSkeleton, &immutableHandSkeleton));
@@ -26,13 +26,14 @@ void PuppetManager::setupPuppeteer (HandMeshBuilder &myHandMeshBuilder){
 	scenes.push_back(new PulsatingPalmScene		(&puppet, &palmSkeleton, &immutablePalmSkeleton));
 	scenes.push_back(new RetractingFingersScene	(&puppet, &handWithFingertipsSkeleton, &immutableHandWithFingertipsSkeleton));
 	scenes.push_back(new SinusoidalWiggleScene	(&puppet, &handWithFingertipsSkeleton, &immutableHandWithFingertipsSkeleton));
-	scenes.push_back(new MiddleDifferentLengthScene(&puppet, &handSkeleton, &immutableHandSkeleton));
+	///// scenes.push_back(new MiddleDifferentLengthScene(&puppet, &handSkeleton, &immutableHandSkeleton));
 	scenes.push_back(new GrowingMiddleFingerScene(&puppet, &handWithFingertipsSkeleton, &immutableHandWithFingertipsSkeleton));
 	scenes.push_back(new StartrekScene			(&puppet, &handSkeleton, &immutableHandSkeleton));
-	scenes.push_back(new StraightenFingersScene	(&puppet, &handWithFingertipsSkeleton, &immutableHandWithFingertipsSkeleton));
+	///// scenes.push_back(new StraightenFingersScene	(&puppet, &handWithFingertipsSkeleton, &immutableHandWithFingertipsSkeleton));
 	scenes.push_back(new SplayFingersScene		(&puppet, &handWithFingertipsSkeleton, &immutableHandWithFingertipsSkeleton));
     scenes.push_back(new SplayFingers2Scene		(&puppet, &handWithFingertipsSkeleton, &immutableHandWithFingertipsSkeleton));
-	scenes.push_back(new TwitchScene			(&puppet, &handSkeleton, &immutableHandSkeleton));
+	scenes.push_back(new SpringFingerScene		(&puppet, &handSkeleton, &immutableHandSkeleton));
+	///// scenes.push_back(new TwitchScene			(&puppet, &handSkeleton, &immutableHandSkeleton));
 	scenes.push_back(new PinkyPuppeteerScene	(&puppet, &handWithFingertipsSkeleton, &immutableHandWithFingertipsSkeleton));
 	scenes.push_back(new FingerLengthPuppeteerScene(&puppet, &handWithFingertipsSkeleton, &immutableHandWithFingertipsSkeleton));
 	
@@ -294,48 +295,53 @@ void PuppetManager::setGuiVisibility (bool bShowGuis){
 void PuppetManager::drawPuppet (bool bComputeAndDisplayPuppet, ofTexture &handImageTexture ){
 	
 	if (bComputeAndDisplayPuppet){
+		bool bUseSubdivision = true;
 		
 		ofPushStyle();
 		{
 			
+			// Draw the main puppet texture (the image of the user's hand)
 			if (bShowPuppetTexture){
-				// Draw the main puppet texture (the image of the user's hand)
-                
-                // This works for non subdivided meshes.
-                
-                
-                // Working but pre-subdiviing
-				handImageTexture.bind();
 				
-				ofSetColor(255);
-				//puppet.drawFaces(); // original
+                if (bUseSubdivision){
+					// Bryce's mesh subdivision makes an enormous difference in quality!
+					ofMesh& puppetDeformedMesh = puppet.getDeformedMesh();
+					butterflySubdivider.fixMesh (puppetDeformedMesh, refinedMesh);
+					
+					// However, the subdivision causes a (LIFO?) reordering of the vertices.
+					// This causes the pinky to be drawn on top, instead of on the bottom...
+					
+					
+					handImageTexture.bind();
+					ofSetColor(255);
+					refinedMesh.drawFaces();
+					handImageTexture.unbind();
 				
-				handImageTexture.unbind();
-                
-                
-                
-                butterflySubdivider.fixMesh(puppet.getDeformedMesh(), refinedMesh);
-                
-                handImageTexture.bind();
-                ofSetColor(255);
-                refinedMesh.drawFaces();
-                handImageTexture.unbind();
-                
-                
-                
+				} else {
+					// Working, but with no mesh subdividing
+					handImageTexture.bind();
+					ofSetColor(255);
+					puppet.drawFaces(); // original
+					handImageTexture.unbind();
+                }
 			}
 			
+			//-------------------------
 			if (bShowPuppetWireframe) {
 				ofSetColor(255,255,255, 180);
-                // puppet.drawWireframe();
-                refinedMesh.drawWireframe();
+				if (bUseSubdivision){
+					refinedMesh.drawWireframe();
+				} else {
+					puppet.drawWireframe();
+				}
 			}
+			
+			//-------------------------
 			if (bShowPuppetSkeleton) {
 				currentSkeleton->draw();
 			}
 			if (bShowPuppetControlPoints){
 				puppet.drawControlPoints();
-                //refinedMesh.drawCotrolPoints();
 			}
 			if (bShowPuppetMeshPoints){
 				ofPushMatrix();
@@ -348,6 +354,7 @@ void PuppetManager::drawPuppet (bool bComputeAndDisplayPuppet, ofTexture &handIm
 				ofPopMatrix();
 			}
 			
+			//-------------------------
 			int scene = getRadioSelection(sceneRadio);
 			scenes[scene]->draw();
 		}
