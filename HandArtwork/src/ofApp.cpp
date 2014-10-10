@@ -94,6 +94,7 @@ void ofApp::setup(){
 	
 	imgW			= cameraWidth;
     imgH			= cameraHeight;
+	currentSceneID  = 0;
 	
 	bWorkAtHalfScale = true; // HAS to be true, 'cuz something no longer works elsewise.
 	if (bWorkAtHalfScale){
@@ -141,7 +142,9 @@ void ofApp::setup(){
 	bComputePixelBasedFrameDifferencing = false;
 	bDoCompositeThresholdedImageWithLeapFboPixels = false;
 	bDrawGradient               = true;
-	bKioskMode                  = false;
+	bKioskMode                  = true;
+    bInIdleMode                 = true;
+	bUseBothTypesOfScenes		= true;
 	
 	//--------------- Setup LEAP
 	leap.open();
@@ -214,11 +217,13 @@ void ofApp::setup(){
 	tempGrayscaleMat1.create	(imgH, imgW, CV_8UC1);
 	tempGrayscaleMat2.create	(imgH, imgW, CV_8UC1);
 	gradientThreshImg.create	(imgH, imgW, CV_8UC1);
+	leapArmPixelsOnlyMat.create	(imgH, imgW, CV_8UC1);
 	
 	videoMat.create				(imgH, imgW, CV_8UC3);
 	leapDiagnosticFboMat.create	(imgH, imgW, CV_8UC3); // 3-channel
 	coloredBinarizedImg.create	(imgH, imgW, CV_8UC3); // 3-channel
 	thresholdedFinal8UC3.create (imgH, imgW, CV_8UC3);
+	
     
 	
 	graySmall.create			(imgH/4, imgW/4, CV_8UC1);
@@ -227,6 +232,10 @@ void ofApp::setup(){
 	rgbVideoChannelMats[0].create (imgH, imgW, CV_8UC1);
 	rgbVideoChannelMats[1].create (imgH, imgW, CV_8UC1);
 	rgbVideoChannelMats[2].create (imgH, imgW, CV_8UC1);
+	
+	leapFboChannelMats[0].create (imgH, imgW, CV_8UC1);
+	leapFboChannelMats[1].create (imgH, imgW, CV_8UC1);
+	leapFboChannelMats[2].create (imgH, imgW, CV_8UC1);
 	
 
 	
@@ -260,9 +269,9 @@ void ofApp::setup(){
 	amountOfPixelMotion01 = 0;
 	amountOfLeapMotion01 = 0;
 	zHandExtent = 0.00;
-	motionAlpha = 0.95;
-	zExtentAlpha = 0.3;
-	fingerCurlAlpha = 0.65;
+	motionAlpha = 0.60;
+	zExtentAlpha = 0.30;
+	fingerCurlAlpha = 0.60;
 	amountOfFingerCurl01 = 0;
 	
 	elapsedMicros = 0;
@@ -280,6 +289,7 @@ void ofApp::setup(){
 	myHandContourAnalyzer.setup(imgW, imgH);
 	myHandMeshBuilder.initialize(imgW, imgH);
 	myHandMeshBuilder.setWorkAtHalfScale(bWorkAtHalfScale);
+	bSuccessfullyBuiltMesh = false;
 	
 	// PUPPET MANAGER & PUPPET
 	myPuppetManager.setupPuppeteer (myHandMeshBuilder);
@@ -510,7 +520,9 @@ void ofApp::setupGui() {
     ofxUICanvas* gui4 = new ofxUICanvas();
     gui4->setName("GUI4");
     gui4->addLabel("What to Render");
+	gui4->addToggle("bUseBothTypesOfScenes",			&bUseBothTypesOfScenes);
 	gui4->addToggle("useTopologyModifierManager",		&useTopologyModifierManager);
+	gui4->addIntSlider("nTolerableTriangleIntersections", 0, 500,			&(myHandMeshBuilder.nTolerableTriangleIntersections));
 
     gui4->addSlider("backgroundGray", 0,255,            &backgroundGray); // slider
 	gui4->addLabelToggle("bDrawImageInBackground",		&bDrawImageInBackground);
@@ -574,6 +586,7 @@ int getSelection(ofxUIRadio* radio) {
 //--------------------------------------------------------------
 void ofApp::update(){
 	
+	bSuccessfullyBuiltMesh = false;
 	long long computerVisionStartTime = ofGetElapsedTimeMicros();
 	
 	updateBufferedVideoPlaybackIfUsingStoredVideo();
@@ -589,7 +602,7 @@ void ofApp::update(){
 	renderDiagnosticLeapFboAndExtractItsPixelData();
 
 	updateComputerVision();
-    updateHandMesh();
+    bSuccessfullyBuiltMesh = updateHandMesh();
 	updateLeapHistoryRecorder();
 	
 	// Update the app's main state machine, including feedback to the user.
@@ -601,31 +614,50 @@ void ofApp::update(){
 	elapsedMicros = 0.8*elapsedMicros + 0.2*elapsedMicrosThisFrame;
 	elapsedMicrosInt = (int) elapsedMicros;
 	
-	if(useTopologyModifierManager) {
-        if(bComputeAndDisplayPuppet) {
-            myTopologyModifierManager.update(myHandMeshBuilder);
-        }
-    } else {
-        // Update all aspects of the puppet geometry
-        myPuppetManager.updatePuppeteer( bComputeAndDisplayPuppet, myHandMeshBuilder);
-    }
-
-    
+	bool bMeshesAreProbablyOK = (appFaultManager.doCurrentFaultsIndicateLikelihoodOfBadMeshes() == false);
+	if (bSuccessfullyBuiltMesh && bMeshesAreProbablyOK){
+		
+		if (bUseBothTypesOfScenes){
+			// mix topo and regular.
+			
+			if (currentSceneID < 2){
+				useTopologyModifierManager = true;
+				myTopologyModifierManager.update (myHandMeshBuilder);
+				myPuppetManager.updatePuppeteerDummy();
+				myHandMeshBuilder.nTolerableTriangleIntersections = 20;
+			} else {
+				useTopologyModifierManager = false;
+				myPuppetManager.updatePuppeteer (bComputeAndDisplayPuppet, myHandMeshBuilder);
+				myHandMeshBuilder.nTolerableTriangleIntersections = 500;
+			}
+			
+		} else {
+			// We're selecting between topo and regular.
+			// Update all aspects of the puppet geometry
+			if (useTopologyModifierManager) {
+				myTopologyModifierManager.update (myHandMeshBuilder);
+			} else {
+				myPuppetManager.updatePuppeteer (bComputeAndDisplayPuppet, myHandMeshBuilder);
+			}
+		}
+	}
     
     // check if we are in idle mode
     if(appFaultManager.getHasFault(FAULT_NO_USER_PRESENT_LONG) && leap.getLeapHands().size() == 0){
         bInPlaybackMode = true;
         playing = true;
         myPuppetManager.bInIdleMode = true;
-        
+        bInIdleMode = true;
+        // cout << "leap hands" << leap.getLeapHands().size() << endl;
+        //cout << "IDLE MODE ON" << endl;
         // set puppet darw mode and alpha
     }else if( leap.getLeapHands().size() > 0 && bInPlaybackMode){
         bInPlaybackMode = false;
         myPuppetManager.bInIdleMode = false;
+        bInIdleMode = false;
 
     }
     
-    // cout << "leap hands" << leap.getLeapHands().size() << endl;
 }
 
 
@@ -759,6 +791,7 @@ void ofApp::updateComputerVision(){
 	computeFrameDifferencing();							// not used presently
 	thresholdLuminanceImage();
 	applyMorphologicalOps();
+	compositeLeapArmIntoThresholdedFinal();
 	compositeThresholdedImageWithLeapFboPixels();
 	
 	myHandContourAnalyzer.update (thresholdedFinal, leapDiagnosticFboMat, leapVisualizer);
@@ -766,23 +799,65 @@ void ofApp::updateComputerVision(){
 }
 
 //--------------------------------------------------------------
-void ofApp::updateHandMesh(){
+void ofApp::compositeLeapArmIntoThresholdedFinal(){
+	
+	// In some circumstances, we are losing the user's "arm":
+	// -- Because of shadowing, since it is further away from the light sources, and sometimes in the shadow of the hand;
+	// -- Because of sleeves, since it is October in Amsterdam and people are feeling chilly.
+	// For this reason, we grab the pixels corresponding to their arm from the leap image,
+	// and add them to the thresholded image.
+	
+	// Extract 8UC3 pixel data from leapDiagnosticFbo into leapFboPixels.
+	// This part is NECESSARY for the proper functioning of the app!
+	bool thisIsNotNegotiableDoNotTouchThis = true;
+	if (thisIsNotNegotiableDoNotTouchThis){
+		leapDiagnosticFbo.readToPixels(leapFboPixels);
+		unsigned char *leapDiagnosticFboPixelData = leapFboPixels.getPixels();
+		leapDiagnosticFboMat.data = leapDiagnosticFboPixelData;
+		cv::flip (leapDiagnosticFboMat, leapDiagnosticFboMat, 0);
+	}
+	
+	bool bDoAddLeapArmToThresholdedFinal = true;
+	if (bDoAddLeapArmToThresholdedFinal){
+		
+		// Split apart the channels of the leapFboMat
+		split(leapDiagnosticFboMat, leapFboChannelMats);
+		leapFboChannelMats[2].copyTo (leapArmPixelsOnlyMat);
+		
+		// get the arm only. Those are the pixels in the blue channel with a value of 32.
+		unsigned char* armPixels = leapArmPixelsOnlyMat.data;
+		int nPixels = imgW * imgH;
+		unsigned char val;
+		for (int i=0; i<nPixels; i++){
+			val = armPixels[i];
+			armPixels[i] = (val == 32) ? 255 : 0;
+		}
+		
+		// OR the arm pixels with the thresholded final.
+		cv::bitwise_or(leapArmPixelsOnlyMat, thresholdedFinal, thresholdedFinal);
+	}
+}
+
+//--------------------------------------------------------------
+bool ofApp::updateHandMesh(){
 	
 	bool bRefined = myHandContourAnalyzer.refineCrotches (leapVisualizer, grayMat, thresholdedFinal, leapDiagnosticFboMat);
     ofVec3f& theHandCentroid     = myHandContourAnalyzer.handCentroidLeap;
     ofVec3f& theLeapWristPoint   = myHandContourAnalyzer.wristPosition;
+	bool bSuccess = false;
     
 	if (bRefined){
 		ofPolyline &theHandContour  = myHandContourAnalyzer.theHandContourRefined;
 		Handmark *theHandmarks      = myHandContourAnalyzer.HandmarksRefined;
-		myHandMeshBuilder.buildMesh (theHandContour, theHandCentroid, theLeapWristPoint, theHandmarks);
+		bSuccess = myHandMeshBuilder.buildMesh (theHandContour, theHandCentroid, theLeapWristPoint, theHandmarks);
 		
 	} else {
 		ofPolyline &theHandContour  = myHandContourAnalyzer.theHandContourResampled;
 		Handmark *theHandmarks      = myHandContourAnalyzer.Handmarks;
-		myHandMeshBuilder.buildMesh (theHandContour, theHandCentroid, theLeapWristPoint, theHandmarks);
+		bSuccess = myHandMeshBuilder.buildMesh (theHandContour, theHandCentroid, theLeapWristPoint, theHandmarks);
 	}
 	
+	return bSuccess;
 }
 
 
@@ -1186,13 +1261,16 @@ void ofApp::renderDiagnosticLeapFboAndExtractItsPixelData(){
 //--------------------------------------------------------------
 void ofApp::compositeThresholdedImageWithLeapFboPixels(){
 	
+	/* 
+	// done earlier in compositeLeapArmIntoThresholdedFinal!
 	// Extract 8UC3 pixel data from leapDiagnosticFbo into leapFboPixels.
 	// This part is necessary
+	//
 	leapDiagnosticFbo.readToPixels(leapFboPixels);
 	unsigned char *leapDiagnosticFboPixelData = leapFboPixels.getPixels();
 	leapDiagnosticFboMat.data = leapDiagnosticFboPixelData;
 	cv::flip (leapDiagnosticFboMat, leapDiagnosticFboMat, 0);
-	
+	*/
 	
 	if (bDoCompositeThresholdedImageWithLeapFboPixels){
 		// Composite the colored orientation image (in leapFboMat) against
@@ -1231,13 +1309,30 @@ void ofApp::draw(){
 	
 	// set puppet or topology modifier gui visibility
     if(guiTabBar->isVisible()) {
-        if(useTopologyModifierManager) {
-            myTopologyModifierManager.setGuiVisibility(true);
-            myPuppetManager.setGuiVisibility(false);
-        } else {
-            myPuppetManager.setGuiVisibility(true);
-            myTopologyModifierManager.setGuiVisibility(false);
-        }
+		
+		
+		if (bUseBothTypesOfScenes){
+			if (currentSceneID < 2){
+				useTopologyModifierManager = true;
+				myTopologyModifierManager.setGuiVisibility(true);
+				myPuppetManager.setGuiVisibility(false);
+			} else {
+				useTopologyModifierManager = false;
+				myPuppetManager.setGuiVisibility(true);
+				myTopologyModifierManager.setGuiVisibility(false);
+			}
+			
+		} else {
+			
+			if(useTopologyModifierManager) {
+				myTopologyModifierManager.setGuiVisibility(true);
+				myPuppetManager.setGuiVisibility(false);
+			} else {
+				myPuppetManager.setGuiVisibility(true);
+				myTopologyModifierManager.setGuiVisibility(false);
+			}
+		}
+		
     } else {
         myPuppetManager.setGuiVisibility(false);
         myTopologyModifierManager.setGuiVisibility(false);
@@ -1260,18 +1355,7 @@ void ofApp::draw(){
             }
         }
     }
-    if (bDrawMeshBuilderWireframe){
-        drawMeshBuilderWireframe();
-    }
-    if (bShowText){
-		drawText();
-    }
-    if (bDrawMiniImages) {
-        drawDiagnosticMiniImages();
-    }
-    if (bDrawContourAnalyzer){
-        drawContourAnalyzer();
-    }
+
     
     
 
@@ -1283,11 +1367,17 @@ void ofApp::draw(){
         ofPushMatrix();
 		ofSetColor(255,255,255);
         
-        bool bEverythingIsAwesome = true;
-        bool bCalculatedMesh = myHandMeshBuilder.bCalculatedMesh;
-        bEverythingIsAwesome = bCalculatedMesh; // && there's no show-stopping fault!
-        // TODO: Check here for application faults, such as too-fast, etc,
+        bool bEverythingIsAwesome = false;
+        bool bCalculatedMesh = bSuccessfullyBuiltMesh; //myHandMeshBuilder.bCalculatedMesh;
+		bool bMeshesAreProbablyOK = (appFaultManager.doCurrentFaultsIndicateLikelihoodOfBadMeshes() == false);
+	
+        bEverythingIsAwesome = bCalculatedMesh && bMeshesAreProbablyOK;
         
+        // quick hack so live video does not show in idle mode
+        if( bKioskMode && bInIdleMode){
+            bEverythingIsAwesome = false;
+        }
+    
         if (bEverythingIsAwesome){
             
             // ALL GOOD! SHOW THE PUPPET!
@@ -1295,13 +1385,13 @@ void ofApp::draw(){
 			// Before we show the puppet, however, show an image in the background if desired.
 			if (bDrawImageInBackground){
 				ofPushMatrix();
-				float bgScale = puppetDisplayScale * 1.0;
-				float ox = ofGetWindowWidth()      - cameraWidth*bgScale;
-				float oy = ofGetWindowHeight()/2.0 - cameraHeight*bgScale/2.0;
-				ofTranslate( ox, oy, 0);
-				ofScale (bgScale, bgScale);
-				ofSetColor(255,255,255);
-				backgroundImage.draw(0,0, 1024,768);
+                    float bgScale = puppetDisplayScale * 1.0;
+                    float ox = ofGetWindowWidth()      - cameraWidth*bgScale;
+                    float oy = ofGetWindowHeight()/2.0 - cameraHeight*bgScale/2.0;
+                    ofTranslate( ox, oy, 0);
+                    ofScale (bgScale, bgScale);
+                    ofSetColor(255,255,255);
+                    backgroundImage.draw(0,0, 1024,768);
 				ofPopMatrix();
 			}
 			
@@ -1317,26 +1407,28 @@ void ofApp::draw(){
             ofTexture &handImageTexture = (bInPlaybackMode) ?
 					(video.getTextureReference()) :
 					(processFrameImg.getTextureReference());
-            
-            if (useTopologyModifierManager) {
-                if(bComputeAndDisplayPuppet) {
-                    myTopologyModifierManager.draw (handImageTexture);
-                }
-            } else {
-                // Draw the puppet.
-                myPuppetManager.drawPuppet (bComputeAndDisplayPuppet, handImageTexture);
-            }
-            
-			/*
-            // Select the texture from the camera or the stored video, depending on the playback mode.
-            ofTexture &handImageTexture = (bInPlaybackMode) ?
-                (video.getTextureReference()) :
-                (processFrameImg.getTextureReference());
-            
-            // Draw the puppet.
-            myPuppetManager.drawPuppet(bComputeAndDisplayPuppet, handImageTexture);
-            */
-        
+			
+			
+			if (bUseBothTypesOfScenes){
+				// mix topo and regular.
+				if (currentSceneID < 2){
+					useTopologyModifierManager = true;
+					myTopologyModifierManager.draw(handImageTexture);
+				} else {
+					useTopologyModifierManager = false;
+					myPuppetManager.drawPuppet(bComputeAndDisplayPuppet, handImageTexture);
+				}
+				
+			} else {
+				// We're selecting between topo and regular.
+				if (useTopologyModifierManager) {
+					myTopologyModifierManager.draw (handImageTexture);
+				} else {
+					// Draw the puppet.
+					myPuppetManager.drawPuppet (bComputeAndDisplayPuppet, handImageTexture);
+				}
+			}
+
         } else {
             
             // THE PUPPET IS FAULTY :(
@@ -1348,16 +1440,23 @@ void ofApp::draw(){
 				// We show it at full (1024x768) resolution, and we include its own natural background.
 				// Note: the image needs to be scaled by puppetscale, or else there is scale-flipping.
 				//
-				ofPushMatrix();
-				float bgScale = puppetDisplayScale * 1.0;
-				float ox = ofGetWindowWidth()      - cameraWidth*bgScale;
-				float oy = ofGetWindowHeight()/2.0 - cameraHeight*bgScale/2.0;
-				ofTranslate( ox, oy, 0);
-				ofScale (bgScale, bgScale);
-				ofSetColor(255,255,255);
-				colorVideo.draw(0,0, 1024,768);
-				ofPopMatrix();
 				
+                if(bInIdleMode && bKioskMode){
+                    drawIdleContour();
+                }else{
+                    ofPushMatrix();
+                    float bgScale = puppetDisplayScale * 1.0;
+                    float ox = ofGetWindowWidth()      - cameraWidth*bgScale;
+                    float oy = ofGetWindowHeight()/2.0 - cameraHeight*bgScale/2.0;
+                    ofTranslate( ox, oy, 0);
+                    ofScale (bgScale, bgScale);
+                    ofSetColor(255,255,255);
+                    colorVideo.draw(0,0, 1024,768);
+                    ofPopMatrix();
+                    
+                }
+                
+                
 			} else {
 				
 				// We're not drawing an image in the background;
@@ -1393,6 +1492,19 @@ void ofApp::draw(){
  
 	}
 
+    // Diagnostics
+    if (bDrawMeshBuilderWireframe){
+        drawMeshBuilderWireframe();
+    }
+    if (bShowText){
+		drawText();
+    }
+    if (bDrawMiniImages) {
+        drawDiagnosticMiniImages();
+    }
+    if (bDrawContourAnalyzer){
+        drawContourAnalyzer();
+    }
     
     //-----------------------------------
     // 3. DISPLAY FEEDBACK TO USER:
@@ -1408,6 +1520,7 @@ void ofApp::draw(){
         appFaultManager.drawDebug(ofGetWidth()-200,20); // shows all active faults as debug text
     }
     appFaultManager.drawFaultHelpScreen();
+	
     
     
     float handTooHighDur = myAppFaultManager.getDurationOfFault (FAULT_HAND_TOO_HIGH);
@@ -1680,7 +1793,7 @@ void ofApp::applicationStateMachine(){
     
     
     // scene on too long
-    if( ofGetElapsedTimef() - myPuppetManager.sceneStartTime > 25 ){
+    if( ofGetElapsedTimef() - myPuppetManager.sceneStartTime > 50 ){
         appFaultManager.updateHasFault (FAULT_SAME_SCENE_TOO_LONG, dt);
     }else{
         appFaultManager.updateResetFault(FAULT_SAME_SCENE_TOO_LONG);
@@ -1982,7 +2095,7 @@ void ofApp::drawText(){
 void ofApp::drawGradientOverlay(){
     
     int offSet = 50;
-    int boxSize = 300+offSet;
+    int boxSize = 275+offSet;
     
     ofFill();
     ofSetColor(0,255);
@@ -1998,6 +2111,28 @@ void ofApp::drawGradientOverlay(){
     glVertex2f(ofGetWidth()-boxSize,ofGetHeight());
     glEnd();
     
+}
+
+void ofApp::drawIdleContour(){
+    
+    // get contours from handContourAnalyzer
+    ofPushStyle();
+    
+    ofSetColor(255,255,255);
+    backgroundImage.draw(0,0, 1024,768);
+
+    ofSetLineWidth(4);
+    ofSetColor(25,200,255,200);
+    ofPolyline smoothContour = myHandContourAnalyzer.theHandContourVerySmooth;
+    ofPushMatrix();
+        ofTranslate(20,-80,0);
+        ofScale(2.5,2.5,1);
+//        for(int i = 0; i < smoothContour.size();i+=2){
+//            ofEllipse(smoothContour[i].x,smoothContour[i].y,2,2);
+//        }
+        smoothContour.draw();
+    ofPopMatrix();
+    ofPopStyle();
 }
 
 //--------------------------------------------------------------
@@ -2240,7 +2375,10 @@ void ofApp::keyPressed(int key){
 			break;
       case 'k':
             bKioskMode = !bKioskMode;
-            if(!bKioskMode) myPuppetManager.bInIdleMode = false;
+            if(!bKioskMode){
+                myPuppetManager.bInIdleMode = false;
+                bInIdleMode = false;
+            }
             break;
             
     }
@@ -2278,17 +2416,63 @@ void ofApp::mousePressed(int x, int y, int button){
 //--------------------------------------------------------------
 void ofApp::mouseReleased(int x, int y, int button){
     
-    
-    // calculate distance from swipeStart
-    float dist = fabs(y-swipeStart);
-    if(dist > 100){
-        if(y > swipeStart) myPuppetManager.animateSceneChange(-1);
-        else myPuppetManager.animateSceneChange(1);
-    }else if(!guiTabBar->isVisible()){
-        
-        myPuppetManager.animateSceneChange(0);
-        
-    }
+	if (bUseBothTypesOfScenes){
+		
+		int nTopoScenes = 2;
+		int nPuppScenes = myPuppetManager.scenes.size();
+		int nTotalScenes = nTopoScenes + nPuppScenes;
+		
+		// get direction of swipe.
+		int dir = 1;
+		float dist = fabs(y-swipeStart);
+		if (dist > 20){
+			if (y > swipeStart){
+				dir = -1;
+			} else {
+				dir =  1;
+			}
+		}
+		
+		// modify currentSceneID
+		currentSceneID = (currentSceneID + dir + nTotalScenes)%nTotalScenes;
+		
+		// inform puppeteers
+		if ((currentSceneID == 0) || (currentSceneID == 1)){
+			myTopologyModifierManager.setScene (currentSceneID);
+			useTopologyModifierManager = true;
+			
+		} else {
+			int whichPuppScene = currentSceneID - nTopoScenes;
+			myPuppetManager.animateSceneChangeToGivenScene (whichPuppScene, dir);
+			useTopologyModifierManager = false;
+		}
+		
+		
+		// printf("currentSceneID      = %d\n", currentSceneID);
+	
+	} else {
+	
+	
+	
+		
+		// calculate distance from swipeStart
+		float dist = fabs(y-swipeStart);
+		if (dist > 100){
+			if (y > swipeStart){
+				myPuppetManager.animateSceneChange(-1);
+			} else {
+				myPuppetManager.animateSceneChange( 1);
+			}
+		} else if (!guiTabBar->isVisible()){
+			myPuppetManager.animateSceneChange(0);
+		}
+		
+	}
+	
+	
+	
+		
+
 }
 
 //--------------------------------------------------------------

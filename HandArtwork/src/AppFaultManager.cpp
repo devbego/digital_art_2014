@@ -156,6 +156,48 @@ vector<ApplicationFault> AppFaultManager::getAllFaults(){
     
 }
 
+
+//===================================================================
+bool AppFaultManager::doCurrentFaultsIndicateLikelihoodOfBadMeshes(){
+	
+	ApplicationFault activeFault = FAULT_NOTHING_WRONG;
+    
+    bool bBadFaultIsHappening = false;
+    
+    // find the fault on the longest and above its time limit
+    typedef std::map<ApplicationFault,float>::iterator it_type;
+    for(it_type iterator = timeHasFault.begin(); iterator != timeHasFault.end(); iterator++) {
+        ApplicationFault aFault = iterator->first;
+		float timeFaultIsOn = iterator->second;
+		if (timeFaultIsOn > 0){
+			switch (aFault){
+				case FAULT_LEAP_DROPPED_FRAME:
+				case FAULT_NO_LEAP_OBJECT_PRESENT:
+				case FAULT_TOO_MANY_HANDS:
+				case FAULT_HAND_TOO_FAST:
+				case FAULT_HAND_TOO_HIGH:
+				case FAULT_HAND_TOO_CURLED:
+				case FAULT_HAND_TOO_VERTICAL:
+				case FAULT_HAND_NOT_DEEP_ENOUGH:
+				case FAULT_NO_USER_PRESENT_BRIEF:
+				case FAULT_NO_USER_PRESENT_LONG:
+					bBadFaultIsHappening = true;
+					break;
+				
+				default:
+					bBadFaultIsHappening = false;
+					break;
+			}
+		}
+        
+    }
+
+	return bBadFaultIsHappening;
+}
+
+
+
+//===================================================================
 void AppFaultManager::drawFaultHelpScreen(){
     
     // use priority to choose shown fault
@@ -174,7 +216,6 @@ void AppFaultManager::drawFaultHelpScreen(){
 //            timeOn = iterator->second;
 //        }
 //    }
-    
     
     //cout << "activeFault " << activeFault << endl;
     

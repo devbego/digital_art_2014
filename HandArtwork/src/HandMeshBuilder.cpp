@@ -24,6 +24,8 @@ void HandMeshBuilder::initialize(int w, int h){
 	
 	informThereIsNoHandPresent();
 	bWorkAtHalfScale = true; // absolutely definitely.
+	
+	nTolerableTriangleIntersections = 20;
 }
 
 //============================================================
@@ -65,7 +67,7 @@ ofMesh& HandMeshBuilder::getMesh(){
 
 
 //============================================================
-void HandMeshBuilder::buildMesh (ofPolyline &handContour, ofVec3f &handCentroid, ofVec3f &leapWristPoint, Handmark *hmarks){
+bool HandMeshBuilder::buildMesh (ofPolyline &handContour, ofVec3f &handCentroid, ofVec3f &leapWristPoint, Handmark *hmarks){
 	
 	bCalculatedMesh = false;
 	bRenderIntermediate = false;
@@ -85,7 +87,7 @@ void HandMeshBuilder::buildMesh (ofPolyline &handContour, ofVec3f &handCentroid,
 				bAllHandmarkIndicesValid = false;
 				printf ("problem with handmark %d: %d\n", i, hmarks[i].index);
 				bCalculatedMesh = false;
-                return;
+                return bCalculatedMesh;
 			}
 		}
 		if (bAllHandmarkIndicesValid){
@@ -100,8 +102,9 @@ void HandMeshBuilder::buildMesh (ofPolyline &handContour, ofVec3f &handCentroid,
 			// Catch problems with the contour and handmarks before they are passed to meshing.
 			bool contourAndHandmarksAreFaulty = areContourAndHandmarksFaulty (nContourPoints);
 			if (contourAndHandmarksAreFaulty){
+				handMesh.clear();
 				bCalculatedMesh = false;
-				return;
+				return bCalculatedMesh;
 			}
             
             theLeapCentroid.set (handCentroid.x, handCentroid.y);
@@ -141,13 +144,16 @@ void HandMeshBuilder::buildMesh (ofPolyline &handContour, ofVec3f &handCentroid,
 				bCalculatedMesh = true;
 				
 			} else {
+				handMesh.clear();
 				bCalculatedMesh = false;
-				return;
+				return bCalculatedMesh;
 			}
 			
 			
 		}
 	}
+	
+	return bCalculatedMesh;
 }
 
 //--------------------------------------------------------------
@@ -156,15 +162,20 @@ bool HandMeshBuilder::areContourAndHandmarksFaulty (int nContourPts){
 	// Catch fatal problems with the contour before it is passed to the mesher.
 	// Returns TRUE if something is faulty.
 	//
+	
+	bool bVerbose = false;
 
 	// TEST 1. Are the handmark indices valid?
 	bool bHasInvalidHandmarkIndices = false;
 	for (int i=0; i<N_HANDMARKS; i++){
 		int index = myHandmarks[i].index;
 		if ((index < 0) || (index >= nContourPts)){
+			if (bVerbose) {
+				printf("%d: -------- Problem with handmark! %d is invalid.\n", (int)ofGetElapsedTimeMillis(), i);
+			}
 			bHasInvalidHandmarkIndices = true;
 			return true;
-			//printf("%d: --------Problem with handmark! %d is invalid.\n", (int)ofGetElapsedTimeMillis(), i);
+			
 		}
 	}
 	
@@ -174,13 +185,14 @@ bool HandMeshBuilder::areContourAndHandmarksFaulty (int nContourPts){
 	for (int i=0; i<12; i++){ // only up to 12, for now.
 		int currIndex = myHandmarks[i].index;
 		if (currIndex < prevIndex){
+			if (bVerbose){
+				printf("%d: -------- Problem with handmark order! %d is out of sequence.\n", (int)ofGetElapsedTimeMillis(), i);
+			}
 			bHasHandmarksOutOfSequence = true;
 			return true;
-			//printf("%d: --------Problem with handmark order! %d is out of sequence.\n", (int)ofGetElapsedTimeMillis(), i);
 		}
 		prevIndex = currIndex;
 	}
-	
 	
 	return false;
 }
@@ -191,13 +203,13 @@ bool HandMeshBuilder::isHandMeshFaulty(){
 	// Catch fatal problems with the mesh before it is passed to the puppet.
 	// Returns TRUE if the mesh is faulty.
 	//
-	bool bIsProblematic = false;
     
-    bool bDoIncorrectNumVerticesTest = true;
-    bool bDoHasIncorrectNumFacesTest = true;
-    bool bDoHasBadValuesTest = true;
-    bool bDoDuplicatedVerticesTest = true;
-    bool bDoIntersectingTrianglesTest = false; // doesn't seem necessary; puppeteer seems resilient...
+    bool bDoIncorrectNumVerticesTest	= true;
+    bool bDoHasIncorrectNumFacesTest	= true;
+    bool bDoHasBadValuesTest			= true;
+    bool bDoDuplicatedVerticesTest		= true;
+    bool bDoIntersectingTrianglesTest	= true; // doesn't seem necessary; puppeteer seems resilient...
+	bool bDoTestForTeenyTriangles		= true;
     
     
 	// TEST 1. Does the mesh have the right number of vertices?
@@ -208,7 +220,7 @@ bool HandMeshBuilder::isHandMeshFaulty(){
         if ((numVertices != numVerticesThereShouldBe) && (numVertices > 0)){
             bHasIncorrectNumVertices = true;
             
-            printf("%d: --------Problem with numVertices: %d\n", (int)ofGetElapsedTimeMillis(), numVertices);
+            // printf("%d: --------Problem with numVertices: %d\n", (int)ofGetElapsedTimeMillis(), numVertices);
             return true;
         }
     }
@@ -221,7 +233,7 @@ bool HandMeshBuilder::isHandMeshFaulty(){
         if ((numFaces != numFacesThereShouldBe) && (numFaces > 0)){
             bHasIncorrectNumFaces = true;
             
-            printf("%d: --------Problem with numFaces: %d\n", (int)ofGetElapsedTimeMillis(), numFaces);
+            // printf("%d: --------Problem with numFaces: %d\n", (int)ofGetElapsedTimeMillis(), numFaces);
             return true;
         }
     }
@@ -232,10 +244,10 @@ bool HandMeshBuilder::isHandMeshFaulty(){
         for (int i = 0; i < handMesh.getNumVertices(); i++) {
             float px = handMesh.getVertex(i).x;
             float py = handMesh.getVertex(i).y;
-            if ((px <= 0.0001) || (py <= 0.0001) || (px > imgW) || (py > imgH)){
+            if ((px <= 0.001) || (py <= 0.001) || (px > imgW) || (py > imgH)){
                 bFoundBadValues = true;
                 
-                printf("%d: --------Problem with vertex %d:	%f	%f\n", (int)ofGetElapsedTimeMillis(), i, px,py);
+                // printf("%d: --------Problem with vertex %d:	%f	%f\n", (int)ofGetElapsedTimeMillis(), i, px,py);
                 return true;
             }
         }
@@ -246,22 +258,35 @@ bool HandMeshBuilder::isHandMeshFaulty(){
     if (bDoDuplicatedVerticesTest){
         bFoundDuplicatedVertices = checkForDuplicatedVertices();
         if (bFoundDuplicatedVertices){
-            printf("%d: --------Problem with duplicated vertices: \n", (int)ofGetElapsedTimeMillis());
+			
+            //printf("%d: --------Problem with duplicated vertices: \n", (int)ofGetElapsedTimeMillis());
             return true;
         }
     }
     
     // TEST 5. Check whether any triangles intersect each other.
     // Also checks to see if any vertices reside on the edge of another triangle.
-    bool bFoundIntersectingTriangles = false;
+    bool bFoundTooManyIntersectingTriangles = false;
     if (bDoIntersectingTrianglesTest){
-        bFoundIntersectingTriangles = check_triangle_intersections (handMesh);
-        if (bFoundIntersectingTriangles){
-            printf("%d: --------Problem with intersecting triangles! \n", (int)ofGetElapsedTimeMillis());
+		int nIntersectingTriangles = count_triangle_intersections (handMesh);
+        bFoundTooManyIntersectingTriangles = (nIntersectingTriangles > nTolerableTriangleIntersections); // WOW ARBITRARY
+        if (bFoundTooManyIntersectingTriangles){
+            
+			//printf("%d: --------Problem with too many intersecting triangles! %d \n", (int)ofGetElapsedTimeMillis(), nIntersectingTriangles);
             return true;
         }
     }
     
+	// TEST 6. Check for triangles whose sides or areas are less than some epsilon.
+	bool bFoundTrianglesThatWereTooTeeny = false;
+	if (bDoTestForTeenyTriangles){
+		bFoundTrianglesThatWereTooTeeny = checkForTrianglesThatAreTooTeeny (handMesh);
+		if (bFoundTrianglesThatWereTooTeeny){
+			
+			// printf("%d: --------Problem with triangles too small! \n", (int)ofGetElapsedTimeMillis());
+			return true;
+		}
+	}
     
 	// Other possible tests:
 	// Are all faces oriented the correct direction?
@@ -874,6 +899,8 @@ void HandMeshBuilder::addFingersToHandMesh (){
 				handMesh.addVertex(ofPoint(avgx,avgy,0.0));
 				handMesh.addVertex(ofPoint(px21,py21,0.0));
 			}
+		} else {
+			printf ("Unexpected problem in addFingersToHandMesh()!\n");
 		}
 		
 		//---------------
@@ -1728,16 +1755,72 @@ void HandMeshBuilder::drawMesh(){
 
 void HandMeshBuilder::drawMeshWireframe(){
 	if (bCalculatedMesh){
+		ofPushStyle();
 		ofSetColor(0,204,255);
 		handMesh.drawWireframe();
+		ofPopStyle();
 	}
 }
 
 void HandMeshBuilder::drawRefinedMeshWireframe(){
     if (bCalculatedMesh){
+		ofPushStyle();
         ofSetColor(12,255,100);
         refinedHandMesh.drawWireframe();
+		ofPopStyle();
     }
+}
+
+
+bool HandMeshBuilder::checkForTrianglesThatAreTooTeeny (ofMesh &mesh){
+	
+	float myLengthEpsilon = 0.05;
+	float myAreaEpsilon   = 0.05;
+	
+	bool bKeepTrackOfShortest = false;
+	float shortestEdge = 99999;
+	float smallestArea = 99999;
+	
+	int len = mesh.getNumIndices();
+    for (int i=0; i<len; i+=3){
+        ofVec3f v1 = mesh.getVertex(mesh.getIndex(i    ));
+        ofVec3f v2 = mesh.getVertex(mesh.getIndex(i + 1));
+        ofVec3f v3 = mesh.getVertex(mesh.getIndex(i + 2));
+		
+		// Determine if any sides are too short.
+		//
+		float d12 = v1.distance(v2);
+		if (d12 < myLengthEpsilon){ return true; }
+		float d13 = v1.distance(v3);
+		if (d13 < myLengthEpsilon){ return true; }
+		float d23 = v2.distance(v3);
+		if (d23 < myLengthEpsilon){ return true; }
+		
+		// Use Heron's formula to get area.
+		// See http://mathworld.wolfram.com/TriangleArea.html
+		//
+		float s = (d12 + d13 + d23)/2.0; // semiPerimeter
+		float triangleArea = sqrtf ( s*(s - d12)*(s - d13)*(s - d23));
+		if (triangleArea < myAreaEpsilon){ return true; }
+		
+		
+		// keep track of minima, for research purposes.
+		if (bKeepTrackOfShortest){
+			if (d12 < shortestEdge){ shortestEdge = d12; }
+			if (d13 < shortestEdge){ shortestEdge = d13; }
+			if (d23 < shortestEdge){ shortestEdge = d23; }
+			if (triangleArea < smallestArea){
+				smallestArea = triangleArea;
+			}
+		}
+	}
+
+	bool bVerbose = false;
+	if (bVerbose && bKeepTrackOfShortest){
+		printf ("Smallest triArea = %f		Shortest edge = %f\n", smallestArea, shortestEdge);
+	}
+	
+	return false;
 }
 
 
@@ -1745,7 +1828,7 @@ void HandMeshBuilder::drawRefinedMeshWireframe(){
 // Returns true iff the mesh contains two index defined traingles that intersect.
 bool HandMeshBuilder::check_triangle_intersections(ofMesh &mesh)
 {
-    
+	
     int len = mesh.getNumIndices();
     for(int i = 0; i < len; i += 3)
     {
@@ -1772,10 +1855,10 @@ bool HandMeshBuilder::check_triangle_intersections(ofMesh &mesh)
             {
                 //cout << "DEbug1" << endl;
                 //handMesh.save("PotentialFault1.ply");
-                return true;
+				return true;
             }
             
-            bool bb = point_triangle_intersection(v1, v2, v3, p1);
+            bool bb  = point_triangle_intersection(v1, v2, v3, p1);
             bool bb2 = point_triangle_intersection(v1, v2, v3, p2);
             bool bb3 = point_triangle_intersection(v1, v2, v3, p3);
             
@@ -1789,9 +1872,55 @@ bool HandMeshBuilder::check_triangle_intersections(ofMesh &mesh)
         }
         
     }
-    
+	
     return false;
     
+}
+
+
+
+
+// Counts triangles that intersect.
+int HandMeshBuilder::count_triangle_intersections (ofMesh &mesh)
+{
+    
+	int nTriangleIntersections = 0;
+	
+    int len = mesh.getNumIndices();
+    for(int i = 0; i < len; i += 3)
+    {
+        ofVec3f v1 = mesh.getVertex(mesh.getIndex(i));
+        ofVec3f v2 = mesh.getVertex(mesh.getIndex(i + 1));
+        ofVec3f v3 = mesh.getVertex(mesh.getIndex(i + 2));
+        
+        for(int j = 0; j < len; j += 3)
+        {
+            if(j == i)
+            {
+                continue;
+            }
+            
+            ofVec3f p1 = mesh.getVertex(mesh.getIndex(j));
+            ofVec3f p2 = mesh.getVertex(mesh.getIndex(j + 1));
+            ofVec3f p3 = mesh.getVertex(mesh.getIndex(j + 2));
+            
+            int b  = Intersecting(p1, p2, v1, v2, v3);
+            int b2 = Intersecting(p2, p3, v1, v2, v3);
+            int b3 = Intersecting(p3, p1, v1, v2, v3);
+            
+            if (b == 1 || b2 == 1 || b3 == 1){
+				nTriangleIntersections++;
+            }
+            
+        }
+        
+    }
+	
+	if (nTriangleIntersections > 0){
+		//printf ("%d ------- nTriangleIntersections = %d\n", (int)ofGetElapsedTimeMillis(), nTriangleIntersections);
+	}
+    
+    return nTriangleIntersections;
 }
 
 
