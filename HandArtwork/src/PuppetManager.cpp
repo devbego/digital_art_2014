@@ -12,20 +12,24 @@
 //--------------------------------------------------------------
 void PuppetManager::setupPuppeteer (HandMeshBuilder &myHandMeshBuilder){
 	
-    initialSceneID = 4;
+    initialSceneID = 0;
+	prevRequestedScene = 0;
     
 	// Create all of the scenes
 
+	scenes.push_back(new SinusoidalLengthScene	(&puppet, &handSkeleton, &immutableHandSkeleton));
     scenes.push_back(new WiggleScene			(&puppet, &handSkeleton, &immutableHandSkeleton));
 	scenes.push_back(new EqualizeScene			(&puppet, &handSkeleton, &immutableHandSkeleton));
 	scenes.push_back(new LissajousScene			(&puppet, &threePointSkeleton, &immutableThreePointSkeleton));
 	scenes.push_back(new MeanderScene			(&puppet, &handSkeleton, &immutableHandSkeleton));
-	scenes.push_back(new SinusoidalLengthScene	(&puppet, &handSkeleton, &immutableHandSkeleton));
     scenes.push_back(new PulsatingPalmScene		(&puppet, &palmSkeleton, &immutablePalmSkeleton));
 	scenes.push_back(new StartrekScene			(&puppet, &handSkeleton, &immutableHandSkeleton));
 	scenes.push_back(new SplayFingersScene		(&puppet, &handWithFingertipsSkeleton, &immutableHandWithFingertipsSkeleton));
 	scenes.push_back(new SpringFingerScene		(&puppet, &handSkeleton, &immutableHandSkeleton));
     scenes.push_back(new SplayFingers2Scene		(&puppet, &handWithFingertipsSkeleton, &immutableHandWithFingertipsSkeleton));
+	
+	
+	
     
 	///// scenes.push_back(new RetractingFingersScene	(&puppet, &handWithFingertipsSkeleton, &immutableHandWithFingertipsSkeleton));
 	///// scenes.push_back(new GrowingMiddleFingerScene	(&puppet, &handWithFingertipsSkeleton, &immutableHandWithFingertipsSkeleton));
@@ -189,13 +193,48 @@ void PuppetManager::setScene( int sceneIndex ){
     toggles[sceneIndex]->setValue(true);
 }
 
-void PuppetManager::animateSceneChange(int dir){
+//--------------------------------------------------------------
+int PuppetManager::getCurrentSceneID(){
+
+	vector<ofxUIToggle*> toggles = sceneRadio->getToggles();
+	for (int i = 0; i < toggles.size(); i++) {
+		if (toggles[i]->getValue()) {
+			return i;
+		}
+	}
+	return -1;
+}
+
+//--------------------------------------------------------------
+void PuppetManager::animateSceneChangeToGivenScene (int whichScene, int dir){
+	bSwappingOut = true;
+    bSwappingIn = false;
+    swapCounter = 0;
+    
+	int currScene = getRadioSelection(sceneRadio);
+	
+	if(dir > 0) swapTarget = ofGetHeight();
+    else swapTarget = -ofGetHeight()*.5;
+	
+    vector<ofxUIToggle*> toggles = sceneRadio->getToggles();
+	currScene = whichScene % toggles.size();
+
+    nextSceneId = currScene;
+	printf ("Pupp: nextScene = %d\n", nextSceneId);
+	
+	prevRequestedScene = whichScene;
+}
+
+
+//--------------------------------------------------------------
+void PuppetManager::animateSceneChange (int dir){
     bSwappingOut = true;
     bSwappingIn = false;
     swapCounter = 0;
     
-    if(dir > 0)swapTarget = ofGetHeight();
+    if(dir > 0) swapTarget = ofGetHeight();
     else swapTarget = -ofGetHeight()*.5;
+	
     
     int currScene = getRadioSelection(sceneRadio);
     vector<ofxUIToggle*> toggles = sceneRadio->getToggles();
@@ -212,25 +251,37 @@ void PuppetManager::animateSceneChange(int dir){
 		currScene = newScene;
 	}
 	
-	/*
-
-    if(dir == 1)       currScene--;
-    else if(dir == -1) currScene++;
-    else if(dir ==  0) currScene = ofRandom(1,toggles.size() );
-    
-    if(currScene >= toggles.size() ) currScene = 0;
-    if(currScene == 0) currScene = toggles.size()-1;
-	*/
-    
     nextSceneId = currScene;
-    
 }
 
+
+//--------------------------------------------------------------
 void PuppetManager::setNextScene(){
     
     setScene(nextSceneId);
     sceneStartTime = ofGetElapsedTimef();
 }
+
+
+
+//--------------------------------------------------------------
+void PuppetManager::updatePuppeteerDummy (){
+	
+	long long prePuppetMicros = ofGetElapsedTimeMicros();
+	
+	setGuiVisibility (false);
+
+	// Update measurement of CPU time consumption for Puppet.
+	long long postPuppetMicros = ofGetElapsedTimeMicros();
+	elapsedPuppetMicros = 0.8*elapsedPuppetMicros + 0.2*(float)(postPuppetMicros - prePuppetMicros);
+	elapsedPuppetMicrosInt = (int) elapsedPuppetMicros;
+    
+    updateSceneSwapAnimation();
+}
+
+
+
+
 
 //--------------------------------------------------------------
 void PuppetManager::updatePuppeteer (bool bComputeAndDisplayPuppet, HandMeshBuilder &myHandMeshBuilder){
@@ -342,6 +393,7 @@ void PuppetManager::updatePuppeteer (bool bComputeAndDisplayPuppet, HandMeshBuil
     
     updateSceneSwapAnimation();
 }
+
 
 void PuppetManager::updateSceneSwapAnimation(){
     

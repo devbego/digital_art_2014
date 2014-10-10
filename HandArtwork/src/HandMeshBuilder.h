@@ -56,7 +56,7 @@ public:
 	//-----------------------------
 	// 2014 Mesher
 	
-	void	buildMesh (ofPolyline &handContour, ofVec3f &handCentroid, ofVec3f &theLeapWristPoint, Handmark *hmarks);
+	bool	buildMesh (ofPolyline &handContour, ofVec3f &handCentroid, ofVec3f &theLeapWristPoint, Handmark *hmarks);
 	int		getMeshVertexIndexOfControlPoint (int which);
 
 	bool	isHandMeshFaulty();
@@ -73,6 +73,7 @@ public:
 	int		nTrianglesAccum;
 	int		verticesPerFinger;
 	int		handMeshWristVertexIndex;
+	int		nTolerableTriangleIntersections;
 	
 	// The MeshBuilder's local copies
 	Handmark myHandmarks[N_HANDMARKS];
@@ -93,6 +94,7 @@ public:
 private:
     // Returns true iff the mesh contains two index defined traingles that intersect.
     bool check_triangle_intersections(ofMesh &mesh);
+	int	 count_triangle_intersections (ofMesh &mesh);
 	bool checkForTrianglesThatAreTooTeeny (ofMesh &mesh); 
     
     int Intersecting(ofVec3f &p0, ofVec3f &p1, ofVec3f &t0, ofVec3f &t1, ofVec3f &t2);

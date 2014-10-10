@@ -167,6 +167,7 @@ class ofApp : public ofBaseApp{
 	bool	bDoCompositeThresholdedImageWithLeapFboPixels;
 	bool	bComputeAndDisplayPuppet;
 	bool	bFullscreen;
+	bool	bUseBothTypesOfScenes;
 	
     int		framesBackToPlay;
 	int		playingFrame;
@@ -228,6 +229,7 @@ class ofApp : public ofBaseApp{
 	
 	
 	void updateComputerVision();
+	void compositeLeapArmIntoThresholdedFinal(); 
 	void extractVideoMatFromLiveVideo();
 	void extractVideoMatFromBufferedVideoFrame();
 	void extractLuminanceChannelFromSourceVideoMat();
@@ -273,6 +275,7 @@ class ofApp : public ofBaseApp{
 	Mat coloredBinarizedImg;
     Mat maskedCamVidImg;    // The camera or video RGB image, masked to remove the background,
 	Mat gradientThreshImg;
+	Mat leapArmPixelsOnlyMat;
 	
 	
 	Mat thresholded;		// binarized hand, black-white only
@@ -280,6 +283,7 @@ class ofApp : public ofBaseApp{
 	Mat	thresholdedFinal8UC3;
 	Mat thresholdedFinalThrice[3];
 	Mat rgbVideoChannelMats[3];
+	Mat leapFboChannelMats[3];
 	Mat blurred;
 	Mat thresholdConstMat;
 	
@@ -332,8 +336,9 @@ class ofApp : public ofBaseApp{
     
     //-------------------------------
 	// MESH BUILDER!
+	bool bSuccessfullyBuiltMesh;
 	HandMeshBuilder myHandMeshBuilder;
-	void updateHandMesh();
+	bool updateHandMesh();
     
 	//-------------------------------
 	// PUPPETEER!
@@ -346,5 +351,6 @@ class ofApp : public ofBaseApp{
     // ------------------------------
     // swipe scenes
     float swipeStart;
+	int currentSceneID;
 	
 };

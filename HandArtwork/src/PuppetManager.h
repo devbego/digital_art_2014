@@ -60,17 +60,21 @@ public:
 
 	void setupPuppeteer (HandMeshBuilder &myHandMeshBuilder);
 	void updatePuppeteer (bool bComputeAndDisplayPuppet, HandMeshBuilder &myHandMeshBuilder);
+	void updatePuppeteerDummy();
 	void drawPuppet (bool bComputeAndDisplayPuppet,  ofTexture &handImageTexture );
 	void setGuiVisibility (bool bShowGuis);
 	
     void setScene( int sceneIndex ); // manually set a specific scene
     void setNextScene(); // increment to next scene in order
     void animateSceneChange(int dir); // animates puppet in and out of scene plus change
+	void animateSceneChangeToGivenScene (int whichScene, int dir);
     void updateSceneSwapAnimation();
     
 	ofxPuppet puppet;
 	void setSkeleton(Skeleton* skeleton);
 	vector<Scene*> scenes;
+	int getCurrentSceneID();
+	int prevRequestedScene;
     
     ofxButterfly    butterflySubdivider;
     ofMesh          refinedMesh;
