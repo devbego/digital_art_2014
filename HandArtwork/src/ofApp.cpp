@@ -1780,6 +1780,8 @@ void ofApp::applicationStateMachine(){
 	bool	bLeapIsConnected		= leap.isConnected();
 	int		nLeapHandsInScene		= leapVisualizer.nLeapHandsInScene;
 	
+	
+	
     //------- update time each fault has occurred
     
     // no user present
@@ -1801,7 +1803,7 @@ void ofApp::applicationStateMachine(){
 	// -- nBlobsInScene is > 0
     
     // TODO: put this distanceOfBlobFromEntry threshold in gui
-    if( nBlobsInScene > 0 &&
+    if (nBlobsInScene > 0 &&
        nLeapHandsInScene == 0 &&
        distanceOfBlobFromEntry > 100 &&
        amountOfLeapMotion01 < .5*maxAllowableMotion ){
@@ -1864,14 +1866,28 @@ void ofApp::applicationStateMachine(){
         appFaultManager.updateResetFault (FAULT_HAND_NOT_DEEP_ENOUGH);
     }
     
-    
     // scene on too long
     if( ofGetElapsedTimef() - myPuppetManager.sceneStartTime > 50 ){
         appFaultManager.updateHasFault (FAULT_SAME_SCENE_TOO_LONG, dt);
-    }else{
+    } else{
         appFaultManager.updateResetFault(FAULT_SAME_SCENE_TOO_LONG);
     }
+	
+	// hand too small
+	float theHandContourArea = myHandContourAnalyzer.theHandContourArea;
+	float theHandContourArea01 = theHandContourArea / (float)(imgW*imgH);
+	float curlAreaRatio = (amountOfFingerCurl01 / (0.001 + theHandContourArea01));
+	if ((theHandContourArea01 < 0.09) && (insertionPercentage > 0.25) && (curlAreaRatio > 4.1)){
+	    appFaultManager.updateHasFault (FAULT_NO_LEAP_HAND_TOO_SMALL, dt);
+    } else {
+        appFaultManager.updateResetFault (FAULT_NO_LEAP_HAND_TOO_SMALL);
+    }
+	printf("theHandContourArea01 = %f\n", theHandContourArea01);
+	
     
+	
+	
+	
     // get all detected faults
     vector<ApplicationFault> faults = appFaultManager.getAllFaults();
     
@@ -2544,6 +2560,8 @@ void ofApp::changeScene (int dir){
 			myPuppetManager.animateSceneChangeToGivenScene (whichPuppScene, dir);
 			useTopologyModifierManager = false;
 		}
+		
+		myPuppetManager.sceneStartTime = ofGetElapsedTimef();
 		
 	} else {
 		

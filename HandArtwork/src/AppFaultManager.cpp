@@ -48,8 +48,8 @@ void AppFaultManager::setup(){
     priorityOrder[FAULT_TOO_MANY_HANDS] = p; p++;
     priorityOrder[FAULT_HAND_TOO_FAST] = p; p++;
     priorityOrder[FAULT_HAND_TOO_VERTICAL] = p; p++;
+	priorityOrder[FAULT_NO_LEAP_HAND_TOO_SMALL] = p; p++;
     priorityOrder[FAULT_HAND_TOO_CURLED] = p; p++;
-    priorityOrder[FAULT_NO_LEAP_HAND_TOO_SMALL] = p; p++;
     priorityOrder[FAULT_NO_LEAP_OBJECT_PRESENT] = p; p++;
     priorityOrder[FAULT_SAME_SCENE_TOO_LONG] = p; p++;
     priorityOrder[FAULT_LEAP_DROPPED_FRAME] = p; p++;
