@@ -1595,7 +1595,7 @@ void ofApp::updateDataSampleGrabbingProcess(){
 				myHandMeshBuilder.getMesh().save(filename + ".ply");
 				
 				// 2. Record the image as a .JPG file.
-				dataSampleImg.setFromPixels( video.getPixels(), cameraWidth, cameraHeight, OF_IMAGE_COLOR);
+				dataSampleImg.setFromPixels( colorVideo.getPixels(), cameraWidth, cameraHeight, OF_IMAGE_COLOR);
 				dataSampleImg.saveImage(filename + ".jpg", OF_IMAGE_QUALITY_HIGH);
 				
 				// 3. Record the LEAP data as an .XML file.
