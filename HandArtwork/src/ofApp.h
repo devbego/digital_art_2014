@@ -334,6 +334,7 @@ class ofApp : public ofBaseApp{
     float maxAllowableHeightZ;
 	
     AppFaultManager appFaultManager;
+	bool bDrawFaultFeedback;
     float prevTime;
     
     //-------------------------------

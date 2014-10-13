@@ -1,58 +1,21 @@
 #include "ofApp.h"
 
 /*
- // UNTITLED DIGITAL ART (AUGMENTED HAND SERIES)
- // By Golan Levin, Chris Sugrue, and Kyle McDonald
- // https://github.com/CreativeInquiry/digital_art_2014
- // Contact: @golan or golan@flong.com
 
- // Commissioned by the Cinekid Festival of Children's Media, Amsterdam
- // Developed at the Frank-Ratchye STUDIO for Creative Inquiry at CMU
- // Concept and development: Golan Levin, Chris Sugrue, Kyle McDonald
- // Software assistance: Dan Wilcox, Bryce Summers, Erica Lazrus
- // Conceived 2005, Developed 2013-2014
- //
- // Special thanks to Paulien Dresscher, Theo Watson and Eyeo Festival for encouragement.
- // Thanks to Elliot Woods and Simon Sarginson for assistance with Leap/Camera calibration.
- // Thanks to Adam Carlucci for assistance using the Accelerate Framework in openFrameworks.
- // Additional thanks to Rick Barraza and Ben Lower of Microsoft; Christian Schaller and 
- // Hannes Hofmann of Metrilus GmbH; Dr. Roland Goecke of University of Canberra;
- // and Doug Carmean and Chris Rojas of Intel.
- //
- // Developed in openFrameworks (OF), a free, open-source toolkit for arts engineering.
- // This project also uses a number of open-source OF "addons" contributed by others:
- // Uses ofxPuppet addon by Zach Lieberman, based on Ryan Schmidt's As-Rigid-As-Possible code.
- // Uses ofxLeapMotion addon by Theo Watson, with assistance from Dan Wilcox.
- // Uses ofxCv, ofxLibdc, and ofxTiming addons by Kyle McDonald.
- // Uses ofxCvMin and ofxRay addons by Elliot Woods.
- // Uses ofxButterfly addon by Bryce Summers.
+ UNTITLED DIGITAL ART (AUGMENTED HAND SERIES)
+ By Golan Levin, Chris Sugrue, and Kyle McDonald
+ Repository: http://github.com/CreativeInquiry/digital_art_2014
+ Contact: @golan or golan@flong.com
  
- // Links: 
- // https://github.com/Bryce-Summers/ofxButterfly
- // https://github.com/ofTheo/ofxLeapMotion
+ Commissioned by the Cinekid Festival, Amsterdam, October 2014, with support from the Mondriaan Fund for visual art. Developed at the Frank-Ratchye STUDIO for Creative Inquiry at Carnegie Mellon University with additional support from the Pennsylvania Council on the Arts and the Frank-Ratchye Fund for Art @ the Frontier. Concept and software development: Golan Levin, Chris Sugrue, Kyle McDonald. Software assistance: Dan Wilcox, Bryce Summers, Erica Lazrus. Conceived 2005; developed 2013-2014.
  
- // Shoutouts from @golan @chrissugrue @kcimc: 
- //
-
+ Special thanks to Paulien Dresscher, Theo Watson and Eyeo Festival for encouragement, and to Dan Wilcox, Bryce Summers, and Erica Lazrus for their help making this project possible. Thanks to Elliot Woods and Simon Sarginson for assistance with Leap/camera calibration, and to Adam Carlucci for his helpful tutorial on using the Accelerate Framework in openFrameworks. Additional thanks to Rick Barraza and Ben Lower of Microsoft; Christian Schaller and Hannes Hofmann of Metrilus GmbH; Dr. Roland Goecke of University of Canberra; and Doug Carmean and Chris Rojas of Intel.
+ 
+ Developed in openFrameworks (OF), a free, open-source toolkit for arts engineering. This project also uses a number of open-source addons for openFrameworks contributed by others: ofxPuppet by Zach Lieberman, based on Ryan Schmidt's implementation of As-Rigid-As-Possible Shape Manipulation by Igarashi, Moscovich & Hughes; ofxLeapMotion by Theo Watson, with assistance from Dan Wilcox; ofxCv, ofxLibdc, and ofxTiming by Kyle McDonald; ofxCvMin and ofxRay by Elliot Woods; and the ofxButterfly mesh subdivision addon by Bryce Summers.
+ 
+ Shoutouts from @golan @chrissugrue & @kcimc: @admsyn @bla_fasel @bwycz @cinekid @CMUSchoolofArt @creativeinquiry @danomatika @elliotwoods @eyeofestival @laurmccarthy @openframeworks @PESfilm @rickbarraza @SimonsMine @theowatson @zachlieberman
+ 
 */
-
-
-// TODO: Add +1/-1 scenes by Kyle
-// TODO: Add other scenes by Chris (springy?)
-// TODO: Improve thresholding for persons with dark skin.
-// TODO: Connect application faults to show/hide Puppet (see draw()).
-// TODO: Enable saving of GUIs into XML files.
-// TODO: Implement touchscreen behavior (swipe or poke to change scenes)
-// TODO: Make sure cursor hides/shows properly.
-// TODO: Darken camera image & puppet when hand is too high.
-// TODO: Patch holes in wrist area by filling with solid color from LEAP arm.
-// TODO: Decide on final list of scenes, disable others.
-// TODO: Refactor ofApp.cpp/h to have a CameraAndLeapRecorder. (Not urgent)
-// TODO: Check whether computing amount of leap motion works with delayed data
-// TODO: Record hands when they are still enough -- for eventual research/diagnostic purposes.
-// TODO: Get Bryce to amend ofxButterfly so that it does not reorder triangles.
-// TODO: Create option to rotate entire display view by 180.
-
 
 
 //=============================================================================
@@ -68,6 +31,16 @@
  dyld: Library not loaded: @loader_path/libLeap.dylib
 
 */
+
+
+//=============================================================================
+//
+// TODO: Enable saving of GUIs into XML files.
+// TODO: Make sure cursor hides/shows properly.
+// TODO: Refactor ofApp.cpp/h to have a CameraAndLeapRecorder. (Not urgent)
+// TODO: Check whether computing amount of leap motion works with delayed data
+// TODO: Get Bryce to amend ofxButterfly so that it does not reorder triangles.
+// TODO: Create option to rotate entire display view by 180.
 
 
 //=============================================================================
@@ -146,6 +119,7 @@ void ofApp::setup(){
     bInIdleMode                 = true;
 	bUseBothTypesOfScenes		= true;
 	bDataSampleGrabbingEnabled	= true;
+	bDrawFaultFeedback			= true;
 	
 	//--------------- Setup LEAP
 	leap.open();
@@ -449,11 +423,11 @@ void ofApp::setupGui() {
 	gui1->addLabelToggle("bUseGradientThreshold",			&bUseGradientThreshold);
 	
 	gui1->addValuePlotter("averageSkinLuminance", 256,	0.00, 255.0, &averageSkinLuminance, 32);
-	gui1->addSlider("averageSkinLuminance",		0, 255,   &averageSkinLuminance);
+	gui1->addSlider("averageSkinLuminance",		0, 255,		&averageSkinLuminance);
 
-	gui1->addLabelToggle("bUseRedChannelForLuminance",	&bUseRedChannelForLuminance);
-	gui1->addLabelToggle("bDoAdaptiveThresholding",		&bDoAdaptiveThresholding);
-	gui1->addLabelToggle("bDoMorphologicalOps",			&bDoMorphologicalOps);
+	gui1->addLabelToggle("bUseRedChannelForLuminance",		&bUseRedChannelForLuminance);
+	gui1->addLabelToggle("bDoAdaptiveThresholding",			&bDoAdaptiveThresholding);
+	gui1->addLabelToggle("bDoMorphologicalOps",				&bDoMorphologicalOps);
 	
 	gui1->addSpacer();
 	gui1->addSlider("HCA-thresholdValue", 0.0, 128.0,       &(myHandContourAnalyzer.thresholdValue));
@@ -483,8 +457,8 @@ void ofApp::setupGui() {
 	gui2->addSlider("crotchContourSearchMask", 0.0, 0.5,    &(myHandContourAnalyzer.crotchContourSearchTukeyMaskPct));
     
     gui2->addSpacer();
-    gui2->addSlider("minCrotchQuality", 0.0, 0.30,              &(myHandContourAnalyzer.minCrotchQuality));
-    gui2->addSlider("malorientationSuppression", 0.0, 1.0,      &(myHandContourAnalyzer.malorientationSuppression));
+    gui2->addSlider("minCrotchQuality", 0.0, 0.30,			&(myHandContourAnalyzer.minCrotchQuality));
+    gui2->addSlider("malorientationSuppression", 0.0, 1.0,	&(myHandContourAnalyzer.malorientationSuppression));
 	
 	gui2->autoSizeToFitWidgets();
 	ofAddListener(gui2->newGUIEvent,this,&ofApp::guiEvent);
@@ -528,7 +502,7 @@ void ofApp::setupGui() {
     gui4->addLabel("What to Render");
 	gui4->addToggle("bUseBothTypesOfScenes",			&bUseBothTypesOfScenes);
 	gui4->addToggle("useTopologyModifierManager",		&useTopologyModifierManager);
-	gui4->addIntSlider("nTolerableTriangleIntersections", 0, 500,			&(myHandMeshBuilder.nTolerableTriangleIntersections));
+	gui4->addIntSlider("nTolerableTriangleIntersections", 0, 500,	&(myHandMeshBuilder.nTolerableTriangleIntersections));
 
     gui4->addSlider("backgroundGray", 0,255,            &backgroundGray); // slider
 	gui4->addLabelToggle("bDrawImageInBackground",		&bDrawImageInBackground);
@@ -541,7 +515,8 @@ void ofApp::setupGui() {
     gui4->addLabelToggle("bDrawMiniImages",             &bDrawMiniImages,               false, true);
     gui4->addLabelToggle("bShowText",                   &bShowText,                     false, true);
     gui4->addLabelToggle("bDrawAppFaultDebugText",      &bDrawAppFaultDebugText,        false, true);
-    gui4->addLabelToggle("bDrawGradientOverlay",      &bDrawGradient,        false, true);
+    gui4->addLabelToggle("bDrawGradientOverlay",		&bDrawGradient,					false, true);
+	gui4->addLabelToggle("bDrawFaultFeedback",			&bDrawFaultFeedback,			false, true);
 
     gui4->addSpacer();
     gui4->addLabelToggle("bDrawContourAnalyzer",        &bDrawContourAnalyzer,          false, true);
@@ -1541,7 +1516,9 @@ void ofApp::draw(){
     if (bDrawAppFaultDebugText){
         appFaultManager.drawDebug(ofGetWidth()-200,20); // shows all active faults as debug text
     }
-    appFaultManager.drawFaultHelpScreen();
+	if (bDrawFaultFeedback){
+		appFaultManager.drawFaultHelpScreen();
+	}
 	
     
     float handTooHighDur = myAppFaultManager.getDurationOfFault (FAULT_HAND_TOO_HIGH);
@@ -2660,3 +2637,24 @@ void ofApp::huntForBlendFunc(int period, int defaultSid, int defaultDid){
 	
 }
 
+
+/*
+ // HTML Acknowlegments
+ 
+ 
+ <b>UNTITLED DIGITAL ART (AUGMENTED HAND SERIES)</b>
+ By <a href="http://flong.com" rel="nofollow">Golan Levin</a>, <a href="http://csugrue.com/" rel="nofollow">Chris Sugrue</a>, and <a href="http://kylemcdonald.net/" rel="nofollow">Kyle McDonald</a>
+ Repository: <a href="https://github.com/CreativeInquiry/digital_art_2014" rel="nofollow">github.com/CreativeInquiry/digital_art_2014</a>
+ Contact: <a href="https://twitter.com/golan" rel="nofollow">@golan</a> or golan@flong.com
+ 
+ Photos © by <a href="http://www.fotogeus.nl/" rel="nofollow">Gerlinde de Geus</a>, courtesy Cinekid Festival.
+ 
+ Commissioned by the <a href="http://www.cinekid.nl/" rel="nofollow">Cinekid Festival</a>, Amsterdam, October 2014, with support from the Mondriaan Fund for visual art. Developed at the <a href="http://studioforcreativeinquiry.org" rel="nofollow">Frank-Ratchye STUDIO for Creative Inquiry</a> at Carnegie Mellon University with additional support from the <a href="http://www.arts.pa.gov/" rel="nofollow">Pennsylvania Council on the Arts</a> and the <a href="http://studioforcreativeinquiry.org/grants" rel="nofollow">Frank-Ratchye Fund for Art @ the Frontier</a>. Concept and software development: Golan Levin, Chris Sugrue, Kyle McDonald. Software assistance: Dan Wilcox, Bryce Summers, Erica Lazrus. Conceived 2005; developed 2013-2014.
+ 
+ Special thanks to Paulien Dresscher, Theo Watson and Eyeo Festival for encouragement, and to Dan Wilcox, Bryce Summers, and Erica Lazrus for their help making this project possible. Thanks to Elliot Woods and Simon Sarginson for assistance with Leap/camera calibration, and to Adam Carlucci for his <a href="http://forum.openframeworks.cc/t/a-guide-to-speeding-up-your-of-app-with-accelerate-osx-ios/10560" rel="nofollow">helpful tutorial</a> on using the Accelerate Framework in openFrameworks. Additional thanks to Rick Barraza and Ben Lower of Microsoft; Christian Schaller and Hannes Hofmann of Metrilus GmbH; Dr. Roland Goecke of University of Canberra; and Doug Carmean and Chris Rojas of Intel.
+ 
+ Developed in <a href="http://openframeworks.cc/" rel="nofollow">openFrameworks</a> (OF), a free, open-source toolkit for arts engineering. This project also uses a number of open-source addons for openFrameworks contributed by others: <a href="https://github.com/ofZach/ofxPuppet" rel="nofollow">ofxPuppet</a> by Zach Lieberman, based on Ryan Schmidt's <a href="http://www.dgp.toronto.edu/~rms/software/Deform2D/index.html" rel="nofollow">implementation</a> of <a href="http://www-ui.is.s.u-tokyo.ac.jp/~takeo/research/rigid/index.html" rel="nofollow">As-Rigid-As-Possible Shape Manipulation</a> by Igarashi, Moscovich & Hughes; <a href="https://github.com/ofTheo/ofxLeapMotion" rel="nofollow">ofxLeapMotion</a> by Theo Watson, with assistance from Dan Wilcox; <a href="https://github.com/kylemcdonald/ofxCv" rel="nofollow">ofxCv</a>, <a href="https://github.com/kylemcdonald/ofxLibdc" rel="nofollow">ofxLibdc</a>, and <a href="https://github.com/kylemcdonald/ofxTiming" rel="nofollow">ofxTiming</a> by Kyle McDonald; <a href="https://github.com/elliotwoods/ofxCvMin" rel="nofollow">ofxCvMin</a> and <a href="https://github.com/elliotwoods/ofxRay" rel="nofollow">ofxRay</a> by Elliot Woods; and the <a href="https://github.com/Bryce-Summers/ofxButterfly" rel="nofollow">ofxButterfly</a> mesh subdivision addon by Bryce Summers.
+ 
+ <i>Shoutouts from @golan @chrissugrue & @kcimc: @admsyn @bla_fasel @bwycz @cinekid @CMUSchoolofArt @creativeinquiry @danomatika @elliotwoods @eyeofestival @laurmccarthy @openframeworks @PESfilm @rickbarraza @SimonsMine @theowatson @zachlieberman</i>
+
+*/
