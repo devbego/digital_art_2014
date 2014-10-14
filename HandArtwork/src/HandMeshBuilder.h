@@ -11,7 +11,6 @@
 #include "ofMain.h"
 #include "ofxCv.h"
 #include "HandContourAnalyzer.h"
-#include "ofxButterfly.h"
 
 enum HandType {
 	HAND_ERROR = -1,
@@ -37,8 +36,7 @@ public:
 	void			buildMesh2013 (ofPolyline &handContour, ofVec3f &handCentroid, Handmark *hmarks);
 	
 	ofMesh			handMesh;
-    ofMesh          refinedHandMesh;
-    ofxButterfly    butterflyMeshSubdivider;
+
     
 	vector<int>		joints;
 	Handmark		Handmarks[N_HANDMARKS];

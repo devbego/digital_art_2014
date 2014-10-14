@@ -275,7 +275,7 @@ void ofApp::setup(){
 	myPuppetManager.setupPuppetGui ();
     puppetDisplayScale = 1.20;
 	
-	useTopologyModifierManager = false;
+	bUseTopologyModifierManager = false;
     myTopologyModifierManager.setup();
     
     // APPLICATION FAULT MANAGER
@@ -501,7 +501,7 @@ void ofApp::setupGui() {
     gui4->setName("GUI4");
     gui4->addLabel("What to Render");
 	gui4->addToggle("bUseBothTypesOfScenes",			&bUseBothTypesOfScenes);
-	gui4->addToggle("useTopologyModifierManager",		&useTopologyModifierManager);
+	gui4->addToggle("useTopologyModifierManager",		&bUseTopologyModifierManager);
 	gui4->addIntSlider("nTolerableTriangleIntersections", 0, 500,	&(myHandMeshBuilder.nTolerableTriangleIntersections));
 
     gui4->addSlider("backgroundGray", 0,255,            &backgroundGray); // slider
@@ -603,12 +603,12 @@ void ofApp::update(){
 			// mix topo and regular.
 			
 			if (currentSceneID < 2){
-				useTopologyModifierManager = true;
+				bUseTopologyModifierManager = true;
 				myTopologyModifierManager.update (myHandMeshBuilder);
 				myPuppetManager.updatePuppeteerDummy();
 				//myHandMeshBuilder.nTolerableTriangleIntersections = 20;
 			} else {
-				useTopologyModifierManager = false;
+				bUseTopologyModifierManager = false;
 				myPuppetManager.updatePuppeteer (bComputeAndDisplayPuppet, myHandMeshBuilder);
 				//myHandMeshBuilder.nTolerableTriangleIntersections = 500;
 			}
@@ -616,7 +616,7 @@ void ofApp::update(){
 		} else {
 			// We're selecting between topo and regular.
 			// Update all aspects of the puppet geometry
-			if (useTopologyModifierManager) {
+			if (bUseTopologyModifierManager) {
 				myTopologyModifierManager.update (myHandMeshBuilder);
 			} else {
 				myPuppetManager.updatePuppeteer (bComputeAndDisplayPuppet, myHandMeshBuilder);
@@ -1295,18 +1295,18 @@ void ofApp::draw(){
 		
 		if (bUseBothTypesOfScenes){
 			if (currentSceneID < 2){
-				useTopologyModifierManager = true;
+				bUseTopologyModifierManager = true;
 				myTopologyModifierManager.setGuiVisibility(true);
 				myPuppetManager.setGuiVisibility(false);
 			} else {
-				useTopologyModifierManager = false;
+				bUseTopologyModifierManager = false;
 				myPuppetManager.setGuiVisibility(true);
 				myTopologyModifierManager.setGuiVisibility(false);
 			}
 			
 		} else {
 			
-			if(useTopologyModifierManager) {
+			if(bUseTopologyModifierManager) {
 				myTopologyModifierManager.setGuiVisibility(true);
 				myPuppetManager.setGuiVisibility(false);
 			} else {
@@ -1394,16 +1394,16 @@ void ofApp::draw(){
 			if (bUseBothTypesOfScenes){
 				// mix topo and regular.
 				if (currentSceneID < 2){
-					useTopologyModifierManager = true;
+					bUseTopologyModifierManager = true;
 					myTopologyModifierManager.draw(handImageTexture);
 				} else {
-					useTopologyModifierManager = false;
+					bUseTopologyModifierManager = false;
 					myPuppetManager.drawPuppet(bComputeAndDisplayPuppet, handImageTexture);
 				}
 				
 			} else {
 				// We're selecting between topo and regular.
-				if (useTopologyModifierManager) {
+				if (bUseTopologyModifierManager) {
 					myTopologyModifierManager.draw (handImageTexture);
 				} else {
 					// Draw the puppet.
@@ -1859,7 +1859,7 @@ void ofApp::applicationStateMachine(){
     } else {
         appFaultManager.updateResetFault (FAULT_NO_LEAP_HAND_TOO_SMALL);
     }
-	printf("theHandContourArea01 = %f\n", theHandContourArea01);
+	// printf("theHandContourArea01 = %f\n", theHandContourArea01);
 	
     
 	
@@ -2393,7 +2393,10 @@ void ofApp::keyPressed(int key){
             img.allocate(cameraWidth, cameraHeight, OF_IMAGE_COLOR);
             img.setFromPixels( video.getPixels(), cameraWidth, cameraHeight, OF_IMAGE_COLOR);
             img.saveImage( "handmesh-" + ofToString(playingFrame) + ".jpg");
-            break; 
+            break;
+			
+		
+			 
 		
 		case 'P':
         case 'p':
@@ -2402,9 +2405,7 @@ void ofApp::keyPressed(int key){
         case 's':
             leapVisualizer.bDrawSimple = !leapVisualizer.bDrawSimple;
             break;
-        case 'v':
-            bUseVirtualProjector = !bUseVirtualProjector;
-            break;
+        
         case '1':
             loadPlaybackFromDialog();
             break;
@@ -2422,10 +2423,7 @@ void ofApp::keyPressed(int key){
             if(bInPlaybackMode) playing = !playing;
             else if(bRecordingForCalibration) bRecordThisCalibFrame = true;
             break;
-        case 'u':
-            bUseCorrectedCamera = !bUseCorrectedCamera;
-            break;
-
+        
 		//case 'F':
         case 'f':
             bFullscreen = !bFullscreen;
@@ -2455,7 +2453,25 @@ void ofApp::keyPressed(int key){
                 bInIdleMode = false;
             }
             break;
-            
+        
+		
+		/*
+		 // Deprecated key commands: keypress commands that are on the way out.
+		 //
+		case 'T':
+			// Captures meshes from Topo manager. Works, but disabled.
+			if (bUseTopologyModifierManager && bComputeAndDisplayPuppet){
+				// myTopologyModifierManager.saveMeshes();
+			}
+			break;
+		case 'u':
+            bUseCorrectedCamera = !bUseCorrectedCamera;
+            break;
+		case 'v':
+            bUseVirtualProjector = !bUseVirtualProjector;
+            break;
+		 //
+		*/
     }
     
 }
@@ -2530,12 +2546,12 @@ void ofApp::changeScene (int dir){
 		// inform puppeteers
 		if ((currentSceneID == 0) || (currentSceneID == 1)){
 			myTopologyModifierManager.setScene (currentSceneID);
-			useTopologyModifierManager = true;
+			bUseTopologyModifierManager = true;
 			
 		} else {
 			int whichPuppScene = currentSceneID - nTopoScenes;
 			myPuppetManager.animateSceneChangeToGivenScene (whichPuppScene, dir);
-			useTopologyModifierManager = false;
+			bUseTopologyModifierManager = false;
 		}
 		
 		myPuppetManager.sceneStartTime = ofGetElapsedTimef();

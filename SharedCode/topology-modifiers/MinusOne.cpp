@@ -61,6 +61,56 @@ ofMesh& MinusOne::getModifiedMesh() {
     return final;
 }
 
+
+//-------------------------------------------------------
+// Added/modified by Golan in order to use edge refinement with ofxButterfly:
+//
+
 void MinusOne::drawBlends() {
-    blendMesh.drawFaces();
+	blendMesh.drawFaces();
+}
+
+//-------------------------------------------
+void MinusOne::draw (const ofTexture& texture) {
+	
+	texture.bind();
+	if (bUseButterfly){
+		
+		butterflySubdivider.fixMesh (final, refinedMesh);
+		refinedMesh.drawFaces();
+		final.drawFaces();  // cleverly interposed
+		drawBlends();
+		
+	} else {
+		final.drawFaces();     // was drawBase();
+		blendMesh.drawFaces(); // was drawBlends();
+	}
+	texture.unbind();
+}
+
+//-------------------------------------------
+void MinusOne::saveMeshes(){
+	final.save        ("mesh_MinusOne_final.ply");
+	blendMesh.save    ("mesh_MinusOne_blendMesh.ply");
+}
+
+//-------------------------------------------
+void MinusOne::initialize(){
+	// printf("Initializing MinusOne\n");
+
+	final.load("models/mesh_MinusOne_final.ply");
+	for (int i = 0; i < final.getNumVertices(); i++) {
+        // This is important
+		ofVec2f aMeshVertex;
+		aMeshVertex.x =  final.getVertex(i).y;
+		aMeshVertex.y =  768 - final.getVertex(i).x;
+		final.addTexCoord( aMeshVertex );
+	}
+	 
+	// Cache the topology subdivision.
+    butterflySubdivider.topology_start(final);
+    butterflySubdivider.topology_subdivide_boundary(2);
+    refinedMesh = butterflySubdivider.topology_end();
+	 
+	bUseButterfly = true;
 }

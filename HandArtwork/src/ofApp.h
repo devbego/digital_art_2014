@@ -349,7 +349,7 @@ class ofApp : public ofBaseApp{
     float puppetDisplayScale;
 	
 	TopologyModifierManager myTopologyModifierManager;
-    bool useTopologyModifierManager;
+    bool bUseTopologyModifierManager;
     
     //------------------------------
     // Change scenes

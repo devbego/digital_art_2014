@@ -1762,15 +1762,6 @@ void HandMeshBuilder::drawMeshWireframe(){
 	}
 }
 
-void HandMeshBuilder::drawRefinedMeshWireframe(){
-    if (bCalculatedMesh){
-		ofPushStyle();
-        ofSetColor(12,255,100);
-        refinedHandMesh.drawWireframe();
-		ofPopStyle();
-    }
-}
-
 
 bool HandMeshBuilder::checkForTrianglesThatAreTooTeeny (ofMesh &mesh){
 	

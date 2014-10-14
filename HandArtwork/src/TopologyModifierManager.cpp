@@ -14,6 +14,7 @@ void TopologyModifierManager::setup() {
     vector<string> sceneNames;
     for(int i = 0; i < scenes.size(); i++) {
         TopologyModifier* scene = scenes[i];
+		scene->initialize();
         string sceneName = scene->getName();
         sceneNames.push_back(sceneName);
     }
@@ -45,4 +46,8 @@ void TopologyModifierManager::update(HandMeshBuilder& handMeshBuilder) {
 }
 void TopologyModifierManager::draw(const ofTexture& texture) {
     curScene->draw(texture);
+}
+
+void TopologyModifierManager::saveMeshes(){
+	curScene->saveMeshes();
 }

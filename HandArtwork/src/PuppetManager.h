@@ -14,6 +14,7 @@
 
 //------------------------------
 #include "HandMeshBuilder.h"
+#include "ofxButterfly.h"
 
 //------------------------------
 #include "ofxPuppetInteractive.h"

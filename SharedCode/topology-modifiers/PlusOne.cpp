@@ -177,3 +177,69 @@ void PlusOne::drawBlends() {
     leftBaseMesh.drawFaces();
     rightBaseMesh.drawFaces();
 }
+
+//-------------------------------------------------------
+// Added by Golan in order to use edge refinement with ofxButterfly:
+//
+
+void PlusOne::draw (const ofTexture& texture) {
+	texture.bind();
+	
+	if (bUseButterfly){
+		
+		// was drawBase():
+		butterflySubdividerFinal.fixMesh (final, refinedMeshFinal);
+		refinedMeshFinal.drawFaces();
+		final.drawFaces();  // cleverly interposed
+		
+		// draw the blendy stuff overtop.
+		extraMesh.drawFaces();
+		leftBaseMesh.drawFaces();
+		rightBaseMesh.drawFaces();
+		
+	} else {
+		
+		// was drawBase():
+		getModifiedMesh().drawFaces();
+		
+		// was drawBlends():
+		// this can be used to draw over poor texture mapping
+		extraMesh.drawFaces();
+		
+		// these are necessary for proper blending at the base
+		leftBaseMesh.drawFaces();
+		rightBaseMesh.drawFaces();
+	
+	}
+	texture.unbind();
+}
+
+//-------------------------------------------
+void PlusOne::saveMeshes(){
+	final.save        ("mesh_PlusOne_final.ply");
+	leftBaseMesh.save ("mesh_PlusOne_leftBaseMesh.ply");
+	rightBaseMesh.save("mesh_PlusOne_rightBaseMesh.ply");
+	extraMesh.save    ("mesh_PlusOne_extraMesh.ply");
+}
+
+//-------------------------------------------
+void PlusOne::initialize(){
+	// printf("Initializing PlusOne\n");
+	
+	final.load("models/mesh_PlusOne_final.ply");
+	for (int i = 0; i < final.getNumVertices(); i++) {
+        // This is important
+		ofVec2f aMeshVertex;
+		aMeshVertex.x =  final.getVertex(i).y;
+		aMeshVertex.y =  768 - final.getVertex(i).x;
+		final.addTexCoord( aMeshVertex );
+	}
+	
+	// Cache the topology subdivision.
+    butterflySubdividerFinal.topology_start(final);
+    butterflySubdividerFinal.topology_subdivide_boundary(2);
+    refinedMeshFinal = butterflySubdividerFinal.topology_end();
+	
+	bUseButterfly = true;
+}
+
