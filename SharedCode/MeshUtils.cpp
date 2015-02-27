@@ -193,16 +193,28 @@ void mergeCoincidentVertices(ofMesh& mesh, float epsilon) {
     }
 }
 
-ofMesh stitch(ofMesh& mesh, vector<pair<ofIndexType, ofIndexType> >& stitch) {
+// added the optional StitchPlacementType parameter for when you
+// stitch parts of the mesh that move around a lot
+// -zach
+ofMesh stitch(ofMesh& mesh,
+              vector<pair<ofIndexType, ofIndexType> >& stitch,
+              StitchPlacementType type) {
     ofMesh out = mesh;
     ofxPuppet puppet;
     puppet.setup(out);
     puppet.update();
     for(int i = 0; i < stitch.size(); i++) {
         ofIndexType left = stitch[i].first, right = stitch[i].second;
-        ofVec2f avg = (out.getVertex(left) + out.getVertex(right)) / 2;
-        puppet.setControlPoint(left, avg);
-        puppet.setControlPoint(right, avg);
+        
+        ofVec2f controlPt;
+        switch(type) {
+            case STITCH_FROM_AVERAGE: controlPt = (out.getVertex(left) + out.getVertex(right)) / 2; break;
+            case STITCH_FROM_RIGHT:   controlPt = out.getVertex(right); break;
+            case STITCH_FROM_LEFT:    controlPt = out.getVertex(left); break;
+        }
+        
+        puppet.setControlPoint(left, controlPt);
+        puppet.setControlPoint(right, controlPt);
     }
     puppet.update();
     out = puppet.getDeformedMesh();

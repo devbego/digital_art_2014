@@ -43,6 +43,12 @@ public:
     }
 };
 
+enum StitchPlacementType {STITCH_FROM_LEFT, STITCH_FROM_RIGHT, STITCH_FROM_AVERAGE};
+
+ofMesh stitch(ofMesh& mesh,
+              vector<pair<ofIndexType, ofIndexType> >& stitch,
+              StitchPlacementType type = STITCH_FROM_AVERAGE);
+
 ofMesh removeSubmesh(ofMesh& mesh, const IndexSet& indices);
 ofMesh copySubmesh(const ofMesh& mesh, const IndexSet& indices);
 
@@ -58,7 +64,6 @@ void removeTriangles(ofMesh& mesh, const ofPolyline& region);
 ofMesh dropUnusedVertices(ofMesh& mesh);
 ofMesh copySubmesh(const ofMesh& mesh, const ofPolyline& region);
 void mergeCoincidentVertices(ofMesh& mesh, float epsilon = 10e-5);
-ofMesh stitch(ofMesh& mesh, vector<pair<ofIndexType, ofIndexType> >& stitch);
 bool isLeft(ofVec2f a, ofVec2f b, ofVec2f c);
 ofVec2f closestPointOnLine(const ofVec2f& p1, const ofVec2f& p2, const ofVec2f& p3);
 bool sideTest(ofPolyline& polyline, ofVec2f position);

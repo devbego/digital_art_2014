@@ -11,12 +11,18 @@ SpringFingers2Scene::SpringFingers2Scene(ofxPuppet* puppet,
     
     springs.resize(15);
     
-    for(int i = 0; i < 15; i++) {
-        springs[i].springy = 0.7;
-        springs[i].damp = 0.8;
-        springs[i].toChildDamp = 0.15;
-        springs[i].lockAngle = false;
-        springs[i].lockLength = false;
+    // 0 = finger base springs
+    // 1 = finger mid springs
+    // 2 = finger tip springs
+    // this is a weird way of doing things, but it lets us use one
+    // value for all springs on the same parts of each finger
+    for(int i = 0; i < 3; i++) {
+        springy[i]     = 0.7;
+        damp[i]        = 0.8;
+        toChildDamp[i] = 0.15;
+        lockLinear[i]  = false;
+        lockTorsion[i] = false;
+        angleLimit[i]  = 6.28;
     }
 }
 
@@ -24,15 +30,29 @@ SpringFingers2Scene::SpringFingers2Scene(ofxPuppet* puppet,
 void SpringFingers2Scene::setupGui() {
 	SpringFingers2Scene::initializeGui();
     
-    // way too many springs to have settings for every one of them in gui...
-    // solution?
-    for(int i = 0; i < 15; i+=3) {
-        this->gui->addSlider("springy",			0.00, 1.0,  &springs[i].springy);
-        this->gui->addSlider("damp",			0.00, 1.0,  &springs[i].damp);
-        this->gui->addSlider("toChildDamp",		0.00, 1.0,  &springs[i].toChildDamp);
-        this->gui->addToggle("lockAngle",                   &springs[i].lockAngle);
-        this->gui->addToggle("lockLength",                  &springs[i].lockLength);
-    }
+    this->gui->addSlider("Springiness base", 0, 1, &springy[0]);
+    this->gui->addSlider("Springiness mid",  0, 1, &springy[1]);
+    this->gui->addSlider("Springiness tip",  0, 1, &springy[2]);
+    
+    this->gui->addSlider("Dampening base", 0, 1, &damp[0]);
+    this->gui->addSlider("Dampening mid",  0, 1, &damp[1]);
+    this->gui->addSlider("Dampening tip",  0, 1, &damp[2]);
+    
+    this->gui->addSlider("Child dampening base", 0, 1, &toChildDamp[0]);
+    this->gui->addSlider("Child dampening mid",  0, 1, &toChildDamp[1]);
+    this->gui->addSlider("Child dampening tip",  0, 1, &toChildDamp[2]);
+    
+    this->gui->addSlider("Angular limit base", 0, 50.28, &angleLimit[0]);
+    this->gui->addSlider("Angular limit mid",  0, 50.28, &angleLimit[1]);
+    this->gui->addSlider("Angular limit tip",  0, 50.28, &angleLimit[2]);
+    
+    this->gui->addToggle("Linear lock base", &lockLinear[0]);
+    this->gui->addToggle("Linear lock mid", &lockLinear[1]);
+    this->gui->addToggle("Linear lock tip", &lockLinear[2]);
+    
+    this->gui->addToggle("Torsion lock base", &lockTorsion[0]);
+    this->gui->addToggle("Torsion lock mid", &lockTorsion[1]);
+    this->gui->addToggle("Torsion lock tip", &lockTorsion[2]);
     
     this->gui->autoSizeToFitWidgets();
 }
@@ -95,8 +115,22 @@ void SpringFingers2Scene::update() {
             atan((positions[2].y-positions[3].y)/(positions[2].x-positions[3].x))+PI
         };
         
+        // this is weird looking, but we're just setting
+        // spring constants and other options for all three
+        // springs on the current finger
+        for(int s = 0; s<3; s+=1) {
+            springs[i+s*5].setSpringValues(
+                springy[s],
+                damp[s],
+                toChildDamp[s],
+                angleLimit[s],
+                lockLinear[s],
+                lockTorsion[s]
+            );
+        }
+        
         if(springs[i].initialized) {
-            // update the three springs for the current finger i...and
+            // update the three springs for the current finger i
             
             springs[i].update(positions[1], positions[0],
                               ofPoint(0,0),
@@ -111,13 +145,11 @@ void SpringFingers2Scene::update() {
                                  lengths[2], angles[2]);
             
             // change the positions of the fingers after applying springy physics to them!
-            
             handWithFingertipsSkeleton->setPosition(joints[1], springs[i].currentPosition);
             handWithFingertipsSkeleton->setPosition(joints[2], springs[i+5].currentPosition);
             handWithFingertipsSkeleton->setPosition(joints[3], springs[i+10].currentPosition);
         } else {
             // init springs if they're not initialized already...
-            
             springs[i]   .initialize(positions[1]);
             springs[i+5] .initialize(positions[2]);
             springs[i+10].initialize(positions[3]);
@@ -125,8 +157,6 @@ void SpringFingers2Scene::update() {
     }
 }
 
-void SpringFingers2Scene::draw() {
-    
-}
+void SpringFingers2Scene::draw() {}
 
 void SpringFingers2Scene::updateMouse(float mx, float my) { }

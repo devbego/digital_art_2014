@@ -11,10 +11,10 @@ DelayedFingersScene::DelayedFingersScene(ofxPuppet* puppet,
     
     // delay = 30 means delay by 1 second (30 fps)
     pinkyDelayListSize = 0;
-    ringDelayListSize = 10;
-    middleDelayListSize = 20;
-    indexDelayListSize = 30;
-    thumbDelayListSize = 30;
+    ringDelayListSize = 5;
+    middleDelayListSize = 10;
+    indexDelayListSize = 15;
+    thumbDelayListSize = 20;
 }
 
 
@@ -112,14 +112,11 @@ void DelayedFingersScene::update() {
                         joints[0],
                         indexDelayListSize);
         } else if(i == 4 && thumbDelayListSize > 0) {
-            // thumb angle is a bit shaky. see what you can do about this...
-            /*
-            delayFinger(angles[0],
+            delayFinger(angles[1],
                         &thumbDelayList,
                         handWithFingertipsSkeleton,
-                        joints[0],
+                        joints[1],
                         thumbDelayListSize);
-             */
         }
     }
 }

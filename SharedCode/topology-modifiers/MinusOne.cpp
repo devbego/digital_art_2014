@@ -96,6 +96,9 @@ void MinusOne::saveMeshes(){
 
 //-------------------------------------------
 void MinusOne::initialize(){
+    MinusOne::initializeGui();
+    this->gui->autoSizeToFitWidgets();
+    
 	// printf("Initializing MinusOne\n");
 
 	final.load("models/mesh_MinusOne_final.ply");

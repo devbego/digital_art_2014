@@ -224,6 +224,9 @@ void PlusOne::saveMeshes(){
 
 //-------------------------------------------
 void PlusOne::initialize(){
+    PlusOne::initializeGui();
+    this->gui->autoSizeToFitWidgets();
+    
 	// printf("Initializing PlusOne\n");
 	
 	final.load("models/mesh_PlusOne_final.ply");

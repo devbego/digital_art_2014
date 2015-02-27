@@ -21,6 +21,14 @@ public:
 	void draw();
     
     vector<LTSpring> springs;
+    
+    bool lockLinear[3];
+    bool lockTorsion[3];
+    
+    float springy[3];
+    float damp[3];
+    float toChildDamp[3];
+    float angleLimit[3];
 };
 
 class LTSpring {
@@ -28,20 +36,18 @@ class LTSpring {
 public:
     bool initialized;
     
-    float springy;
-    float damp;
-    float toChildDamp;
-    
-    float angleChangeLimit;
-    float lengthChangeLimit;
-    
-    bool lockAngle;
-    bool lockLength;
-    
     ofPoint currentPosition;
     ofPoint prevPosition;
     ofPoint restPosition;
     ofPoint currentForce;
+    
+    float springy;
+    float damp;
+    float toChildDamp;
+    float angleLimit;
+    
+    bool lockLinear;
+    bool lockTorsion;
     
     ofPoint velocity;
     
@@ -60,6 +66,17 @@ public:
         prevPosition = initPosition;
         
         initialized = true;
+    }
+    
+    void setSpringValues(float _springy, float _damp, float _toChildDamp, float _angleLimit,
+                        bool _lockLinear, bool _lockTorsion) {
+        springy = _springy;
+        damp = _damp;
+        toChildDamp = _toChildDamp;
+        angleLimit = _angleLimit;
+        
+        lockLinear = _lockLinear;
+        lockTorsion = _lockTorsion;
     }
     
     void update(ofPoint skeletonPosition, ofPoint childPosition,
@@ -85,28 +102,27 @@ public:
         float newLength = childPosition.distance(newPosition);
         float newAngle = atan((childPosition.y-newPosition.y) / (childPosition.x-newPosition.x)) + PI;
         
-        if(lockLength) {
+        if(lockLinear) {
             newLength = skeletonLength;
         }
-        if(lockAngle) {
+        if(lockTorsion) {
             newAngle = skeletonAngle;
         }
         
-        // TODO: finish limits
-        // but this code should work just fine. just need to add limits to gui and find
-        // some values that work.
+        // limits
         
         /*
         float angleDiff = skeletonAngle-newAngle;
-        if(angleDiff > abs(angleChangeLimit)) {
-            newAngle = skeletonAngle + angleChangeLimit;
+        if(abs(angleDiff) > angleLimit) {
+            newAngle = skeletonAngle + angleLimit;
         }
-         
-        float lengthDiff = skeletonLength-newLength;
-        if(lengthDiff > abs(lengthChangeLimit)) {
-            newLength = skeletonLength + lengthChangeLimit;
+        
+        if(newLength > skeletonLength * 1.2) {
+            newLength = skeletonLength * 1.2;
         }
-        */
+        if(newLength < skeletonLength * 0.8) {
+            newLength = skeletonLength * 0.8;
+        }*/
         
         currentPosition.x = childPosition.x + cos(newAngle) * newLength;
         currentPosition.y = childPosition.y + sin(newAngle) * newLength;

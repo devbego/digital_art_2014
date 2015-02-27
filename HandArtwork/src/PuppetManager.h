@@ -38,9 +38,13 @@
 #include "SplayFingersScene.h"
 #include "SplayFingers2Scene.h"
 #include "SpringFingerScene.h"
+#include "SpringFingers2Scene.h"
 #include "TwitchScene.h"
 #include "PinkyPuppeteerScene.h"
 #include "FingerLengthPuppeteerScene.h"
+#include "RemappedFingersScene.h"
+#include "DelayedFingersScene.h"
+#include "SpasmFingersScene.h"
 
 #include "HandSkeleton.h"
 #include "ThreePointSkeleton.h"
